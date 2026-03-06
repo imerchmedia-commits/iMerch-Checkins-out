@@ -3,143 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iMerch - Secure Attendance</title>
+    <title>iMerch - Admin & Attendance</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        /* Theme Variables */
         :root { 
-            --bg: #0d1117; 
-            --card: #161b22; 
-            --border: #30363d; 
-            --text: #ffffff;
-            --green: #238636; 
-            --red: #da3633; 
-            --blue: #58a6ff; 
+            --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #ffffff;
+            --green: #238636; --red: #da3633; --blue: #58a6ff; 
         }
-
         [data-theme="light"] {
-            --bg: #f6f8fa;
-            --card: #ffffff;
-            --border: #d0d7de;
-            --text: #1f2328;
+            --bg: #f6f8fa; --card: #ffffff; --border: #d0d7de; --text: #1f2328;
         }
-
-        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; transition: background 0.3s; }
         .container { max-width: 450px; margin: auto; }
         .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
-        #theme-toggle {
-            position: fixed; top: 15px; left: 15px; width: 40px; height: 40px;
-            border-radius: 50%; background: var(--card); border: 1px solid var(--border);
-            color: var(--text); cursor: pointer; display: flex; align-items: center;
-            justify-content: center; z-index: 10000; font-size: 1.2em; transition: 0.3s;
-        }
-
-        .logo-container { text-align: center; margin-bottom: 20px; }
-        .logo-container img { max-width: 160px; height: auto; }
-        
-        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        #loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 9999;
-            transition: opacity 0.5s ease;
-        }
-        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite; margin-top: 15px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 5px; }
         #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
-        input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
-        
-        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; transition: 0.3s; }
-        .btn-checkin { background: var(--green); }
-        .btn-checkout { background: var(--red); }
-        .btn:disabled { background: #30363d; cursor: not-allowed; opacity: 0.6; }
-        
-        .history-item { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
-        .history-row { display: flex; justify-content: space-between; width: 100%; }
-        .history-remarks { font-style: italic; color: #8b949e; margin-top: 4px; font-size: 0.85em; }
-        
-        .hidden { display: none !important; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 14px; transition: 0.3s; }
+        .history-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .history-row { display: flex; justify-content: space-between; align-items: flex-start; }
         .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
-        
-        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-decoration: underline; text-align: center; display: block; padding: 20px; }
-        .warning { color: #f85149; font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; background: rgba(218, 54, 51, 0.1); padding: 8px; border-radius: 5px; }
-        .status-text { color: var(--blue); font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; }
+        .hidden { display: none !important; }
+        #theme-toggle { position: fixed; top: 15px; left: 15px; width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; z-index: 10000; }
+        .logo-container { text-align: center; margin-bottom: 15px; }
+        .logo-container img { max-width: 120px; }
+        .history-remarks { font-size: 0.8em; color: #8b949e; margin-top: 5px; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 4px; }
+        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-align: center; display: block; margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<button id="theme-toggle" title="Toggle Dark/Light Mode">🌙</button>
-
-<div id="loading-overlay" class="hidden">
-    <div class="logo-container">
-        <img src="logo1.png" alt="iMerch Logo">
-    </div>
-    <div class="spinner"></div>
-    <p style="margin-top: 15px; color: #8b949e;">Verifying Real-time GPS...</p>
-</div>
+<button id="theme-toggle">🌙</button>
 
 <div class="container">
-    <div id="login-view" class="fade-in">
-        <div class="logo-container">
-            <img src="logo1.png" alt="iMerch Logo">
-        </div>
-        <h2 style="text-align:center">Secure Attendance</h2>
+    <div id="login-view">
+        <div class="logo-container"><img src="logo1.png"></div>
         <div class="card">
-            <form id="login-form" onsubmit="return false;">
-                <input type="email" id="login-email" placeholder="Email Address" required>
+            <form id="login-form">
+                <input type="email" id="login-email" placeholder="Email" required>
                 <input type="password" id="login-pass" placeholder="Password" required>
-                <button type="submit" class="btn" style="background: var(--blue); margin-top:10px;">Login</button>
+                <button type="submit" class="btn" style="background: var(--blue);">Login</button>
             </form>
         </div>
     </div>
 
-    <div id="user-dashboard" class="hidden fade-in">
+    <div id="user-dashboard" class="hidden">
         <div id="live-clock">00:00:00</div>
-        <div class="logo-container">
-            <img src="logo1.png" alt="iMerch Logo">
+        
+        <div id="admin-toggle-area" class="hidden" style="margin-bottom: 15px;">
+            <button id="toggleAdminBtn" class="btn" style="background: var(--blue);">⚙️ Admin Panel</button>
         </div>
 
-        <div id="admin-toggle-area" class="hidden">
-            <button id="toggleAdminBtn" class="btn" style="background: var(--blue); font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button>
-        </div>
-        
         <div id="attendance-section">
             <div class="card">
-                <input type="text" id="location-name" placeholder="Current Location (e.g. Field Office)">
+                <input type="text" id="location-name" placeholder="Site/Location Name">
                 <div id="map"></div>
-                <div id="coords" style="text-align:center; font-size: 0.8em; color: #8b949e; margin-bottom: 5px;">Checking GPS...</div>
-                
-                <div id="geo-status" class="status-text">GPS Active</div>
-                <div id="spoof-warning" class="warning hidden">⚠️ Fake GPS Detected. Access Denied.</div>
-                
-                <button class="btn btn-checkin" id="checkinBtn" disabled>SYNCING GPS...</button>
-                <button class="btn btn-checkout" id="checkoutBtn" disabled>SYNCING GPS...</button>
-                
-                <input type="text" id="attendance-remarks" placeholder="Add remarks (Optional)" style="margin-top: 10px;">
+                <div id="coords" style="text-align:center; font-size: 0.7em; color: #8b949e; margin-bottom: 10px;">Syncing GPS...</div>
+                <button class="btn" id="checkinBtn" style="background: var(--green);" disabled>CHECK IN</button>
+                <button class="btn" id="checkoutBtn" style="background: var(--red);" disabled>CHECK OUT</button>
+                <input type="text" id="attendance-remarks" placeholder="Add remarks (Optional)">
             </div>
-            <h3>My Recent Activity</h3>
+            <h3>Your Recent Activity</h3>
             <div id="history-list"></div>
         </div>
 
         <div id="admin-view" class="hidden">
-            <h3>Admin: Add Employee</h3>
+            <h3>Admin Tools</h3>
             <div class="card">
-                <input type="email" id="new-email" placeholder="New Employee Email">
+                <input type="email" id="new-email" placeholder="New Staff Email">
                 <input type="password" id="new-pass" placeholder="Temp Password">
-                <button class="btn" style="background: var(--blue); margin-top:10px;" id="createAccBtn">Create Account</button>
-                <button class="btn" style="background:#30363d" id="backBtn">Back</button>
+                <button class="btn" style="background: var(--blue);" id="createAccBtn">Create Account</button>
             </div>
+
+            <h3>Staff Logs</h3>
+            <div class="card" style="padding: 10px;">
+                <input type="text" id="admin-search" placeholder="🔍 Search email or remarks...">
+                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                    <button id="exportBtn" class="btn" style="background: #238636; flex: 1; font-size: 12px;">📊 Export Excel</button>
+                    <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1; font-size: 12px;">🗑️ Wipe All</button>
+                </div>
+                <div id="admin-master-list" style="max-height: 400px; overflow-y: auto;"></div>
+            </div>
+            <button class="btn" style="background:#30363d" id="backBtn">Return to Personal Dashboard</button>
         </div>
+
         <span class="logout-link" id="logoutLink">Logout Account</span>
     </div>
 </div>
@@ -147,28 +96,8 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-    const toggleBtn = document.getElementById('theme-toggle');
-    const body = document.body;
-    
-    if(localStorage.getItem('theme') === 'light') {
-        body.setAttribute('data-theme', 'light');
-        toggleBtn.innerText = '☀️';
-    }
-
-    toggleBtn.onclick = () => {
-        if(body.getAttribute('data-theme') === 'light') {
-            body.removeAttribute('data-theme');
-            toggleBtn.innerText = '🌙';
-            localStorage.setItem('theme', 'dark');
-        } else {
-            body.setAttribute('data-theme', 'light');
-            toggleBtn.innerText = '☀️';
-            localStorage.setItem('theme', 'light');
-        }
-    };
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -182,67 +111,36 @@
     const auth = getAuth(app);
 
     let userCoords = null;
-    let isMocked = false;
+    let masterData = [];
     let map, marker;
 
+    // Real-time Clock
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-    function startSecureGPS() {
-        document.getElementById('loading-overlay').classList.remove('hidden');
-        if (!navigator.geolocation) return alert("GPS not supported");
-
+    // GPS & Map Logic
+    function startGPS() {
         navigator.geolocation.watchPosition((pos) => {
-            isMocked = pos.mocked || (pos.coords && pos.coords.mocked) || false;
             userCoords = [pos.coords.latitude, pos.coords.longitude];
-            updateMap(userCoords);
+            document.getElementById('coords').innerText = `GPS Fixed: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
+            document.getElementById('checkinBtn').disabled = false;
+            document.getElementById('checkoutBtn').disabled = false;
             
-            const btnIn = document.getElementById('checkinBtn');
-            const btnOut = document.getElementById('checkoutBtn');
-            const geoStatus = document.getElementById('geo-status');
-            const spoofWarning = document.getElementById('spoof-warning');
-
-            document.getElementById('loading-overlay').style.opacity = '0';
-            setTimeout(() => document.getElementById('loading-overlay').classList.add('hidden'), 500);
-
-            document.getElementById('coords').innerText = `Verified GPS: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
-
-            if (isMocked) {
-                btnIn.disabled = btnOut.disabled = true;
-                spoofWarning.classList.remove('hidden');
-                geoStatus.classList.add('hidden');
+            if (!map) {
+                map = L.map('map').setView(userCoords, 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                marker = L.marker(userCoords).addTo(map);
             } else {
-                // Geofence logic removed - Buttons are now enabled anywhere
-                btnIn.disabled = btnOut.disabled = false;
-                btnIn.innerText = "CHECK IN NOW";
-                btnOut.innerText = "CHECK OUT NOW";
-                geoStatus.innerText = "✅ GPS Ready";
-                geoStatus.classList.remove('hidden');
-                spoofWarning.classList.add('hidden');
+                map.setView(userCoords);
+                marker.setLatLng(userCoords);
             }
-        }, (err) => {
-            console.error("GPS Error: ", err);
-        }, { 
-            enableHighAccuracy: true, 
-            maximumAge: 0, 
-            timeout: 10000 
-        });
+        }, null, { enableHighAccuracy: true });
     }
 
-    function updateMap(coords) {
-        if (!map) {
-            map = L.map('map').setView(coords, 17);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            marker = L.marker(coords).addTo(map);
-        } else {
-            map.setView(coords);
-            marker.setLatLng(coords);
-        }
-    }
-
+    // Action Logic
     async function logAction(type) {
-        if (!userCoords || isMocked) return;
-        const loc = document.getElementById('location-name').value || "Mobile Location";
-        const remarks = document.getElementById('attendance-remarks').value || "";
+        if (!userCoords) return;
+        const loc = document.getElementById('location-name').value || "Mobile Site";
+        const rem = document.getElementById('attendance-remarks').value || "";
         try {
             await addDoc(collection(db, "attendance"), {
                 uid: auth.currentUser.uid,
@@ -251,39 +149,101 @@
                 latitude: userCoords[0],
                 longitude: userCoords[1],
                 type: type,
-                remarks: remarks,
-                timestamp: serverTimestamp(),
-                isMocked: isMocked
+                remarks: rem,
+                timestamp: serverTimestamp()
             });
-            document.getElementById('attendance-remarks').value = ""; 
-            alert(`${type} Recorded!`);
+            document.getElementById('attendance-remarks').value = "";
+            alert("Action Saved!");
         } catch (e) { alert(e.message); }
     }
 
+    // Load All Logs for Admin
+    function loadAdminLogs() {
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snap) => {
+            masterData = [];
+            snap.forEach(doc => masterData.push(doc.data()));
+            renderAdminLogs(masterData);
+        });
+    }
+
+    function renderAdminLogs(data) {
+        const list = document.getElementById('admin-master-list');
+        list.innerHTML = "";
+        data.forEach(d => {
+            const date = d.timestamp ? d.timestamp.toDate() : new Date();
+            const timeStr = date.toLocaleTimeString([], { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const mapUrl = `https://www.google.com/maps?q=${d.latitude},${d.longitude}`;
+            
+            list.innerHTML += `
+                <div class="history-item">
+                    <div class="history-row">
+                        <span style="font-weight:bold; color:var(--blue); font-size:0.8em;">${d.email}</span>
+                        <a href="${mapUrl}" target="_blank" style="text-decoration:none; font-size:0.7em;">📍 View Map</a>
+                    </div>
+                    <div class="history-row" style="margin-top:4px;">
+                        <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
+                        <span style="font-size:0.7em;">${timeStr}</span>
+                    </div>
+                    ${d.remarks ? `<div class="history-remarks">Note: ${d.remarks}</div>` : ""}
+                </div>`;
+        });
+    }
+
+    // Export Logic
+    document.getElementById('exportBtn').onclick = () => {
+        let csv = "Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
+        masterData.forEach(d => {
+            const date = d.timestamp ? d.timestamp.toDate() : new Date();
+            csv += `${d.email},${date.toLocaleDateString()},${date.toLocaleTimeString()},${d.type},${d.locationName},${d.latitude},${d.longitude},"${d.remarks}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Logs_${new Date().toLocaleDateString()}.csv`;
+        a.click();
+    };
+
+    // Wipe Logic
+    document.getElementById('wipeLogsBtn').onclick = async () => {
+        if (!confirm("Are you sure? This deletes ALL history for everyone.")) return;
+        const q = query(collection(db, "attendance"));
+        const snapshot = await getDocs(q);
+        const batch = writeBatch(db);
+        snapshot.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        alert("System Wiped.");
+    };
+
+    // Search Logic
+    document.getElementById('admin-search').oninput = (e) => {
+        const val = e.target.value.toLowerCase();
+        const filtered = masterData.filter(d => 
+            d.email.toLowerCase().includes(val) || 
+            (d.remarks && d.remarks.toLowerCase().includes(val))
+        );
+        renderAdminLogs(filtered);
+    };
+
+    // Auth & View Handlers
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-dashboard').classList.remove('hidden');
             if (user.email === "ron.sarmenta@gmail.com" || user.email === "ronsarmenta.imerchmedia@gmail.com") {
                 document.getElementById('admin-toggle-area').classList.remove('hidden');
+                loadAdminLogs();
             }
-            startSecureGPS();
-            loadHistory(user.uid);
+            startGPS();
+            loadPersonalHistory(user.uid);
         } else {
             document.getElementById('login-view').classList.remove('hidden');
             document.getElementById('user-dashboard').classList.add('hidden');
         }
     });
 
-    document.getElementById('checkinBtn').onclick = () => logAction('Check In');
-    document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
-    document.getElementById('login-form').onsubmit = async () => {
-        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
-        catch (e) { alert(e.message); }
-    };
-    document.getElementById('logoutLink').onclick = () => signOut(auth);
-
-    function loadHistory(uid) {
+    function loadPersonalHistory(uid) {
         const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"));
         onSnapshot(q, (snap) => {
             const list = document.getElementById('history-list');
@@ -291,24 +251,21 @@
             snap.forEach(doc => {
                 const d = doc.data();
                 const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : "...";
-                const remarksHtml = d.remarks ? `<div class="history-remarks">Note: ${d.remarks}</div>` : "";
-                
-                list.innerHTML += `
-                    <div class="history-item">
-                        <div class="history-row">
-                            <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
-                            <span>${time}</span>
-                        </div>
-                        ${remarksHtml}
-                    </div>`;
+                list.innerHTML += `<div class="history-item"><div class="history-row"><span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span><span>${time}</span></div></div>`;
             });
         });
     }
 
+    document.getElementById('login-form').onsubmit = async (e) => {
+        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } catch (e) { alert(e.message); }
+    };
+    document.getElementById('logoutLink').onclick = () => signOut(auth);
+    document.getElementById('checkinBtn').onclick = () => logAction('Check In');
+    document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
     document.getElementById('toggleAdminBtn').onclick = () => { document.getElementById('attendance-section').classList.toggle('hidden'); document.getElementById('admin-view').classList.toggle('hidden'); };
-    document.getElementById('backBtn').onclick = () => { document.getElementById('attendance-section').classList.remove('hidden'); document.getElementById('admin-view').classList.add('hidden'); };
+    document.getElementById('backBtn').onclick = () => { document.getElementById('admin-view').classList.add('hidden'); document.getElementById('attendance-section').classList.remove('hidden'); };
     document.getElementById('createAccBtn').onclick = async () => {
-        try { await createUserWithEmailAndPassword(auth, document.getElementById('new-email').value, document.getElementById('new-pass').value); alert("Employee Created!"); } catch (e) { alert(e.message); }
+        try { await createUserWithEmailAndPassword(auth, document.getElementById('new-email').value, document.getElementById('new-pass').value); alert("Staff Created!"); } catch (e) { alert(e.message); }
     };
 </script>
 </body>
