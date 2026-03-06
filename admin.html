@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iMerch - Admin & Attendance</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>iMerch - Admin Control Panel</title>
     <style>
         :root { 
             --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #ffffff;
@@ -16,8 +15,13 @@
         body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; transition: background 0.3s; }
         .container { max-width: 450px; margin: auto; }
         .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 5px; }
-        #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
+        
+        /* Stats Styling */
+        .stats-container { display: flex; gap: 10px; margin-bottom: 15px; }
+        .stat-box { flex: 1; background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 10px; text-align: center; }
+        .stat-val { display: block; font-size: 1.5em; font-weight: bold; color: var(--blue); }
+        .stat-label { font-size: 0.7em; text-transform: uppercase; letter-spacing: 1px; color: #8b949e; }
+
         input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 14px; transition: 0.3s; }
         .history-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
@@ -30,7 +34,8 @@
         .logo-container { text-align: center; margin-bottom: 15px; }
         .logo-container img { max-width: 120px; }
         .history-remarks { font-size: 0.8em; color: #8b949e; margin-top: 5px; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 4px; }
-        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-align: center; display: block; margin-top: 20px; }
+        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-align: center; display: block; padding: 20px; font-weight: bold; }
+        h3 { border-left: 4px solid var(--blue); padding-left: 10px; margin-top: 25px; }
     </style>
 </head>
 <body>
@@ -40,63 +45,57 @@
 <div class="container">
     <div id="login-view">
         <div class="logo-container"><img src="logo1.png"></div>
+        <h2 style="text-align: center;">Admin Portal</h2>
         <div class="card">
             <form id="login-form">
-                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="email" id="login-email" placeholder="Admin Email" required>
                 <input type="password" id="login-pass" placeholder="Password" required>
-                <button type="submit" class="btn" style="background: var(--blue);">Login</button>
+                <button type="submit" class="btn" style="background: var(--blue);">Access Admin Panel</button>
             </form>
         </div>
     </div>
 
-    <div id="user-dashboard" class="hidden">
-        <div id="live-clock">00:00:00</div>
+    <div id="admin-view" class="hidden">
+        <div class="logo-container"><img src="logo1.png"></div>
         
-        <div id="admin-toggle-area" class="hidden" style="margin-bottom: 15px;">
-            <button id="toggleAdminBtn" class="btn" style="background: var(--blue);">⚙️ Admin Panel</button>
+        <h3>Staff Management</h3>
+        <div class="card">
+            <input type="email" id="new-email" placeholder="New Staff Email">
+            <input type="password" id="new-pass" placeholder="Temp Password">
+            <button class="btn" style="background: var(--blue);" id="createAccBtn">Create Account</button>
         </div>
 
-        <div id="attendance-section">
-            <div class="card">
-                <input type="text" id="location-name" placeholder="Site/Location Name">
-                <div id="map"></div>
-                <div id="coords" style="text-align:center; font-size: 0.7em; color: #8b949e; margin-bottom: 10px;">Syncing GPS...</div>
-                <button class="btn" id="checkinBtn" style="background: var(--green);" disabled>CHECK IN</button>
-                <button class="btn" id="checkoutBtn" style="background: var(--red);" disabled>CHECK OUT</button>
-                <input type="text" id="attendance-remarks" placeholder="Add remarks (Optional)">
+        <h3>Global Attendance Logs</h3>
+        
+        <div class="stats-container">
+            <div class="stat-box">
+                <span class="stat-val" id="total-staff-count">0</span>
+                <span class="stat-label">Total Staff</span>
             </div>
-            <h3>Your Recent Activity</h3>
-            <div id="history-list"></div>
+            <div class="stat-box">
+                <span class="stat-val" id="present-today-count" style="color: var(--green);">0</span>
+                <span class="stat-label">Present Today</span>
+            </div>
         </div>
 
-        <div id="admin-view" class="hidden">
-            <h3>Admin Tools</h3>
-            <div class="card">
-                <input type="email" id="new-email" placeholder="New Staff Email">
-                <input type="password" id="new-pass" placeholder="Temp Password">
-                <button class="btn" style="background: var(--blue);" id="createAccBtn">Create Account</button>
+        <div class="card" style="padding: 10px;">
+            <input type="text" id="admin-search" placeholder="🔍 Search email, site, or remarks...">
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                <button id="exportBtn" class="btn" style="background: #238636; flex: 1; font-size: 12px;">📊 Export CSV</button>
+                <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1; font-size: 12px;">🗑️ Wipe Data</button>
             </div>
-
-            <h3>Staff Logs</h3>
-            <div class="card" style="padding: 10px;">
-                <input type="text" id="admin-search" placeholder="🔍 Search email or remarks...">
-                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                    <button id="exportBtn" class="btn" style="background: #238636; flex: 1; font-size: 12px;">📊 Export Excel</button>
-                    <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1; font-size: 12px;">🗑️ Wipe All</button>
-                </div>
-                <div id="admin-master-list" style="max-height: 400px; overflow-y: auto;"></div>
+            <div id="admin-master-list" style="max-height: 500px; overflow-y: auto;">
+                <p style="text-align: center; color: #8b949e;">Loading logs...</p>
             </div>
-            <button class="btn" style="background:#30363d" id="backBtn">Return to Personal Dashboard</button>
         </div>
 
-        <span class="logout-link" id="logoutLink">Logout Account</span>
+        <span class="logout-link" id="logoutLink">🔒 Secure Logout</span>
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -110,162 +109,145 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    let userCoords = null;
     let masterData = [];
-    let map, marker;
 
-    // Real-time Clock
-    setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+    const toggleBtn = document.getElementById('theme-toggle');
+    toggleBtn.onclick = () => {
+        const isLight = document.body.getAttribute('data-theme') === 'light';
+        if(isLight) {
+            document.body.removeAttribute('data-theme');
+            toggleBtn.innerText = '🌙';
+        } else {
+            document.body.setAttribute('data-theme', 'light');
+            toggleBtn.innerText = '☀️';
+        }
+    };
 
-    // GPS & Map Logic
-    function startGPS() {
-        navigator.geolocation.watchPosition((pos) => {
-            userCoords = [pos.coords.latitude, pos.coords.longitude];
-            document.getElementById('coords').innerText = `GPS Fixed: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
-            document.getElementById('checkinBtn').disabled = false;
-            document.getElementById('checkoutBtn').disabled = false;
-            
-            if (!map) {
-                map = L.map('map').setView(userCoords, 16);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                marker = L.marker(userCoords).addTo(map);
-            } else {
-                map.setView(userCoords);
-                marker.setLatLng(userCoords);
+    function updateStats(data) {
+        const uniqueEmails = new Set();
+        const presentToday = new Set();
+        const today = new Date().toLocaleDateString();
+
+        data.forEach(d => {
+            uniqueEmails.add(d.email);
+            if (d.timestamp) {
+                const logDate = d.timestamp.toDate().toLocaleDateString();
+                if (logDate === today) {
+                    presentToday.add(d.email);
+                }
             }
-        }, null, { enableHighAccuracy: true });
+        });
+
+        document.getElementById('total-staff-count').innerText = uniqueEmails.size;
+        document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
-    // Action Logic
-    async function logAction(type) {
-        if (!userCoords) return;
-        const loc = document.getElementById('location-name').value || "Mobile Site";
-        const rem = document.getElementById('attendance-remarks').value || "";
-        try {
-            await addDoc(collection(db, "attendance"), {
-                uid: auth.currentUser.uid,
-                email: auth.currentUser.email,
-                locationName: loc,
-                latitude: userCoords[0],
-                longitude: userCoords[1],
-                type: type,
-                remarks: rem,
-                timestamp: serverTimestamp()
-            });
-            document.getElementById('attendance-remarks').value = "";
-            alert("Action Saved!");
-        } catch (e) { alert(e.message); }
-    }
-
-    // Load All Logs for Admin
     function loadAdminLogs() {
         const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
         onSnapshot(q, (snap) => {
             masterData = [];
             snap.forEach(doc => masterData.push(doc.data()));
+            updateStats(masterData);
             renderAdminLogs(masterData);
         });
     }
 
     function renderAdminLogs(data) {
         const list = document.getElementById('admin-master-list');
-        list.innerHTML = "";
+        list.innerHTML = data.length ? "" : "<p style='text-align:center; color:#8b949e;'>No records found.</p>";
         data.forEach(d => {
             const date = d.timestamp ? d.timestamp.toDate() : new Date();
-            const timeStr = date.toLocaleTimeString([], { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = date.toLocaleDateString();
+            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             const mapUrl = `https://www.google.com/maps?q=${d.latitude},${d.longitude}`;
             
             list.innerHTML += `
                 <div class="history-item">
                     <div class="history-row">
-                        <span style="font-weight:bold; color:var(--blue); font-size:0.8em;">${d.email}</span>
-                        <a href="${mapUrl}" target="_blank" style="text-decoration:none; font-size:0.7em;">📍 View Map</a>
+                        <span style="font-weight:bold; color:var(--blue); font-size:0.85em;">${d.email}</span>
+                        <a href="${mapUrl}" target="_blank" style="text-decoration:none; font-size:0.75em; background: #30363d; padding: 2px 6px; border-radius: 4px; color: white;">📍 Map</a>
                     </div>
                     <div class="history-row" style="margin-top:4px;">
                         <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
-                        <span style="font-size:0.7em;">${timeStr}</span>
+                        <span style="font-size:0.7em; color: #8b949e;">${dateStr}<br>${timeStr}</span>
                     </div>
-                    ${d.remarks ? `<div class="history-remarks">Note: ${d.remarks}</div>` : ""}
+                    ${d.remarks ? `<div class="history-remarks"><strong>Remarks:</strong> ${d.remarks}</div>` : ""}
                 </div>`;
         });
     }
 
-    // Export Logic
     document.getElementById('exportBtn').onclick = () => {
+        if(masterData.length === 0) return alert("No data to export");
         let csv = "Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
         masterData.forEach(d => {
             const date = d.timestamp ? d.timestamp.toDate() : new Date();
-            csv += `${d.email},${date.toLocaleDateString()},${date.toLocaleTimeString()},${d.type},${d.locationName},${d.latitude},${d.longitude},"${d.remarks}"\n`;
+            csv += `${d.email},${date.toLocaleDateString()},${date.toLocaleTimeString()},${d.type},${d.locationName},${d.latitude},${d.longitude},"${d.remarks || ''}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Logs_${new Date().toLocaleDateString()}.csv`;
+        a.download = `Attendance_Report_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
 
-    // Wipe Logic
     document.getElementById('wipeLogsBtn').onclick = async () => {
-        if (!confirm("Are you sure? This deletes ALL history for everyone.")) return;
+        if (!confirm("CRITICAL: Delete ALL attendance history permanently?")) return;
         const q = query(collection(db, "attendance"));
         const snapshot = await getDocs(q);
         const batch = writeBatch(db);
         snapshot.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
-        alert("System Wiped.");
+        alert("All logs have been cleared.");
     };
 
-    // Search Logic
     document.getElementById('admin-search').oninput = (e) => {
         const val = e.target.value.toLowerCase();
         const filtered = masterData.filter(d => 
             d.email.toLowerCase().includes(val) || 
+            d.locationName.toLowerCase().includes(val) ||
             (d.remarks && d.remarks.toLowerCase().includes(val))
         );
         renderAdminLogs(filtered);
     };
 
-    // Auth & View Handlers
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            document.getElementById('login-view').classList.add('hidden');
-            document.getElementById('user-dashboard').classList.remove('hidden');
-            if (user.email === "ron.sarmenta@gmail.com" || user.email === "ronsarmenta.imerchmedia@gmail.com") {
-                document.getElementById('admin-toggle-area').classList.remove('hidden');
+            const adminEmails = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
+            if (adminEmails.includes(user.email)) {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('hidden');
                 loadAdminLogs();
+            } else {
+                alert("Access Denied: This area is for Admins only.");
+                signOut(auth);
             }
-            startGPS();
-            loadPersonalHistory(user.uid);
         } else {
             document.getElementById('login-view').classList.remove('hidden');
-            document.getElementById('user-dashboard').classList.add('hidden');
+            document.getElementById('admin-view').classList.add('hidden');
         }
     });
 
-    function loadPersonalHistory(uid) {
-        const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"));
-        onSnapshot(q, (snap) => {
-            const list = document.getElementById('history-list');
-            list.innerHTML = "";
-            snap.forEach(doc => {
-                const d = doc.data();
-                const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : "...";
-                list.innerHTML += `<div class="history-item"><div class="history-row"><span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span><span>${time}</span></div></div>`;
-            });
-        });
-    }
-
     document.getElementById('login-form').onsubmit = async (e) => {
-        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } catch (e) { alert(e.message); }
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-pass').value;
+        try { await signInWithEmailAndPassword(auth, email, pass); } 
+        catch (e) { alert("Login Failed: " + e.message); }
     };
+
     document.getElementById('logoutLink').onclick = () => signOut(auth);
-    document.getElementById('checkinBtn').onclick = () => logAction('Check In');
-    document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
-    document.getElementById('toggleAdminBtn').onclick = () => { document.getElementById('attendance-section').classList.toggle('hidden'); document.getElementById('admin-view').classList.toggle('hidden'); };
-    document.getElementById('backBtn').onclick = () => { document.getElementById('admin-view').classList.add('hidden'); document.getElementById('attendance-section').classList.remove('hidden'); };
+
     document.getElementById('createAccBtn').onclick = async () => {
-        try { await createUserWithEmailAndPassword(auth, document.getElementById('new-email').value, document.getElementById('new-pass').value); alert("Staff Created!"); } catch (e) { alert(e.message); }
+        const email = document.getElementById('new-email').value;
+        const pass = document.getElementById('new-pass').value;
+        if(!email || !pass) return alert("Please fill in both fields");
+        try { 
+            await createUserWithEmailAndPassword(auth, email, pass); 
+            alert("Success: New Employee Account Created!"); 
+            document.getElementById('new-email').value = "";
+            document.getElementById('new-pass').value = "";
+        } catch (e) { alert("Creation Failed: " + e.message); }
     };
 </script>
 </body>
