@@ -29,13 +29,16 @@
 
         input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 14px; transition: 0.3s; }
-        .history-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .history-item { padding: 12px 0; border-bottom: 1px solid var(--border); transition: 0.2s; }
+        .history-item:hover { background: rgba(255,255,255,0.03); }
         .history-row { display: flex; justify-content: space-between; align-items: flex-start; }
         .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
         .hidden { display: none !important; }
         
+        .geo-btn { background: var(--blue); border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+
         #theme-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; z-index: 10000; font-size: 1.5em; }
         .logo-container { text-align: center; margin-bottom: 20px; }
         .logo-container img { max-width: 150px; }
@@ -133,6 +136,16 @@
         markerGroup = L.layerGroup().addTo(map);
     }
 
+    // Function to zoom to a specific log entry on the map
+    window.zoomToLocation = (lat, lng, name, type) => {
+        if (!lat || !lng) return alert("No GPS coordinates for this log.");
+        map.setView([lat, lng], 16);
+        L.popup()
+            .setLatLng([lat, lng])
+            .setContent(`<b>${name}</b><br>${type}`)
+            .openOn(map);
+    };
+
     async function loadStaffData() {
         const snap = await getDocs(collection(db, "users"));
         snap.forEach(doc => {
@@ -160,16 +173,18 @@
         const list = document.getElementById('admin-master-list');
         list.innerHTML = "";
         data.forEach(d => {
-            const date = d.timestamp ? d.timestamp.toDate().toLocaleString() : "Pending...";
+            const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString() : "Pending";
+            const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
+            
             list.innerHTML += `
                 <div class="history-item">
                     <div class="history-row">
                         <span style="font-weight:bold; color:var(--blue);">${d.fullName}</span>
-                        <span style="font-size:0.75em; color:#8b949e;">${date}</span>
+                        <span style="font-size:0.75em; color:#8b949e;">${date} ${time}</span>
                     </div>
-                    <div class="history-row" style="margin-top:4px;">
+                    <div class="history-row" style="margin-top:4px; align-items: center;">
                         <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
-                        <span style="font-size:0.7em;">${d.email}</span>
+                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${d.fullName}', '${d.type}')">📍 Show</button>
                     </div>
                 </div>`;
         });
@@ -183,53 +198,53 @@
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
-    // EXPORT TO EXCEL (CSV)
+    // EXPORT TO EXCEL (CSV) with Geo Location
     document.getElementById('exportBtn').onclick = () => {
         if (masterLogs.length === 0) return alert("No logs to export.");
-        let csv = "Full Name,Email,Action,Location,Remarks,Date,Time\n";
+        
+        // Arranged Header: Full Name, Email, Date, Time, Action, Location, Lat, Lng, Remarks
+        let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
+        
         masterLogs.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            csv += `"${d.fullName}","${d.email}","${d.type}","${d.locationName}","${d.remarks || ''}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}"\n`;
+            const date = dt.toLocaleDateString().replace(/,/g, '');
+            const time = dt.toLocaleTimeString().replace(/,/g, '');
+            const lat = d.latitude || "";
+            const lng = d.longitude || "";
+            const remarks = (d.remarks || "").replace(/"/g, '""');
+
+            csv += `"${d.fullName}","${d.email}","${date}","${time}","${d.type}","${d.locationName}","${lat}","${lng}","${remarks}"\n`;
         });
-        const blob = new Blob([csv], { type: 'text/csv' });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.setAttribute('hidden', '');
-        a.setAttribute('href', url);
-        a.setAttribute('download', `iMerch_Attendance_${new Date().toLocaleDateString()}.csv`);
-        document.body.appendChild(a);
+        a.href = url;
+        a.download = `iMerch_Logs_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
-        document.body.removeChild(a);
     };
 
-    // WIPE ALL LOGS
+    // WIPE LOGS
     document.getElementById('wipeLogsBtn').onclick = async () => {
-        if (!confirm("CRITICAL: This will permanently delete ALL attendance logs. Continue?")) return;
+        if (!confirm("Delete all attendance logs permanently?")) return;
         const batch = writeBatch(db);
         const snap = await getDocs(collection(db, "attendance"));
         snap.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
-        alert("All logs wiped successfully.");
+        alert("Logs cleared.");
     };
 
-    // CREATE ACCOUNT WITH FULLNAME
+    // CREATE ACCOUNT
     document.getElementById('createAccBtn').onclick = async () => {
         const fullName = document.getElementById('new-fullname').value;
         const email = document.getElementById('new-email').value;
         const pass = document.getElementById('new-pass').value;
-
-        if (!fullName || !email || !pass) return alert("Please fill all fields.");
-
+        if (!fullName || !email || !pass) return alert("Missing info.");
         try {
             const userCred = await createUserWithEmailAndPassword(auth, email, pass);
-            await addDoc(collection(db, "users"), {
-                uid: userCred.user.uid,
-                fullName: fullName,
-                email: email,
-                createdAt: serverTimestamp()
-            });
-            alert("Staff Account Created for " + fullName);
-            location.reload(); 
+            await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName, email, createdAt: serverTimestamp() });
+            alert("Created!");
+            location.reload();
         } catch (e) { alert(e.message); }
     };
 
@@ -250,7 +265,7 @@
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
         try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
-        catch (e) { alert("Login Error: " + e.message); }
+        catch (e) { alert("Error: " + e.message); }
     };
 
     document.getElementById('logoutLink').onclick = () => signOut(auth);
