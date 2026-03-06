@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <title>iMerch - Master Admin & Export</title>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --blue: #58a6ff; --green: #238636; }
+        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --blue: #58a6ff; --green: #238636; --red: #da3633; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: white; padding: 20px; margin: 0; }
         .container { max-width: 1000px; margin: auto; padding: 20px; }
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .search-container { position: relative; margin-bottom: 20px; }
-        .search-box { width: 100%; padding: 15px; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: white; font-size: 16px; outline: none; transition: 0.3s; }
+        .search-box { width: 100%; padding: 15px; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: white; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; }
         .search-box:focus { border-color: var(--blue); }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .stat-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; }
@@ -18,6 +18,9 @@
         th { background: #21262d; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
         .btn-excel { background: var(--green); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
         .btn-excel:hover { opacity: 0.9; }
+        .btn-delete { background: var(--red); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-delete:hover { background: #f85149; }
+        .btn-bulk-delete { background: var(--red); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; display: none; }
     </style>
 </head>
 <body>
@@ -25,7 +28,7 @@
 <div class="container">
     <div class="header-flex">
         <h2>iMerch Master Logs</h2>
-        <div style="font-size: 0.8em; color: #8b949e;">Logged in as Ron</div>
+        <div style="font-size: 0.8em; color: #8b949e;">Logged in as ron.sarmenta@gmail.com</div>
     </div>
 
     <div class="search-container">
@@ -37,8 +40,9 @@
             <small style="color: #8b949e;">Entries Found</small>
             <div id="count-display" style="font-size: 22px; font-weight: bold;">0</div>
         </div>
-        <div class="stat-card" style="display: flex; align-items: center;">
-            <button class="btn-excel" onclick="exportToCSV()">Export Table to Excel (.csv)</button>
+        <div class="stat-card" style="display: flex; gap: 10px;">
+            <button class="btn-excel" onclick="exportToCSV()">Export to Excel</button>
+            <button id="bulkDeleteBtn" class="btn-bulk-delete" onclick="deleteFilteredLogs()">Delete All Filtered</button>
         </div>
     </div>
 
@@ -51,6 +55,7 @@
                     <th>Status</th>
                     <th>Time</th>
                     <th>Location</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="payroll-body">
@@ -61,7 +66,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -76,61 +81,60 @@
     const auth = getAuth(app);
 
     let allLogs = [];
+    let currentFiltered = [];
 
+    // --- ADMIN ACCESS CHECK ---
     onAuthStateChanged(auth, (user) => {
         if (user && user.email === "ron.sarmenta@gmail.com") {
             loadData();
         } else {
-            alert("Access Denied");
+            alert("Access Denied: Admin privileges required.");
             window.location.href = "index.html";
         }
     });
 
-    // --- ADMIN SELF-LOGGING FUNCTION ---
-    window.logAction = async (type) => {
-        const loc = document.getElementById('location-name')?.value || "Office Site (Admin)";
-        try {
-            await addDoc(collection(db, "attendance"), {
-                uid: auth.currentUser.uid,
-                email: auth.currentUser.email,
-                locationName: loc,
-                coords: [0, 0], // Optional: replace with actual coords if needed
-                type: type,
-                timestamp: serverTimestamp()
+    // --- DELETE INDIVIDUAL LOG ---
+    window.deleteLog = async (docId) => {
+        if (confirm("Permanently delete this log entry?")) {
+            try {
+                await deleteDoc(doc(db, "attendance", docId));
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+    };
+
+    // --- BULK DELETE FILTERED LOGS ---
+    window.deleteFilteredLogs = async () => {
+        const count = currentFiltered.length;
+        if (confirm(`Are you sure you want to delete all ${count} visible logs? This cannot be undone.`)) {
+            const batch = writeBatch(db);
+            currentFiltered.forEach(log => {
+                batch.delete(doc(db, "attendance", log.id));
             });
-            alert(type + " recorded for " + auth.currentUser.email);
-        } catch (e) { 
-            console.error("Firebase Error:", e);
-            alert("Sync Error: " + e.message); 
+            try {
+                await batch.commit();
+                document.getElementById('adminSearch').value = ""; // Clear search
+                alert(`Successfully deleted ${count} entries.`);
+            } catch (e) {
+                alert("Bulk Delete Error: " + e.message);
+            }
         }
     };
 
     function loadData() {
-        const q = collection(db, "attendance"); 
-        
-        onSnapshot(q, (snap) => {
+        onSnapshot(collection(db, "attendance"), (snap) => {
             allLogs = [];
-            if (snap.empty) {
-                document.getElementById('payroll-body').innerHTML = "<tr><td colspan='5' style='text-align:center'>No logs found in database.</td></tr>";
-                document.getElementById('count-display').innerText = "0";
-                return;
-            }
-
-            snap.forEach(doc => {
-                allLogs.push(doc.data());
-            });
-
+            snap.forEach(d => allLogs.push({ ...d.data(), id: d.id }));
             allLogs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            currentFiltered = allLogs;
             renderRows(allLogs);
-        }, (error) => {
-            console.error("Firestore Error:", error);
-            document.getElementById('payroll-body').innerHTML = `<tr><td colspan='5' style='text-align:center; color:red;'>Error: ${error.message}</td></tr>`;
         });
     }
 
     window.renderRows = (data) => {
         const body = document.getElementById('payroll-body');
-        body.innerHTML = "";
+        body.innerHTML = data.length === 0 ? "<tr><td colspan='6' style='text-align:center'>No logs found.</td></tr>" : "";
         document.getElementById('count-display').innerText = data.length;
 
         data.forEach(log => {
@@ -146,6 +150,7 @@
                     <td style="${typeClass}; font-weight:bold;">${log.type}</td>
                     <td>${timeStr}</td>
                     <td>${log.locationName || 'N/A'}</td>
+                    <td><button class="btn-delete" onclick="deleteLog('${log.id}')">Delete</button></td>
                 </tr>
             `;
         });
@@ -153,37 +158,31 @@
 
     window.filterData = () => {
         const term = document.getElementById('adminSearch').value.toLowerCase();
-        const filtered = allLogs.filter(l => 
+        currentFiltered = allLogs.filter(l => 
             l.email.toLowerCase().includes(term) || 
-            l.type.toLowerCase().includes(term) ||
             (l.locationName && l.locationName.toLowerCase().includes(term))
         );
-        renderRows(filtered);
+        
+        // Show bulk delete button only when searching/filtering
+        const bulkBtn = document.getElementById('bulkDeleteBtn');
+        bulkBtn.style.display = (term.length > 0 && currentFiltered.length > 0) ? "block" : "none";
+        
+        renderRows(currentFiltered);
     };
 
     window.exportToCSV = () => {
-        let csv = "Employee Email,Date,Status,Time,Location\n";
-        if (allLogs.length === 0) {
-            alert("No data found to export!");
-            return;
-        }
-        allLogs.forEach(log => {
+        let csv = "Email,Date,Status,Time,Location\n";
+        currentFiltered.forEach(log => {
             const dateObj = log.timestamp ? log.timestamp.toDate() : new Date();
-            const date = dateObj.toLocaleDateString();
-            const time = dateObj.toLocaleTimeString();
-            const loc = log.locationName || "N/A";
-            csv += `"${log.email}","${date}","${log.type}","${time}","${loc}"\n`;
+            csv += `"${log.email}","${dateObj.toLocaleDateString()}","${log.type}","${dateObj.toLocaleTimeString()}","${log.locationName || 'N/A'}"\n`;
         });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `iMerch_Attendance_Export_${new Date().toLocaleDateString()}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `iMerch_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
     };
 </script>
 </body>
 </html>
-
