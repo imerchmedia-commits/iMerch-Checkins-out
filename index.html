@@ -11,23 +11,26 @@
         .container { max-width: 450px; margin: auto; }
         .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
         
-        /* LOGIN STYLING */
         .input-group { position: relative; width: 100%; margin: 10px 0; }
         input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; font-size: 16px; }
         .eye-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #8b949e; width: 24px; height: 24px; display: flex; align-items: center; }
         
         #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 10px; }
         #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
-        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; }
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; transition: 0.3s; }
         .btn-checkin { background: var(--green); }
         .btn-checkout { background: var(--red); }
-        .btn-primary { background: var(--blue); }
+        .btn:disabled { background: #30363d; cursor: not-allowed; opacity: 0.6; }
+        
         .history-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
         .hidden { display: none !important; }
         .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
+        
         .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-decoration: underline; text-align: center; display: block; padding: 20px; }
+        .warning { color: #f85149; font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; background: rgba(218, 54, 51, 0.1); padding: 8px; border-radius: 5px; }
+        .success-text { color: #3fb950; font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -37,31 +40,30 @@
         <h2 style="text-align:center">iMerch Login</h2>
         <div class="card">
             <form id="login-form" onsubmit="return false;">
+                <input type="email" id="login-email" placeholder="Email Address" required style="margin-bottom:10px;">
                 <div class="input-group">
-                    <input type="email" id="login-email" placeholder="Email Address" autocomplete="username" required>
+                    <input type="password" id="login-pass" placeholder="Password" required>
                 </div>
-                <div class="input-group">
-                    <input type="password" id="login-pass" placeholder="Password" autocomplete="current-password" required>
-                    <div class="eye-icon" id="togglePassword">
-                        <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
+                <button type="submit" class="btn" style="background: var(--blue); margin-top:10px;">Login</button>
             </form>
         </div>
     </div>
 
     <div id="user-dashboard" class="hidden">
         <div id="live-clock">00:00:00</div>
-        <div id="admin-toggle-area" class="hidden"><button id="toggleAdminBtn" class="btn btn-primary" style="font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button></div>
+        <div id="admin-toggle-area" class="hidden"><button id="toggleAdminBtn" class="btn" style="background: var(--blue); font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button></div>
         
         <div id="attendance-section">
             <div class="card">
                 <input type="text" id="location-name" placeholder="Current Location (e.g. Office)">
                 <div id="map"></div>
-                <div id="coords" style="font-size: 0.8em; color: #8b949e; margin-bottom: 15px;">Awaiting GPS...</div>
-                <button class="btn btn-checkin" id="checkinBtn">CHECK IN NOW</button>
-                <button class="btn btn-checkout" id="checkoutBtn">CHECK OUT NOW</button>
+                <div id="coords" style="text-align:center; font-size: 0.8em; color: #8b949e; margin-bottom: 5px;">Initializing Secure GPS...</div>
+                
+                <div id="geo-status" class="warning">Checking Office Proximity...</div>
+                <div id="spoof-warning" class="warning hidden">⚠️ Fake GPS Detected. Access Denied.</div>
+                
+                <button class="btn btn-checkin" id="checkinBtn" disabled>OUTSIDE GEOFENCE</button>
+                <button class="btn btn-checkout" id="checkoutBtn" disabled>OUTSIDE GEOFENCE</button>
             </div>
             <h3>My Recent Activity</h3>
             <div id="history-list"></div>
@@ -71,8 +73,8 @@
             <h3>Admin: Add Employee</h3>
             <div class="card">
                 <input type="email" id="new-email" placeholder="New Employee Email">
-                <input type="password" id="new-pass" placeholder="Temp Password">
-                <button class="btn btn-primary" id="createAccBtn">Create Account</button>
+                <input type="password" id="new-pass" placeholder="Temp Password" style="margin-top:10px;">
+                <button class="btn" style="background: var(--blue); margin-top:10px;" id="createAccBtn">Create Account</button>
                 <button class="btn" style="background:#30363d" id="backBtn">Back</button>
             </div>
         </div>
@@ -86,6 +88,7 @@
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+    // --- CONFIGURATION ---
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
@@ -93,107 +96,156 @@
         storageBucket: "imerch-checkins-out.firebasestorage.app"
     };
 
+    // UPDATE THESE TO YOUR ACTUAL OFFICE LOCATION
+    const OFFICE_LAT = 14.65790; 
+    const OFFICE_LNG = 121.01781;
+    const MAX_DISTANCE_METERS = 100;
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // TOGGLE PASSWORD VISIBILITY
-    const passwordInput = document.getElementById('login-pass');
-    document.getElementById('togglePassword').addEventListener('click', function() {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        this.style.color = type === 'text' ? '#58a6ff' : '#8b949e';
-    });
+    let userCoords = null;
+    let isMocked = false;
+    let map, marker, officeCircle;
 
-    // LOGIN ACTION
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const pass = passwordInput.value;
+    // Haversine Formula to calculate distance between two points in meters
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3; // Earth radius in meters
+        const φ1 = lat1 * Math.PI/180;
+        const φ2 = lat2 * Math.PI/180;
+        const Δφ = (lat2-lat1) * Math.PI/180;
+        const Δλ = (lon2-lon1) * Math.PI/180;
+
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                  Math.cos(φ1) * Math.cos(φ2) *
+                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+
+    function startSecureGPS() {
+        if (!navigator.geolocation) return alert("GPS not supported");
+
+        navigator.geolocation.watchPosition((pos) => {
+            isMocked = pos.mocked || (pos.coords && pos.coords.mocked) || false;
+            userCoords = [pos.coords.latitude, pos.coords.longitude];
+            
+            updateMap(userCoords);
+            
+            const distance = getDistance(userCoords[0], userCoords[1], OFFICE_LAT, OFFICE_LNG);
+            const isInside = distance <= MAX_DISTANCE_METERS;
+
+            const btnIn = document.getElementById('checkinBtn');
+            const btnOut = document.getElementById('checkoutBtn');
+            const geoStatus = document.getElementById('geo-status');
+            const spoofWarning = document.getElementById('spoof-warning');
+
+            document.getElementById('coords').innerText = `Verified GPS: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
+
+            if (isMocked) {
+                btnIn.disabled = btnOut.disabled = true;
+                spoofWarning.classList.remove('hidden');
+                geoStatus.classList.add('hidden');
+            } else if (!isInside) {
+                btnIn.disabled = btnOut.disabled = true;
+                btnIn.innerText = btnOut.innerText = "OUTSIDE GEOFENCE";
+                geoStatus.innerText = `⚠️ You are ${Math.round(distance)}m away from office.`;
+                geoStatus.className = "warning";
+                geoStatus.classList.remove('hidden');
+                spoofWarning.classList.add('hidden');
+            } else {
+                btnIn.disabled = btnOut.disabled = false;
+                btnIn.innerText = "CHECK IN NOW";
+                btnOut.innerText = "CHECK OUT NOW";
+                geoStatus.innerText = "✅ Within Office Range";
+                geoStatus.className = "success-text";
+                geoStatus.classList.remove('hidden');
+                spoofWarning.classList.add('hidden');
+            }
+        }, null, { enableHighAccuracy: true, maximumAge: 0 });
+    }
+
+    function updateMap(coords) {
+        if (!map) {
+            map = L.map('map').setView(coords, 17);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            
+            // Add blue circle for office fence
+            officeCircle = L.circle([OFFICE_LAT, OFFICE_LNG], {
+                color: '#58a6ff',
+                fillColor: '#58a6ff',
+                fillOpacity: 0.2,
+                radius: MAX_DISTANCE_METERS
+            }).addTo(map);
+            
+            marker = L.marker(coords).addTo(map);
+        } else {
+            map.setView(coords);
+            marker.setLatLng(coords);
+        }
+    }
+
+    async function logAction(type) {
+        if (!userCoords || isMocked) return;
+        const loc = document.getElementById('location-name').value || "Office Site";
         try {
-            await signInWithEmailAndPassword(auth, email, pass);
-        } catch (e) { alert("Login Failed: " + e.message); }
-    });
+            await addDoc(collection(db, "attendance"), {
+                uid: auth.currentUser.uid,
+                email: auth.currentUser.email,
+                locationName: loc,
+                latitude: userCoords[0],
+                longitude: userCoords[1],
+                type: type,
+                timestamp: serverTimestamp(),
+                isMocked: isMocked
+            });
+            alert(`${type} Recorded!`);
+        } catch (e) { alert(e.message); }
+    }
 
-    // AUTH STATE
-    let historyUnsubscribe;
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-dashboard').classList.remove('hidden');
             if (user.email === "ron.sarmenta@gmail.com") document.getElementById('admin-toggle-area').classList.remove('hidden');
-            initMap();
+            startSecureGPS();
             loadHistory(user.uid);
         } else {
             document.getElementById('login-view').classList.remove('hidden');
             document.getElementById('user-dashboard').classList.add('hidden');
-            if(historyUnsubscribe) historyUnsubscribe();
         }
     });
 
-    // CLOCK & GPS
-    setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString([], {hour12: true}); }, 1000);
-    
-    let userCoords = [14.657906, 121.017815];
-    let map, marker;
-    function initMap() {
-        if (!map) {
-            map = L.map('map').setView(userCoords, 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            marker = L.marker(userCoords).addTo(map);
-            navigator.geolocation.watchPosition((pos) => {
-                userCoords = [pos.coords.latitude, pos.coords.longitude];
-                map.setView(userCoords, 16);
-                marker.setLatLng(userCoords);
-                document.getElementById('coords').innerText = `GPS Fixed: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
-            }, null, { enableHighAccuracy: true });
-        }
-    }
-
     document.getElementById('checkinBtn').onclick = () => logAction('Check In');
     document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
-
-    // UPDATED LOG ACTION
-    async function logAction(type) {
-        const loc = document.getElementById('location-name').value || "Office Site";
-        try {
-            // We use serverTimestamp() to ensure Ron sees the same time as the employee
-            await addDoc(collection(db, "attendance"), {
-                uid: auth.currentUser.uid,
-                email: auth.currentUser.email,
-                locationName: loc,
-                coords: userCoords,
-                type: type,
-                timestamp: serverTimestamp() 
-            });
-            alert(type + " recorded for " + auth.currentUser.email);
-        } catch (e) { 
-            console.error(e);
-            alert("Sync Error: " + e.message); 
-        }
-    }
+    document.getElementById('login-form').onsubmit = async () => {
+        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
+        catch (e) { alert(e.message); }
+    };
+    document.getElementById('logoutLink').onclick = () => signOut(auth);
 
     function loadHistory(uid) {
         const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"));
-        historyUnsubscribe = onSnapshot(q, (snap) => {
+        onSnapshot(q, (snap) => {
             const list = document.getElementById('history-list');
             list.innerHTML = "";
             snap.forEach(doc => {
                 const d = doc.data();
-                const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...";
+                const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : "...";
                 list.innerHTML += `<div class="history-item"><span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span><span>${time}</span></div>`;
             });
         });
     }
 
-    document.getElementById('logoutLink').onclick = () => signOut(auth);
+    // Admin Toggle
     document.getElementById('toggleAdminBtn').onclick = () => { document.getElementById('attendance-section').classList.toggle('hidden'); document.getElementById('admin-view').classList.toggle('hidden'); };
     document.getElementById('backBtn').onclick = () => { document.getElementById('attendance-section').classList.remove('hidden'); document.getElementById('admin-view').classList.add('hidden'); };
     document.getElementById('createAccBtn').onclick = async () => {
-        try { await createUserWithEmailAndPassword(auth, document.getElementById('new-email').value, document.getElementById('new-pass').value); alert("Success!"); } catch (e) { alert(e.message); }
+        try { await createUserWithEmailAndPassword(auth, document.getElementById('new-email').value, document.getElementById('new-pass').value); alert("Employee Created!"); } catch (e) { alert(e.message); }
     };
 </script>
 </body>
 </html>
-
-
