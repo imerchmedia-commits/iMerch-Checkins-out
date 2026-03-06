@@ -2,186 +2,98 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch Secure Attendance</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>iMerch - Master Records</title>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --green: #238636; --red: #da3633; --blue: #58a6ff; }
-        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: white; padding: 20px; margin: 0; }
-        .container { max-width: 450px; margin: auto; }
-        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
-        #map { height: 200px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
-        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; transition: 0.2s; }
-        .btn:active { opacity: 0.7; }
-        .btn-checkin { background: var(--green); }
-        .btn-checkout { background: var(--red); }
-        .btn-primary { background: var(--blue); }
-        .history-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
-        .hidden { display: none !important; }
-        .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
-        .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
-        .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
-        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.8em; text-decoration: underline; }
+        body { font-family: sans-serif; background: #0d1117; color: white; padding: 40px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #161b22; }
+        th, td { padding: 12px; border: 1px solid #30363d; text-align: left; }
+        th { background: #21262d; color: #58a6ff; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+        .in { background: #238636; }
+        .out { background: #da3633; }
+        .filter-bar { margin-bottom: 20px; display: flex; gap: 10px; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <div id="login-view">
-        <h2 style="text-align:center">iMerch Login</h2>
-        <div class="card">
-            <input type="email" id="login-email" placeholder="Email Address">
-            <input type="password" id="login-pass" placeholder="Password">
-            <button class="btn btn-primary" onclick="handleLogin()">Login to Dashboard</button>
-        </div>
+    <h2>iMerch Master Attendance Log</h2>
+    
+    <div class="filter-bar">
+        <input type="text" id="nameFilter" placeholder="Filter by Email..." onkeyup="filterTable()">
+        <button onclick="exportToCSV()" style="background: #238636; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Export to Excel (CSV)</button>
     </div>
 
-    <div id="user-dashboard" class="hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span id="user-display">Welcome</span>
-            <span class="logout-link" onclick="handleLogout()">Logout</span>
-        </div>
-        
-        <div id="admin-toggle-area" class="hidden" style="margin-top: 10px;">
-            <button onclick="toggleAdminView()" class="btn btn-primary" style="font-size: 0.8em; padding: 5px;">Admin: Manage Staff</button>
-        </div>
+    <table id="master-table">
+        <thead>
+            <tr>
+                <th>Date & Time</th>
+                <th>Employee Email</th>
+                <th>Status</th>
+                <th>Location</th>
+                <th>GPS Coords</th>
+            </tr>
+        </thead>
+        <tbody id="master-body">
+            </tbody>
+    </table>
 
-        <div id="attendance-section">
-            <div class="card" style="margin-top:20px;">
-                <input type="text" id="location-name" placeholder="Current Location (e.g. Office)">
-                <div id="map"></div>
-                <div id="coords" style="font-size: 0.8em; color: #8b949e; margin-bottom: 10px;">GPS Tracking Active...</div>
-                
-                <button class="btn btn-checkin" onclick="logAttendance('Check In')">CHECK IN</button>
-                <button class="btn btn-checkout" onclick="logAttendance('Check Out')">CHECK OUT</button>
-            </div>
-            <h3>My Recent Activity</h3>
-            <div id="history-list"></div>
-        </div>
-
-        <div id="admin-view" class="hidden">
-            <h3>Admin: Register Employee</h3>
-            <div class="card">
-                <input type="email" id="new-email" placeholder="New Employee Email">
-                <input type="password" id="new-pass" placeholder="Temporary Password">
-                <button class="btn btn-primary" onclick="adminCreateUser()">Create Account</button>
-                <button class="btn" style="background:#30363d" onclick="toggleAdminView()">Back to Attendance</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
         projectId: "imerch-checkins-out",
-        storageBucket: "imerch-checkins-out.appspot.com",
-        messagingSenderId: "389274092837",
-        appId: "1:389274092837:web:a1b2c3d4e5f6g7h8"
+        storageBucket: "imerch-checkins-out.appspot.com"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    let userCoords = [14.657906, 121.017815];
-    let map, marker, historyUnsubscribe;
-
-    // LOGIN LOGIC
-    window.handleLogin = async () => {
-        const email = document.getElementById('login-email').value;
-        const pass = document.getElementById('login-pass').value;
-        try {
-            await signInWithEmailAndPassword(auth, email, pass);
-        } catch (e) { alert("Login Failed: " + e.message); }
-    };
-
-    window.handleLogout = () => signOut(auth);
-
-    // AUTH STATE LISTENER
     onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('login-view').classList.add('hidden');
-            document.getElementById('user-dashboard').classList.remove('hidden');
-            document.getElementById('user-display').innerText = user.email;
-
-            // SHOW ADMIN BUTTON ONLY FOR YOU
-            if (user.email === "ronsarmenta.imerchmedia@gmail.com") {
-                document.getElementById('admin-toggle-area').classList.remove('hidden');
-            }
-            
-            initMap();
-            loadHistory(user.uid);
+        if (user && user.email === "ronsarmenta.imerchmedia@gmail.com") {
+            loadAllData();
         } else {
-            document.getElementById('login-view').classList.remove('hidden');
-            document.getElementById('user-dashboard').classList.add('hidden');
-            if(historyUnsubscribe) historyUnsubscribe();
+            alert("Unauthorized. Admin access only.");
+            window.location.href = "index.html";
         }
     });
 
-    function initMap() {
-        if (!map) {
-            map = L.map('map').setView(userCoords, 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            marker = L.marker(userCoords).addTo(map);
-            
-            navigator.geolocation.watchPosition((pos) => {
-                userCoords = [pos.coords.latitude, pos.coords.longitude];
-                map.setView(userCoords, 16);
-                marker.setLatLng(userCoords);
-                document.getElementById('coords').innerText = `GPS: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
-            });
-        }
-    }
-
-    window.logAttendance = async (type) => {
-        const loc = document.getElementById('location-name').value || "Office";
-        await addDoc(collection(db, "attendance"), {
-            uid: auth.currentUser.uid,
-            email: auth.currentUser.email,
-            locationName: loc,
-            coords: userCoords,
-            type: type,
-            timestamp: serverTimestamp()
-        });
-        alert(type + " Recorded!");
-    };
-
-    function loadHistory(uid) {
-        const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"));
-        historyUnsubscribe = onSnapshot(q, (snap) => {
-            const list = document.getElementById('history-list');
-            list.innerHTML = "";
+    function loadAllData() {
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snap) => {
+            const body = document.getElementById('master-body');
+            body.innerHTML = "";
             snap.forEach(doc => {
                 const d = doc.data();
-                const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString() : "...";
-                list.innerHTML += `<div class="history-item">
-                    <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
-                    <span>${time}</span>
-                </div>`;
+                const time = d.timestamp ? d.timestamp.toDate().toLocaleString() : "...";
+                body.innerHTML += `
+                    <tr>
+                        <td>${time}</td>
+                        <td>${d.email}</td>
+                        <td><span class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</span></td>
+                        <td>${d.locationName}</td>
+                        <td>${d.coords ? d.coords.join(', ') : 'N/A'}</td>
+                    </tr>`;
             });
         });
     }
 
-    window.toggleAdminView = () => {
-        document.getElementById('attendance-section').classList.toggle('hidden');
-        document.getElementById('admin-view').classList.toggle('hidden');
-    };
-
-    window.adminCreateUser = async () => {
-        const email = document.getElementById('new-email').value;
-        const pass = document.getElementById('new-pass').value;
-        try {
-            await createUserWithEmailAndPassword(auth, email, pass);
-            alert("Success! Employee Added.");
-        } catch (e) { alert(e.message); }
+    // CSV Export Function
+    window.exportToCSV = () => {
+        let csv = "Date,Email,Status,Location,Coordinates\n";
+        document.querySelectorAll("#master-table tr").forEach(tr => {
+            const data = Array.from(tr.querySelectorAll("td")).map(td => td.innerText).join(",");
+            if(data) csv += data + "\n";
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `iMerch_Report_${new Date().toLocaleDateString()}.csv`;
+        a.click();
     };
 </script>
 </body>
