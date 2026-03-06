@@ -2,18 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iMerch - Real-Time Attendance</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --green: #238636; --red: #da3633; --blue: #58a6ff; }
-        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: white; padding: 20px; margin: 0; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: white; padding: 15px; margin: 0; }
         .container { max-width: 450px; margin: auto; }
         .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
-        #live-clock { font-size: 2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 10px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
-        #map { height: 200px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
-        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; }
+        #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 10px; }
+        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; font-size: 16px; } /* 16px prevents iOS/Android zoom on click */
+        #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; }
         .btn-checkin { background: var(--green); }
         .btn-checkout { background: var(--red); }
         .btn-primary { background: var(--blue); }
@@ -22,7 +22,7 @@
         .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
-        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.8em; text-decoration: underline; text-align: center; display: block; margin-top: 10px; }
+        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-decoration: underline; text-align: center; display: block; padding: 20px; }
     </style>
 </head>
 <body>
@@ -31,9 +31,9 @@
     <div id="login-view">
         <h2 style="text-align:center">iMerch Login</h2>
         <div class="card">
-            <input type="email" id="login-email" placeholder="Email Address">
+            <input type="email" id="login-email" placeholder="Email Address" autocomplete="email">
             <input type="password" id="login-pass" placeholder="Password">
-            <button class="btn btn-primary" onclick="handleLogin()">Login</button>
+            <button class="btn btn-primary" id="loginBtn">Login to Dashboard</button>
         </div>
     </div>
 
@@ -41,17 +41,17 @@
         <div id="live-clock">00:00:00</div>
         
         <div id="admin-toggle-area" class="hidden">
-            <button onclick="toggleAdminView()" class="btn btn-primary" style="font-size: 0.8em; padding: 5px;">Admin: Manage Staff</button>
+            <button id="toggleAdminBtn" class="btn btn-primary" style="font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button>
         </div>
 
         <div id="attendance-section">
             <div class="card">
                 <input type="text" id="location-name" placeholder="Current Location (e.g. Office)">
                 <div id="map"></div>
-                <div id="coords" style="font-size: 0.8em; color: #8b949e; margin-bottom: 15px;">Awaiting GPS Signal...</div>
+                <div id="coords" style="font-size: 0.8em; color: #8b949e; margin-bottom: 15px;">Awaiting GPS...</div>
                 
-                <button class="btn btn-checkin" onclick="logAttendance('Check In')">CHECK IN NOW</button>
-                <button class="btn btn-checkout" onclick="logAttendance('Check Out')">CHECK OUT NOW</button>
+                <button class="btn btn-checkin" id="checkinBtn">CHECK IN NOW</button>
+                <button class="btn btn-checkout" id="checkoutBtn">CHECK OUT NOW</button>
             </div>
             <h3>My Recent Activity</h3>
             <div id="history-list"></div>
@@ -62,5 +62,21 @@
             <div class="card">
                 <input type="email" id="new-email" placeholder="New Employee Email">
                 <input type="password" id="new-pass" placeholder="Temp Password">
-                <button class="btn btn-primary" onclick="adminCreateUser()">Create Account</button>
-                <button class="btn" style
+                <button class="btn btn-primary" id="createAccBtn">Create Account</button>
+                <button class="btn" style="background:#30363d" id="backBtn">Back to Tracker</button>
+            </div>
+        </div>
+
+        <span class="logout-link" id="logoutLink">Logout Account</span>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
+        authDomain: "
