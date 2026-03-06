@@ -3,136 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch - Admin & Attendance</title>
+    <title>iMerch Secure Attendance</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --green: #238636; --red: #da3633; --blue: #58a6ff; }
         body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: white; padding: 20px; margin: 0; }
-        .container { max-width: 500px; margin: auto; }
-        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
+        .container { max-width: 450px; margin: auto; }
+        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
         #map { height: 200px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
-        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; transition: 0.2s; }
+        .btn:active { opacity: 0.7; }
         .btn-checkin { background: var(--green); }
         .btn-checkout { background: var(--red); }
-        .btn-admin { background: var(--blue); }
+        .btn-primary { background: var(--blue); }
         .history-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
-        .hidden { display: none; }
-        .badge { font-size: 0.7em; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; }
+        .hidden { display: none !important; }
+        .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
+        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.8em; text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="text-align: right; margin-bottom: 10px;">
-        <button onclick="toggleView()" style="background: none; border: 1px solid var(--border); color: var(--blue); cursor: pointer; padding: 5px 10px; border-radius: 5px;">Switch View</button>
-    </div>
-
-    <div id="admin-view" class="hidden">
-        <h2>Admin Dashboard</h2>
+    <div id="login-view">
+        <h2 style="text-align:center">iMerch Login</h2>
         <div class="card">
-            <h3>Register New Employee</h3>
-            <input type="email" id="new-email" placeholder="Employee Email">
-            <input type="password" id="new-pass" placeholder="Password">
-            <button class="btn btn-admin" onclick="adminCreateUser()">Create User Account</button>
+            <input type="email" id="login-email" placeholder="Email Address">
+            <input type="password" id="login-pass" placeholder="Password">
+            <button class="btn btn-primary" onclick="handleLogin()">Login to Dashboard</button>
         </div>
     </div>
 
-    <div id="user-view">
-        <h2 id="display-name">iMerch Attendance</h2>
-        <div class="card">
-            <input type="text" id="location-name" placeholder="Enter Location Name (e.g. Office, Site A)">
-            <div id="map"></div>
-            <div id="coords" style="font-size: 0.8em; color: #8b949e; margin-bottom: 10px;">Detecting GPS...</div>
-            
-            <button class="btn btn-checkin" onclick="logAttendance('Check In')">CHECK IN</button>
-            <button class="btn btn-checkout" onclick="logAttendance('Check Out')">CHECK OUT</button>
+    <div id="user-dashboard" class="hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span id="user-display">Welcome</span>
+            <span class="logout-link" onclick="handleLogout()">Logout</span>
+        </div>
+        
+        <div id="admin-toggle-area" class="hidden" style="margin-top: 10px;">
+            <button onclick="toggleAdminView()" class="btn btn-primary" style="font-size: 0.8em; padding: 5px;">Admin: Manage Staff</button>
         </div>
 
-        <h3>Recent Activity</h3>
-        <div id="history-list"></div>
+        <div id="attendance-section">
+            <div class="card" style="margin-top:20px;">
+                <input type="text" id="location-name" placeholder="Current Location (e.g. Office)">
+                <div id="map"></div>
+                <div id="coords" style="font-size: 0.8em; color: #8b949e; margin-bottom: 10px;">GPS Tracking Active...</div>
+                
+                <button class="btn btn-checkin" onclick="logAttendance('Check In')">CHECK IN</button>
+                <button class="btn btn-checkout" onclick="logAttendance('Check Out')">CHECK OUT</button>
+            </div>
+            <h3>My Recent Activity</h3>
+            <div id="history-list"></div>
+        </div>
+
+        <div id="admin-view" class="hidden">
+            <h3>Admin: Register Employee</h3>
+            <div class="card">
+                <input type="email" id="new-email" placeholder="New Employee Email">
+                <input type="password" id="new-pass" placeholder="Temporary Password">
+                <button class="btn btn-primary" onclick="adminCreateUser()">Create Account</button>
+                <button class="btn" style="background:#30363d" onclick="toggleAdminView()">Back to Attendance</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // PROJECT CONFIG (Updated with your API Key)
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
         projectId: "imerch-checkins-out",
         storageBucket: "imerch-checkins-out.appspot.com",
-        messagingSenderId: "389274092837", // General Placeholder
-        appId: "1:389274092837:web:a1b2c3d4e5f6g7h8" // General Placeholder
+        messagingSenderId: "389274092837",
+        appId: "1:389274092837:web:a1b2c3d4e5f6g7h8"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    let userCoords = [14.657906, 121.017815]; 
-    const map = L.map('map').setView(userCoords, 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-    const marker = L.marker(userCoords).addTo(map);
+    let userCoords = [14.657906, 121.017815];
+    let map, marker, historyUnsubscribe;
 
-    navigator.geolocation.watchPosition((pos) => {
-        userCoords = [pos.coords.latitude, pos.coords.longitude];
-        map.setView(userCoords, 16);
-        marker.setLatLng(userCoords);
-        document.getElementById('coords').innerText = `GPS: ${userCoords[0].toFixed(6)}, ${userCoords[1].toFixed(6)}`;
-    }, (err) => console.log(err), { enableHighAccuracy: true });
+    // LOGIN LOGIC
+    window.handleLogin = async () => {
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-pass').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (e) { alert("Login Failed: " + e.message); }
+    };
+
+    window.handleLogout = () => signOut(auth);
+
+    // AUTH STATE LISTENER
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('user-dashboard').classList.remove('hidden');
+            document.getElementById('user-display').innerText = user.email;
+
+            // SHOW ADMIN BUTTON ONLY FOR YOU
+            if (user.email === "ronsarmenta.imerchmedia@gmail.com") {
+                document.getElementById('admin-toggle-area').classList.remove('hidden');
+            }
+            
+            initMap();
+            loadHistory(user.uid);
+        } else {
+            document.getElementById('login-view').classList.remove('hidden');
+            document.getElementById('user-dashboard').classList.add('hidden');
+            if(historyUnsubscribe) historyUnsubscribe();
+        }
+    });
+
+    function initMap() {
+        if (!map) {
+            map = L.map('map').setView(userCoords, 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            marker = L.marker(userCoords).addTo(map);
+            
+            navigator.geolocation.watchPosition((pos) => {
+                userCoords = [pos.coords.latitude, pos.coords.longitude];
+                map.setView(userCoords, 16);
+                marker.setLatLng(userCoords);
+                document.getElementById('coords').innerText = `GPS: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
+            });
+        }
+    }
+
+    window.logAttendance = async (type) => {
+        const loc = document.getElementById('location-name').value || "Office";
+        await addDoc(collection(db, "attendance"), {
+            uid: auth.currentUser.uid,
+            email: auth.currentUser.email,
+            locationName: loc,
+            coords: userCoords,
+            type: type,
+            timestamp: serverTimestamp()
+        });
+        alert(type + " Recorded!");
+    };
+
+    function loadHistory(uid) {
+        const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"));
+        historyUnsubscribe = onSnapshot(q, (snap) => {
+            const list = document.getElementById('history-list');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString() : "...";
+                list.innerHTML += `<div class="history-item">
+                    <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
+                    <span>${time}</span>
+                </div>`;
+            });
+        });
+    }
+
+    window.toggleAdminView = () => {
+        document.getElementById('attendance-section').classList.toggle('hidden');
+        document.getElementById('admin-view').classList.toggle('hidden');
+    };
 
     window.adminCreateUser = async () => {
         const email = document.getElementById('new-email').value;
         const pass = document.getElementById('new-pass').value;
         try {
             await createUserWithEmailAndPassword(auth, email, pass);
-            alert("Success: Employee account created!");
-            document.getElementById('new-email').value = "";
-            document.getElementById('new-pass').value = "";
+            alert("Success! Employee Added.");
         } catch (e) { alert(e.message); }
-    };
-
-    window.logAttendance = async (status) => {
-        const locName = document.getElementById('location-name').value || "Office Location";
-        try {
-            await addDoc(collection(db, "attendance"), {
-                locationName: locName,
-                coords: userCoords,
-                type: status,
-                timestamp: serverTimestamp()
-            });
-            alert(`${status} successful!`);
-        } catch (e) { alert("Error: " + e.message); }
-    };
-
-    const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
-    onSnapshot(q, (snapshot) => {
-        const list = document.getElementById('history-list');
-        list.innerHTML = "";
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const time = data.timestamp ? data.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "...";
-            list.innerHTML += `
-                <div class="history-item">
-                    <div>
-                        <span class="badge ${data.type === 'Check In' ? 'in' : 'out'}">${data.type}</span>
-                        <div style="margin-top:5px; font-weight:bold">${data.locationName}</div>
-                    </div>
-                    <div style="text-align:right; color:#8b949e;">${time}</div>
-                </div>`;
-        });
-    });
-
-    window.toggleView = () => {
-        document.getElementById('admin-view').classList.toggle('hidden');
-        document.getElementById('user-view').classList.toggle('hidden');
     };
 </script>
 </body>
