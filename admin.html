@@ -6,7 +6,7 @@
     <style>
         :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --blue: #58a6ff; --green: #238636; --red: #da3633; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: white; padding: 20px; margin: 0; }
-        .container { max-width: 1000px; margin: auto; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; padding: 20px; }
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .search-container { position: relative; margin-bottom: 20px; }
         .search-box { width: 100%; padding: 15px; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: white; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; }
@@ -14,7 +14,7 @@
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .stat-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; position: relative; }
         table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
-        th, td { padding: 14px; border: 1px solid var(--border); text-align: left; font-size: 14px; }
+        th, td { padding: 14px; border: 1px solid var(--border); text-align: left; font-size: 13px; }
         th { background: #21262d; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
         .btn-excel { background: var(--green); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
         .btn-excel:hover { opacity: 0.9; }
@@ -22,7 +22,8 @@
         .btn-delete:hover { background: #f85149; }
         .btn-bulk-delete { background: var(--red); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; display: none; }
         .danger-link { color: #f85149; font-size: 11px; text-decoration: underline; cursor: pointer; position: absolute; bottom: 10px; right: 15px; }
-        .danger-link:hover { color: white; }
+        .geo-link { color: var(--blue); text-decoration: none; font-family: monospace; }
+        .geo-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -34,7 +35,7 @@
     </div>
 
     <div class="search-container">
-        <input type="text" id="adminSearch" class="search-box" placeholder="Search Employee Email, Date, or Location..." onkeyup="filterData()">
+        <input type="text" id="adminSearch" class="search-box" placeholder="Search Email, Date, Location, or Coordinates..." onkeyup="filterData()">
     </div>
 
     <div class="stats-grid">
@@ -53,11 +54,12 @@
         <table id="payroll-table">
             <thead>
                 <tr>
-                    <th>Employee Email</th>
+                    <th>Email</th>
                     <th>Date</th>
                     <th>Status</th>
                     <th>Time</th>
-                    <th>Location</th>
+                    <th>Location Name</th>
+                    <th>Coordinates</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -102,33 +104,25 @@
         }
     };
 
-    // --- DELETE ONLY WHAT IS SEARCHED ---
     window.deleteFilteredLogs = async () => {
         const count = currentFiltered.length;
-        if (confirm(`Delete all ${count} logs currently visible in search?`)) {
+        if (confirm(`Delete all ${count} logs currently visible?`)) {
             const batch = writeBatch(db);
             currentFiltered.forEach(log => { batch.delete(doc(db, "attendance", log.id)); });
-            try {
-                await batch.commit();
-                document.getElementById('adminSearch').value = "";
-                alert(`Deleted ${count} filtered entries.`);
-            } catch (e) { alert("Error: " + e.message); }
+            await batch.commit();
+            document.getElementById('adminSearch').value = "";
+            alert(`Deleted ${count} entries.`);
         }
     };
 
-    // --- WIPE EVERYTHING IN THE ENTIRE COLLECTION ---
     window.deleteAllDatabaseLogs = async () => {
-        const firstCheck = confirm("DANGER: This will delete EVERY log in the iMerch database, even those not shown on screen. Continue?");
-        if (firstCheck) {
-            const secondCheck = confirm("FINAL WARNING: This cannot be undone. Are you absolutely sure?");
-            if (secondCheck) {
-                try {
-                    const querySnapshot = await getDocs(collection(db, "attendance"));
-                    const batch = writeBatch(db);
-                    querySnapshot.forEach((doc) => { batch.delete(doc.ref); });
-                    await batch.commit();
-                    alert("Database wiped successfully.");
-                } catch (e) { alert("Wipe Error: " + e.message); }
+        if (confirm("DANGER: Wipe EVERYTHING?")) {
+            if (confirm("FINAL WARNING: This cannot be undone.")) {
+                const querySnapshot = await getDocs(collection(db, "attendance"));
+                const batch = writeBatch(db);
+                querySnapshot.forEach((doc) => { batch.delete(doc.ref); });
+                await batch.commit();
+                alert("Database wiped.");
             }
         }
     };
@@ -145,7 +139,7 @@
 
     window.renderRows = (data) => {
         const body = document.getElementById('payroll-body');
-        body.innerHTML = data.length === 0 ? "<tr><td colspan='6' style='text-align:center'>No logs found.</td></tr>" : "";
+        body.innerHTML = data.length === 0 ? "<tr><td colspan='7' style='text-align:center'>No logs found.</td></tr>" : "";
         document.getElementById('count-display').innerText = data.length;
 
         data.forEach(log => {
@@ -154,6 +148,11 @@
             const timeStr = dateObj ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "---";
             const typeClass = log.type === "Check In" ? "color: #3fb950" : "color: #f85149";
             
+            // Geo formatting
+            const lat = log.latitude || log.lat;
+            const lon = log.longitude || log.lng;
+            const geoDisplay = (lat && lon) ? `<a class="geo-link" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank">${lat.toFixed(4)}, ${lon.toFixed(4)}</a>` : 'No Geo Data';
+
             body.innerHTML += `
                 <tr>
                     <td>${log.email}</td>
@@ -161,6 +160,7 @@
                     <td style="${typeClass}; font-weight:bold;">${log.type}</td>
                     <td>${timeStr}</td>
                     <td>${log.locationName || 'N/A'}</td>
+                    <td>${geoDisplay}</td>
                     <td><button class="btn-delete" onclick="deleteLog('${log.id}')">Delete</button></td>
                 </tr>
             `;
@@ -171,7 +171,8 @@
         const term = document.getElementById('adminSearch').value.toLowerCase();
         currentFiltered = allLogs.filter(l => 
             l.email.toLowerCase().includes(term) || 
-            (l.locationName && l.locationName.toLowerCase().includes(term))
+            (l.locationName && l.locationName.toLowerCase().includes(term)) ||
+            (l.latitude && l.latitude.toString().includes(term))
         );
         const bulkBtn = document.getElementById('bulkDeleteBtn');
         bulkBtn.style.display = (term.length > 0 && currentFiltered.length > 0) ? "block" : "none";
@@ -179,16 +180,16 @@
     };
 
     window.exportToCSV = () => {
-        let csv = "Email,Date,Status,Time,Location\n";
+        let csv = "Email,Date,Status,Time,Location,Lat,Lon\n";
         currentFiltered.forEach(log => {
             const dateObj = log.timestamp ? log.timestamp.toDate() : new Date();
-            csv += `"${log.email}","${dateObj.toLocaleDateString()}","${log.type}","${dateObj.toLocaleTimeString()}","${log.locationName || 'N/A'}"\n`;
+            csv += `"${log.email}","${dateObj.toLocaleDateString()}","${log.type}","${dateObj.toLocaleTimeString()}","${log.locationName || 'N/A'}","${log.latitude || ''}","${log.longitude || ''}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `iMerch_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `iMerch_Geo_Logs_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
 </script>
