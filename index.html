@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iMerch Attendance System</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica; background-color: #0d1117; color: white; margin: 0; padding: 20px; }
+        #map { height: 250px; border-radius: 15px; margin-bottom: 20px; }
+        .card { background: #161b22; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #30363d; }
+        .status-btn { width: 100%; padding: 15px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; background: #238636; color: white; margin-top: 10px; }
+        .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #30363d; }
+        .check-in { color: #3fb950; }
+        .check-out { color: #f85149; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div id="address">Locating...</div>
+        <div id="coords" style="font-size: 0.8em; color: #8b949e;">0.0000, 0.0000</div>
+    </div>
+
+    <div id="map"></div>
+
+    <button class="status-btn" onclick="handleAttendance()">LOG ATTENDANCE</button>
+
+    <h3>History</h3>
+    <div id="history-list"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } 
+               from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // TODO: REPLACE WITH YOUR FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let userCoords = [14.657906, 121.017815]; // Default from your photo
+
+        // Initialize Map
+        const map = L.map('map').setView(userCoords, 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        const marker = L.marker(userCoords).addTo(map);
+
+        // Get Live GPS
+        navigator.geolocation.getCurrentPosition((pos) => {
+            userCoords = [pos.coords.latitude, pos.coords.longitude];
+            map.setView(userCoords, 16);
+            marker.setLatLng(userCoords);
+            document.getElementById('coords').innerText = `${userCoords[0]}, ${userCoords[1]}`;
+        });
+
+        // Save to Firebase
+        window.handleAttendance = async () => {
+            await addDoc(collection(db, "attendance"), {
+                timestamp: new Date(),
+                location: userCoords,
+                type: "Check In" // You can toggle this based on last record
+            });
+            alert("Attendance Logged!");
+        };
+
+        // Real-time History Sync
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            const list = document.getElementById('history-list');
+            list.innerHTML = "";
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const date = data.timestamp.toDate();
+                list.innerHTML += `
+                    <div class="history-item">
+                        <span class="${data.type === 'Check In' ? 'check-in' : 'check-out'}">
+                            ${data.type}
+                        </span>
+                        <span>${date.toLocaleTimeString()} - ${date.toLocaleDateString()}</span>
+                    </div>`;
+            });
+        });
+    </script>
+</body>
+</html>
