@@ -57,8 +57,10 @@
         #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
         input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
         
-        .remember-me { display: flex; align-items: center; gap: 8px; font-size: 0.9em; color: #8b949e; margin-bottom: 15px; cursor: pointer; }
-        .remember-me input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+        .login-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+        .remember-me { display: flex; align-items: center; gap: 8px; font-size: 0.85em; color: #8b949e; cursor: pointer; }
+        .remember-me input { width: 16px; height: 16px; margin: 0; }
+        .forgot-link { color: var(--blue); font-size: 0.85em; cursor: pointer; text-decoration: none; }
 
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; transition: 0.3s; }
         .btn-checkin { background: var(--green); }
@@ -102,11 +104,14 @@
                 <input type="email" id="login-email" placeholder="Email Address" required>
                 <input type="password" id="login-pass" placeholder="Password" required>
                 
-                <label class="remember-me">
-                    <input type="checkbox" id="remember-check"> Remember Me
-                </label>
+                <div class="login-footer">
+                    <label class="remember-me">
+                        <input type="checkbox" id="remember-check"> Remember Me
+                    </label>
+                    <span id="forgot-pass" class="forgot-link">Forgot Password?</span>
+                </div>
 
-                <button type="submit" id="loginBtn" class="btn" style="background: var(--blue); margin-top:5px;">Login</button>
+                <button type="submit" id="loginBtn" class="btn" style="background: var(--blue); margin-top:15px;">Login</button>
             </form>
             <div id="login-error" class="warning hidden"></div>
         </div>
@@ -157,7 +162,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -170,11 +175,13 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // --- REMEMBER ME LOGIC ---
+    // --- DOM ELEMENTS ---
     const emailField = document.getElementById('login-email');
     const passField = document.getElementById('login-pass');
     const rememberCheck = document.getElementById('remember-check');
+    const errorDiv = document.getElementById('login-error');
 
+    // --- REMEMBER ME LOGIC ---
     if (localStorage.getItem('rememberedEmail')) {
         emailField.value = localStorage.getItem('rememberedEmail');
         passField.value = localStorage.getItem('rememberedPass');
@@ -282,18 +289,31 @@
         }
     });
 
-    // --- LOGIN WITH BETTER ERROR MESSAGES ---
+    // --- FORGOT PASSWORD LOGIC ---
+    document.getElementById('forgot-pass').onclick = async () => {
+        const email = emailField.value;
+        if (!email) {
+            alert("Please type your email address first.");
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert("Password reset link sent to: " + email);
+        } catch (error) {
+            alert("Error: " + error.message);
+        }
+    };
+
+    // --- LOGIN LOGIC ---
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
         const email = emailField.value;
         const pass = passField.value;
-        const errorDiv = document.getElementById('login-error');
         
         try {
             await signInWithEmailAndPassword(auth, email, pass);
             errorDiv.classList.add('hidden');
             
-            // Save credentials if Remember Me is checked
             if (rememberCheck.checked) {
                 localStorage.setItem('rememberedEmail', email);
                 localStorage.setItem('rememberedPass', pass);
@@ -303,16 +323,12 @@
             }
         } catch (error) {
             errorDiv.classList.remove('hidden');
-            console.log("Error Code:", error.code);
-            
             if (error.code === 'auth/user-not-found') {
-                errorDiv.innerText = "❌ User not found. Check your email or register.";
+                errorDiv.innerText = "❌ Email not found in our records.";
             } else if (error.code === 'auth/wrong-password') {
-                errorDiv.innerText = "❌ Incorrect password. Please try again.";
-            } else if (error.code === 'auth/invalid-credential') {
-                errorDiv.innerText = "❌ Invalid account details. Ensure user exists.";
+                errorDiv.innerText = "❌ Incorrect password. Try again.";
             } else {
-                errorDiv.innerText = "❌ Login Failed: " + error.message;
+                errorDiv.innerText = "❌ Login Error: " + error.message;
             }
         }
     };
