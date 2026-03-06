@@ -78,7 +78,6 @@
     let allLogs = [];
 
     onAuthStateChanged(auth, (user) => {
-        // SECURITY CHECK: Only Ron can enter
         if (user && user.email === "ronsarmenta.imerchmedia@gmail.com") {
             loadData();
         } else {
@@ -88,29 +87,29 @@
     });
 
     function loadData() {
-    // We removed orderBy("timestamp") to skip the Index requirement for now
-    const q = collection(db, "attendance"); 
-    
-    onSnapshot(q, (snap) => {
-        allLogs = [];
-        const body = document.getElementById('payroll-body');
+        // Querying without orderBy for immediate results (no index required)
+        const q = collection(db, "attendance"); 
         
-        if (snap.empty) {
-            console.log("No documents found in 'attendance' collection");
-            body.innerHTML = "<tr><td colspan='5' style='text-align:center'>No logs found in database.</td></tr>";
-            return;
-        }
+        onSnapshot(q, (snap) => {
+            allLogs = [];
+            if (snap.empty) {
+                document.getElementById('payroll-body').innerHTML = "<tr><td colspan='5' style='text-align:center'>No logs found in database.</td></tr>";
+                document.getElementById('count-display').innerText = "0";
+                return;
+            }
 
-        snap.forEach(doc => {
-            allLogs.push(doc.data());
+            snap.forEach(doc => {
+                allLogs.push(doc.data());
+            });
+
+            // Manual sort: Latest logs first
+            allLogs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            renderRows(allLogs);
+        }, (error) => {
+            console.error("Firestore Error:", error);
+            document.getElementById('payroll-body').innerHTML = `<tr><td colspan='5' style='text-align:center; color:red;'>Error: ${error.message}</td></tr>`;
         });
-
-        // Manually sort by time in Javascript instead of Firestore
-        allLogs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-
-        renderRows(allLogs);
-    });
-}
+    }
 
     window.renderRows = (data) => {
         const body = document.getElementById('payroll-body');
@@ -147,24 +146,25 @@
 
     window.exportToCSV = () => {
         let csv = "Employee Email,Date,Status,Time,Location\n";
-        const rows = document.querySelectorAll("#payroll-body tr");
         
-        if (rows.length === 0 || allLogs.length === 0) {
+        if (allLogs.length === 0) {
             alert("No data found to export!");
             return;
         }
 
-        rows.forEach(tr => {
-            const cols = Array.from(tr.querySelectorAll("td")).map(td => `"${td.innerText.trim()}"`);
-            csv += cols.join(",") + "\n";
+        allLogs.forEach(log => {
+            const dateObj = log.timestamp ? log.timestamp.toDate() : new Date();
+            const date = dateObj.toLocaleDateString();
+            const time = dateObj.toLocaleTimeString();
+            const loc = log.locationName || "N/A";
+            csv += `"${log.email}","${date}","${log.type}","${time}","${loc}"\n`;
         });
 
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `iMerch_Logs_${new Date().toLocaleDateString()}.csv`);
-        link.style.visibility = 'hidden';
+        link.setAttribute("download", `iMerch_Attendance_Export_${new Date().toLocaleDateString()}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -172,5 +172,3 @@
 </script>
 </body>
 </html>
-
-
