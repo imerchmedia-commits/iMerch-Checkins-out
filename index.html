@@ -175,6 +175,37 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // --- THEME TOGGLE LOGIC ---
+    const toggleBtn = document.getElementById('theme-toggle');
+    const body = document.body;
+
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') {
+        body.setAttribute('data-theme', 'light');
+        toggleBtn.innerText = '☀️';
+        toggleBtn.style.color = '#ffa500';
+    } else {
+        body.removeAttribute('data-theme');
+        toggleBtn.innerText = '🌙';
+        toggleBtn.style.color = 'var(--text)';
+    }
+
+    toggleBtn.onclick = () => {
+        const currentTheme = body.getAttribute('data-theme');
+        if (currentTheme === 'light') {
+            body.removeAttribute('data-theme');
+            toggleBtn.innerText = '🌙';
+            toggleBtn.style.color = 'var(--text)';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            body.setAttribute('data-theme', 'light');
+            toggleBtn.innerText = '☀️';
+            toggleBtn.style.color = '#ffa500';
+            localStorage.setItem('theme', 'light');
+        }
+    };
+    // --------------------------
+
     const emailField = document.getElementById('login-email');
     const passField = document.getElementById('login-pass');
     const rememberCheck = document.getElementById('remember-check');
@@ -185,19 +216,6 @@
         passField.value = localStorage.getItem('rememberedPass');
         rememberCheck.checked = true;
     }
-
-    const toggleBtn = document.getElementById('theme-toggle');
-    const body = document.body;
-    if(localStorage.getItem('theme') === 'light') {
-        body.setAttribute('data-theme', 'light');
-        toggleBtn.innerText = '☀️';
-    }
-    toggleBtn.onclick = () => {
-        const isLight = body.getAttribute('data-theme') === 'light';
-        body.toggleAttribute('data-theme', !isLight);
-        toggleBtn.innerText = isLight ? '🌙' : '☀️';
-        localStorage.setItem('theme', isLight ? 'dark' : 'light');
-    };
 
     let userCoords = null;
     let isMocked = false;
@@ -274,20 +292,15 @@
         if (user) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-dashboard').classList.remove('hidden');
-            
-            // STRICT ADMIN CHECK - Only these 2 emails
             const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
             const adminArea = document.getElementById('admin-toggle-area');
-            
             if (admins.includes(user.email)) {
                 adminArea.classList.remove('hidden');
             } else {
-                // If not admin, ensure admin sections are forced hidden
                 adminArea.classList.add('hidden');
                 document.getElementById('admin-view').classList.add('hidden');
                 document.getElementById('attendance-section').classList.remove('hidden');
             }
-
             startSecureGPS();
             loadHistory(user.uid);
         } else {
@@ -296,7 +309,6 @@
         }
     });
 
-    // Login Logic
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
         const email = emailField.value;
@@ -342,7 +354,6 @@
         });
     }
 
-    // Admin Toggle with Security Check
     document.getElementById('toggleAdminBtn').onclick = () => { 
         const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
         if(admins.includes(auth.currentUser.email)) {
