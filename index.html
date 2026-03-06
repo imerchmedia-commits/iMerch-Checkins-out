@@ -6,62 +6,140 @@
     <title>iMerch - Secure Attendance</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --green: #238636; --red: #da3633; --blue: #58a6ff; }
-        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: white; padding: 15px; margin: 0; }
+        /* Theme Variables */
+        :root { 
+            --bg: #0d1117; 
+            --card: #161b22; 
+            --border: #30363d; 
+            --text: #ffffff;
+            --green: #238636; 
+            --red: #da3633; 
+            --blue: #58a6ff; 
+        }
+
+        [data-theme="light"] {
+            --bg: #f6f8fa;
+            --card: #ffffff;
+            --border: #d0d7de;
+            --text: #1f2328;
+        }
+
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
         .container { max-width: 450px; margin: auto; }
-        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        .input-group { position: relative; width: 100%; margin: 10px 0; }
-        input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; font-size: 16px; }
-        .eye-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #8b949e; width: 24px; height: 24px; display: flex; align-items: center; }
+        #theme-toggle {
+            position: fixed; top: 15px; left: 15px; width: 40px; height: 40px;
+            border-radius: 50%; background: var(--card); border: 1px solid var(--border);
+            color: var(--text); cursor: pointer; display: flex; align-items: center;
+            justify-content: center; z-index: 10000; font-size: 1.2em; transition: 0.3s;
+        }
+
+        .logo-container { text-align: center; margin-bottom: 20px; }
+        .logo-container img { max-width: 160px; height: auto; }
         
-        #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 10px; }
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite; margin-top: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 5px; }
         #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
-        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; }
+        input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+        
+        .login-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+        .remember-me { display: flex; align-items: center; gap: 8px; font-size: 0.85em; color: #8b949e; cursor: pointer; }
+        .remember-me input { width: 16px; height: 16px; margin: 0; }
+        .forgot-link { color: var(--blue); font-size: 0.85em; cursor: pointer; text-decoration: none; }
+
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; transition: 0.3s; }
         .btn-checkin { background: var(--green); }
         .btn-checkout { background: var(--red); }
         .btn:disabled { background: #30363d; cursor: not-allowed; opacity: 0.6; }
-        .history-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
+        
+        .history-item { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
+        .history-row { display: flex; justify-content: space-between; width: 100%; }
+        .history-remarks { font-style: italic; color: #8b949e; margin-top: 4px; font-size: 0.85em; }
+        
         .hidden { display: none !important; }
         .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
+        
         .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-decoration: underline; text-align: center; display: block; padding: 20px; }
-        .warning { color: #f85149; font-size: 0.8em; text-align: center; margin-top: 5px; font-weight: bold; }
+        .warning { color: #f85149; font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; background: rgba(218, 54, 51, 0.1); padding: 8px; border-radius: 5px; }
+        .status-text { color: var(--blue); font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
+<button id="theme-toggle" title="Toggle Dark/Light Mode">🌙</button>
+
+<div id="loading-overlay" class="hidden">
+    <div class="logo-container">
+        <img src="logo1.png" alt="iMerch Logo">
+    </div>
+    <div class="spinner"></div>
+    <p style="margin-top: 15px; color: #8b949e;">Verifying Real-time GPS...</p>
+</div>
+
 <div class="container">
-    <div id="login-view">
-        <h2 style="text-align:center">iMerch Login</h2>
+    <div id="login-view" class="fade-in">
+        <div class="logo-container">
+            <img src="logo1.png" alt="iMerch Logo">
+        </div>
+        <h2 style="text-align:center">Secure Attendance</h2>
         <div class="card">
-            <form id="login-form" onsubmit="return false;">
-                <input type="email" id="login-email" placeholder="Email Address" required style="margin-bottom:10px;">
-                <div class="input-group">
-                    <input type="password" id="login-pass" placeholder="Password" required>
-                    <div class="eye-icon" id="togglePassword">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    </div>
+            <form id="login-form">
+                <input type="email" id="login-email" placeholder="Email Address" required>
+                <input type="password" id="login-pass" placeholder="Password" required>
+                
+                <div class="login-footer">
+                    <label class="remember-me">
+                        <input type="checkbox" id="remember-check"> Remember Me
+                    </label>
+                    <span id="forgot-pass" class="forgot-link">Forgot Password?</span>
                 </div>
-                <button type="submit" class="btn btn-primary" id="loginBtn" style="background: var(--blue); margin-top:10px;">Login</button>
+
+                <button type="submit" id="loginBtn" class="btn" style="background: var(--blue); margin-top:15px;">Login</button>
             </form>
+            <div id="login-error" class="warning hidden"></div>
         </div>
     </div>
 
-    <div id="user-dashboard" class="hidden">
+    <div id="user-dashboard" class="hidden fade-in">
         <div id="live-clock">00:00:00</div>
-        <div id="admin-toggle-area" class="hidden"><button id="toggleAdminBtn" class="btn" style="background: var(--blue); font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button></div>
+        <div class="logo-container">
+            <img src="logo1.png" alt="iMerch Logo">
+        </div>
+
+        <div id="admin-toggle-area" class="hidden">
+            <button id="toggleAdminBtn" class="btn" style="background: var(--blue); font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button>
+        </div>
         
         <div id="attendance-section">
             <div class="card">
-                <input type="text" id="location-name" placeholder="Current Location (e.g. Office)">
+                <input type="text" id="location-name" placeholder="Current Location (e.g. Field Office)">
                 <div id="map"></div>
-                <div id="coords" style="text-align:center; font-size: 0.8em; color: #8b949e; margin-bottom: 15px;">Initializing Secure GPS...</div>
+                <div id="coords" style="text-align:center; font-size: 0.8em; color: #8b949e; margin-bottom: 5px;">Checking GPS...</div>
+                
+                <div id="geo-status" class="status-text">GPS Active</div>
                 <div id="spoof-warning" class="warning hidden">⚠️ Fake GPS Detected. Access Denied.</div>
                 
-                <button class="btn btn-checkin" id="checkinBtn" disabled>WAITING FOR GPS...</button>
-                <button class="btn btn-checkout" id="checkoutBtn" disabled>WAITING FOR GPS...</button>
+                <button class="btn btn-checkin" id="checkinBtn" disabled>SYNCING GPS...</button>
+                <button class="btn btn-checkout" id="checkoutBtn" disabled>SYNCING GPS...</button>
+                
+                <input type="text" id="attendance-remarks" placeholder="Add remarks (Optional)" style="margin-top: 10px;">
             </div>
             <h3>My Recent Activity</h3>
             <div id="history-list"></div>
@@ -71,7 +149,7 @@
             <h3>Admin: Add Employee</h3>
             <div class="card">
                 <input type="email" id="new-email" placeholder="New Employee Email">
-                <input type="password" id="new-pass" placeholder="Temp Password" style="margin-top:10px;">
+                <input type="password" id="new-pass" placeholder="Temp Password">
                 <button class="btn" style="background: var(--blue); margin-top:10px;" id="createAccBtn">Create Account</button>
                 <button class="btn" style="background:#30363d" id="backBtn">Back</button>
             </div>
@@ -84,7 +162,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -97,51 +175,75 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // --- DOM ELEMENTS ---
+    const emailField = document.getElementById('login-email');
+    const passField = document.getElementById('login-pass');
+    const rememberCheck = document.getElementById('remember-check');
+    const errorDiv = document.getElementById('login-error');
+
+    // --- REMEMBER ME LOGIC ---
+    if (localStorage.getItem('rememberedEmail')) {
+        emailField.value = localStorage.getItem('rememberedEmail');
+        passField.value = localStorage.getItem('rememberedPass');
+        rememberCheck.checked = true;
+    }
+
+    // --- THEME LOGIC ---
+    const toggleBtn = document.getElementById('theme-toggle');
+    const body = document.body;
+    if(localStorage.getItem('theme') === 'light') {
+        body.setAttribute('data-theme', 'light');
+        toggleBtn.innerText = '☀️';
+    }
+    toggleBtn.onclick = () => {
+        const isLight = body.getAttribute('data-theme') === 'light';
+        body.toggleAttribute('data-theme', !isLight);
+        toggleBtn.innerText = isLight ? '🌙' : '☀️';
+        localStorage.setItem('theme', isLight ? 'dark' : 'light');
+    };
+
     let userCoords = null;
     let isMocked = false;
     let map, marker;
 
-    // SECURE CLOCK (Display only, DB uses Server Time)
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-    // SECURE GPS INITIALIZATION
     function startSecureGPS() {
+        document.getElementById('loading-overlay').classList.remove('hidden');
         if (!navigator.geolocation) return alert("GPS not supported");
 
         navigator.geolocation.watchPosition((pos) => {
-            // Check for Mock/Fake GPS (on supported browsers)
             isMocked = pos.mocked || (pos.coords && pos.coords.mocked) || false;
-            
             userCoords = [pos.coords.latitude, pos.coords.longitude];
             updateMap(userCoords);
             
             const btnIn = document.getElementById('checkinBtn');
             const btnOut = document.getElementById('checkoutBtn');
-            const warning = document.getElementById('spoof-warning');
+            const geoStatus = document.getElementById('geo-status');
+            const spoofWarning = document.getElementById('spoof-warning');
+
+            document.getElementById('loading-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('loading-overlay').classList.add('hidden'), 500);
+            document.getElementById('coords').innerText = `Verified GPS: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
 
             if (isMocked) {
                 btnIn.disabled = btnOut.disabled = true;
-                warning.classList.remove('hidden');
-                document.getElementById('coords').innerText = "Access Blocked";
+                spoofWarning.classList.remove('hidden');
+                geoStatus.classList.add('hidden');
             } else {
                 btnIn.disabled = btnOut.disabled = false;
                 btnIn.innerText = "CHECK IN NOW";
                 btnOut.innerText = "CHECK OUT NOW";
-                warning.classList.add('hidden');
-                document.getElementById('coords').innerText = `Verified GPS: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
+                geoStatus.innerText = "✅ GPS Ready";
+                geoStatus.classList.remove('hidden');
+                spoofWarning.classList.add('hidden');
             }
-        }, (err) => {
-            document.getElementById('coords').innerText = "Error: Please enable Location Services";
-        }, { 
-            enableHighAccuracy: true, 
-            timeout: 10000, 
-            maximumAge: 0 // Forces fresh satellite data, prevents cached fake locations
-        });
+        }, null, { enableHighAccuracy: true });
     }
 
     function updateMap(coords) {
         if (!map) {
-            map = L.map('map').setView(coords, 16);
+            map = L.map('map').setView(coords, 17);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
             marker = L.marker(coords).addTo(map);
         } else {
@@ -151,12 +253,9 @@
     }
 
     async function logAction(type) {
-        if (!userCoords || isMocked) return alert("Secure GPS required.");
-        
-        const loc = document.getElementById('location-name').value || "Field Location";
-        const btn = type === 'Check In' ? document.getElementById('checkinBtn') : document.getElementById('checkoutBtn');
-        
-        btn.disabled = true;
+        if (!userCoords || isMocked) return;
+        const loc = document.getElementById('location-name').value || "Mobile Location";
+        const remarks = document.getElementById('attendance-remarks').value || "";
         try {
             await addDoc(collection(db, "attendance"), {
                 uid: auth.currentUser.uid,
@@ -165,22 +264,23 @@
                 latitude: userCoords[0],
                 longitude: userCoords[1],
                 type: type,
-                timestamp: serverTimestamp(), // SECURE: Uses Google's server time, not phone time
+                remarks: remarks,
+                timestamp: serverTimestamp(),
                 isMocked: isMocked
             });
-            alert(`${type} Success!`);
-        } catch (e) {
-            alert("Error: " + e.message);
-        }
-        btn.disabled = false;
+            document.getElementById('attendance-remarks').value = ""; 
+            alert(`${type} Recorded!`);
+        } catch (e) { alert(e.message); }
     }
 
-    // AUTH & UI LOGIC
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-dashboard').classList.remove('hidden');
-            if (user.email === "ron.sarmenta@gmail.com") document.getElementById('admin-toggle-area').classList.remove('hidden');
+            const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com", "ron.sarmenta@imerchmedia.net"];
+            if (admins.includes(user.email)) {
+                document.getElementById('admin-toggle-area').classList.remove('hidden');
+            }
             startSecureGPS();
             loadHistory(user.uid);
         } else {
@@ -189,12 +289,52 @@
         }
     });
 
+    // --- FORGOT PASSWORD LOGIC ---
+    document.getElementById('forgot-pass').onclick = async () => {
+        const email = emailField.value;
+        if (!email) {
+            alert("Please type your email address first.");
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert("Password reset link sent to: " + email);
+        } catch (error) {
+            alert("Error: " + error.message);
+        }
+    };
+
+    // --- LOGIN LOGIC ---
+    document.getElementById('login-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const email = emailField.value;
+        const pass = passField.value;
+        
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+            errorDiv.classList.add('hidden');
+            
+            if (rememberCheck.checked) {
+                localStorage.setItem('rememberedEmail', email);
+                localStorage.setItem('rememberedPass', pass);
+            } else {
+                localStorage.removeItem('rememberedEmail');
+                localStorage.removeItem('rememberedPass');
+            }
+        } catch (error) {
+            errorDiv.classList.remove('hidden');
+            if (error.code === 'auth/user-not-found') {
+                errorDiv.innerText = "❌ Email not found in our records.";
+            } else if (error.code === 'auth/wrong-password') {
+                errorDiv.innerText = "❌ Incorrect password. Try again.";
+            } else {
+                errorDiv.innerText = "❌ Login Error: " + error.message;
+            }
+        }
+    };
+
     document.getElementById('checkinBtn').onclick = () => logAction('Check In');
     document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
-    document.getElementById('login-form').onsubmit = async () => {
-        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
-        catch (e) { alert(e.message); }
-    };
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
     function loadHistory(uid) {
@@ -205,12 +345,19 @@
             snap.forEach(doc => {
                 const d = doc.data();
                 const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : "...";
-                list.innerHTML += `<div class="history-item"><span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span><span>${time}</span></div>`;
+                const remarksHtml = d.remarks ? `<div class="history-remarks">Note: ${d.remarks}</div>` : "";
+                list.innerHTML += `
+                    <div class="history-item">
+                        <div class="history-row">
+                            <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
+                            <span>${time}</span>
+                        </div>
+                        ${remarksHtml}
+                    </div>`;
             });
         });
     }
 
-    // Admin Toggle
     document.getElementById('toggleAdminBtn').onclick = () => { document.getElementById('attendance-section').classList.toggle('hidden'); document.getElementById('admin-view').classList.toggle('hidden'); };
     document.getElementById('backBtn').onclick = () => { document.getElementById('attendance-section').classList.remove('hidden'); document.getElementById('admin-view').classList.add('hidden'); };
     document.getElementById('createAccBtn').onclick = async () => {
