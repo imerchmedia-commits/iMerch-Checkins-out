@@ -73,7 +73,7 @@
         
         .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-decoration: underline; text-align: center; display: block; padding: 20px; }
         .warning { color: #f85149; font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; background: rgba(218, 54, 51, 0.1); padding: 8px; border-radius: 5px; }
-        .success-text { color: #3fb950; font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; }
+        .status-text { color: var(--blue); font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -115,11 +115,11 @@
         
         <div id="attendance-section">
             <div class="card">
-                <input type="text" id="location-name" placeholder="Current Location (e.g. Office)">
+                <input type="text" id="location-name" placeholder="Current Location (e.g. Field Office)">
                 <div id="map"></div>
                 <div id="coords" style="text-align:center; font-size: 0.8em; color: #8b949e; margin-bottom: 5px;">Checking GPS...</div>
                 
-                <div id="geo-status" class="warning">Initializing Geofence...</div>
+                <div id="geo-status" class="status-text">GPS Active</div>
                 <div id="spoof-warning" class="warning hidden">⚠️ Fake GPS Detected. Access Denied.</div>
                 
                 <button class="btn btn-checkin" id="checkinBtn" disabled>SYNCING GPS...</button>
@@ -177,28 +177,13 @@
         storageBucket: "imerch-checkins-out.firebasestorage.app"
     };
 
-    const OFFICE_LAT = 14.65790; 
-    const OFFICE_LNG = 121.01781;
-    const MAX_DISTANCE_METERS = 100;
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
     let userCoords = null;
     let isMocked = false;
-    let map, marker, officeCircle;
-
-    function getDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371e3; 
-        const φ1 = lat1 * Math.PI/180;
-        const φ2 = lat2 * Math.PI/180;
-        const Δφ = (lat2-lat1) * Math.PI/180;
-        const Δλ = (lon2-lon1) * Math.PI/180;
-        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-    }
+    let map, marker;
 
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
@@ -206,14 +191,10 @@
         document.getElementById('loading-overlay').classList.remove('hidden');
         if (!navigator.geolocation) return alert("GPS not supported");
 
-        // Use watchPosition with high accuracy and no cache for real-time tracking
         navigator.geolocation.watchPosition((pos) => {
             isMocked = pos.mocked || (pos.coords && pos.coords.mocked) || false;
             userCoords = [pos.coords.latitude, pos.coords.longitude];
             updateMap(userCoords);
-            
-            const distance = getDistance(userCoords[0], userCoords[1], OFFICE_LAT, OFFICE_LNG);
-            const isInside = distance <= MAX_DISTANCE_METERS;
             
             const btnIn = document.getElementById('checkinBtn');
             const btnOut = document.getElementById('checkoutBtn');
@@ -229,19 +210,12 @@
                 btnIn.disabled = btnOut.disabled = true;
                 spoofWarning.classList.remove('hidden');
                 geoStatus.classList.add('hidden');
-            } else if (!isInside) {
-                btnIn.disabled = btnOut.disabled = true;
-                btnIn.innerText = btnOut.innerText = "OUTSIDE GEOFENCE";
-                geoStatus.innerText = `⚠️ You are ${Math.round(distance)}m away from office.`;
-                geoStatus.className = "warning";
-                geoStatus.classList.remove('hidden');
-                spoofWarning.classList.add('hidden');
             } else {
+                // Geofence logic removed - Buttons are now enabled anywhere
                 btnIn.disabled = btnOut.disabled = false;
                 btnIn.innerText = "CHECK IN NOW";
                 btnOut.innerText = "CHECK OUT NOW";
-                geoStatus.innerText = "✅ Within Office Range";
-                geoStatus.className = "success-text";
+                geoStatus.innerText = "✅ GPS Ready";
                 geoStatus.classList.remove('hidden');
                 spoofWarning.classList.add('hidden');
             }
@@ -258,7 +232,6 @@
         if (!map) {
             map = L.map('map').setView(coords, 17);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            officeCircle = L.circle([OFFICE_LAT, OFFICE_LNG], { color: '#58a6ff', fillOpacity: 0.2, radius: MAX_DISTANCE_METERS }).addTo(map);
             marker = L.marker(coords).addTo(map);
         } else {
             map.setView(coords);
@@ -268,7 +241,7 @@
 
     async function logAction(type) {
         if (!userCoords || isMocked) return;
-        const loc = document.getElementById('location-name').value || "Office Site";
+        const loc = document.getElementById('location-name').value || "Mobile Location";
         const remarks = document.getElementById('attendance-remarks').value || "";
         try {
             await addDoc(collection(db, "attendance"), {
@@ -282,7 +255,7 @@
                 timestamp: serverTimestamp(),
                 isMocked: isMocked
             });
-            document.getElementById('attendance-remarks').value = ""; // Clear after success
+            document.getElementById('attendance-remarks').value = ""; 
             alert(`${type} Recorded!`);
         } catch (e) { alert(e.message); }
     }
