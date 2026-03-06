@@ -6,79 +6,153 @@
     <title>iMerch - Secure Attendance</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #ffffff; --green: #238636; --red: #da3633; --blue: #58a6ff; }
-        [data-theme="light"] { --bg: #f6f8fa; --card: #ffffff; --border: #d0d7de; --text: #1f2328; }
+        /* Theme Variables */
+        :root { 
+            --bg: #0d1117; 
+            --card: #161b22; 
+            --border: #30363d; 
+            --text: #ffffff;
+            --green: #238636; 
+            --red: #da3633; 
+            --blue: #58a6ff; 
+        }
+
+        [data-theme="light"] {
+            --bg: #f6f8fa;
+            --card: #ffffff;
+            --border: #d0d7de;
+            --text: #1f2328;
+        }
+
         body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
         .container { max-width: 450px; margin: auto; }
         .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #theme-toggle { position: fixed; top: 15px; left: 15px; width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10000; font-size: 1.2em; }
+        
+        #theme-toggle {
+            position: fixed; top: 15px; left: 15px; width: 40px; height: 40px;
+            border-radius: 50%; background: var(--card); border: 1px solid var(--border);
+            color: var(--text); cursor: pointer; display: flex; align-items: center;
+            justify-content: center; z-index: 10000; font-size: 1.2em; transition: 0.3s;
+        }
+
         .logo-container { text-align: center; margin-bottom: 20px; }
         .logo-container img { max-width: 160px; height: auto; }
+        
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite; margin-top: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 5px; }
         #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
         input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+        
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; transition: 0.3s; }
         .btn-checkin { background: var(--green); }
         .btn-checkout { background: var(--red); }
-        .btn-export { background: #8b949e; margin-top: 10px; }
-        .history-item { padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
-        .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; margin-right: 5px; }
+        .btn:disabled { background: #30363d; cursor: not-allowed; opacity: 0.6; }
+        
+        .history-item { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
+        .history-row { display: flex; justify-content: space-between; width: 100%; }
+        .history-remarks { font-style: italic; color: #8b949e; margin-top: 4px; font-size: 0.85em; }
+        
+        .hidden { display: none !important; }
+        .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
-        .hidden { display: none !important; }
-        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-align: center; display: block; padding: 20px; }
+        
+        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-decoration: underline; text-align: center; display: block; padding: 20px; }
+        .warning { color: #f85149; font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; background: rgba(218, 54, 51, 0.1); padding: 8px; border-radius: 5px; }
+        .status-text { color: var(--blue); font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<button id="theme-toggle">🌙</button>
+<button id="theme-toggle" title="Toggle Dark/Light Mode">🌙</button>
+
+<div id="loading-overlay" class="hidden">
+    <div class="spinner"></div>
+    <p style="margin-top: 15px; color: #8b949e;">Verifying Real-time GPS...</p>
+</div>
 
 <div class="container">
-    <div id="login-view">
-        <div class="logo-container"><img src="logo1.png" alt="iMerch"></div>
+    <div id="login-view" class="fade-in">
+        <div class="logo-container">
+            <img src="logo1.png" alt="iMerch Logo">
+        </div>
+        <h2 style="text-align:center">Secure Attendance</h2>
         <div class="card">
             <form id="login-form">
-                <input type="email" id="login-email" placeholder="Email" required>
+                <input type="email" id="login-email" placeholder="Email Address" required>
                 <input type="password" id="login-pass" placeholder="Password" required>
-                <button type="submit" class="btn" style="background: var(--blue);">Login</button>
+                
+                <div class="login-footer">
+                    <label class="remember-me">
+                        <input type="checkbox" id="remember-check"> Remember Me
+                    </label>
+                    <span id="forgot-pass" class="forgot-link">Forgot Password?</span>
+                </div>
+
+                <button type="submit" id="loginBtn" class="btn" style="background: var(--blue); margin-top:15px;">Login</button>
             </form>
+            <div id="login-error" class="warning hidden"></div>
         </div>
     </div>
 
-    <div id="user-dashboard" class="hidden">
+    <div id="user-dashboard" class="hidden fade-in">
         <div id="live-clock">00:00:00</div>
-        
-        <div id="admin-controls" class="hidden" style="margin-bottom: 20px;">
-            <button id="viewAdminBtn" class="btn" style="background: var(--blue);">ADMIN DASHBOARD</button>
+        <div class="logo-container">
+            <img src="logo1.png" alt="iMerch Logo">
         </div>
 
+        <div id="admin-toggle-area" class="hidden">
+            <button id="toggleAdminBtn" class="btn" style="background: var(--blue); font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button>
+        </div>
+        
         <div id="attendance-section">
             <div class="card">
-                <input type="text" id="location-name" placeholder="Location Name">
+                <input type="text" id="location-name" placeholder="Current Location (e.g. Field Office)">
                 <div id="map"></div>
-                <button class="btn btn-checkin" id="checkinBtn" disabled>WAITING FOR GPS...</button>
-                <button class="btn btn-checkout" id="checkoutBtn" disabled>WAITING FOR GPS...</button>
-                <input type="text" id="attendance-remarks" placeholder="Remarks (Optional)">
+                <div id="coords" style="text-align:center; font-size: 0.8em; color: #8b949e; margin-bottom: 5px;">Checking GPS...</div>
+                
+                <div id="geo-status" class="status-text">GPS Active</div>
+                <div id="spoof-warning" class="warning hidden">⚠️ Fake GPS Detected. Access Denied.</div>
+                
+                <button class="btn btn-checkin" id="checkinBtn" disabled>SYNCING GPS...</button>
+                <button class="btn btn-checkout" id="checkoutBtn" disabled>SYNCING GPS...</button>
+                
+                <input type="text" id="attendance-remarks" placeholder="Add remarks (Optional)" style="margin-top: 10px;">
             </div>
-            <h3>My History</h3>
+            <h3>My Recent Activity</h3>
             <div id="history-list"></div>
         </div>
 
         <div id="admin-view" class="hidden">
-            <button id="backToUserBtn" class="btn" style="background: #30363d;">Back to Check-in</button>
-            <div class="card">
-                <h4>Add New Staff</h4>
-                <input type="text" id="new-fullname" placeholder="Full Name">
-                <input type="email" id="new-email" placeholder="Email">
-                <input type="password" id="new-pass" placeholder="Password">
-                <button id="createAccBtn" class="btn" style="background: var(--green);">Create Staff</button>
-            </div>
+            <h3>Admin: Master Controls</h3>
+            <button id="exportBtn" class="btn" style="background: #8b949e; font-size: 0.9em;">📥 Export Master Logs (Excel/CSV)</button>
             
-            <h3>All Staff Activity</h3>
-            <button id="exportBtn" class="btn btn-export">📊 DOWNLOAD MASTER EXCEL (CSV)</button>
+            <div class="card">
+                <h4>Add Employee</h4>
+                <input type="text" id="new-fullname" placeholder="Full Name (First Last)">
+                <input type="email" id="new-email" placeholder="New Employee Email">
+                <input type="password" id="new-pass" placeholder="Temp Password">
+                <button class="btn" style="background: var(--green); margin-top:10px;" id="createAccBtn">Create Account</button>
+                <button class="btn" style="background:#30363d" id="backBtn">Back</button>
+            </div>
+
+            <h3>Staff Activity Tracking</h3>
             <div id="master-history-list"></div>
         </div>
-
         <span class="logout-link" id="logoutLink">Logout Account</span>
     </div>
 </div>
@@ -101,16 +175,18 @@
     const auth = getAuth(app);
 
     let userCoords = null;
-    let nameMap = {}; // Local cache for Full Names
+    let isMocked = false;
+    let map, marker;
+    let staffNames = {}; // Look-up cache
 
-    // 1. Clock & Theme
+    // Load Staff Names into memory for Admin View
+    async function loadStaffNames() {
+        const snap = await getDocs(collection(db, "users"));
+        snap.forEach(doc => { staffNames[doc.data().uid] = doc.data().fullName; });
+    }
+
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
-    document.getElementById('theme-toggle').onclick = () => {
-        const isLight = document.body.getAttribute('data-theme') === 'light';
-        document.body.setAttribute('data-theme', isLight ? 'dark' : 'light');
-    };
 
-    // 2. Auth Listener
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             document.getElementById('login-view').classList.add('hidden');
@@ -118,69 +194,73 @@
             
             const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
             if (admins.includes(user.email)) {
-                document.getElementById('admin-controls').classList.remove('hidden');
-                loadMasterHistory(); 
+                document.getElementById('admin-toggle-area').classList.remove('hidden');
+                await loadStaffNames();
+                loadMasterHistory();
             }
-            
-            startGPS();
-            loadUserHistory(user.uid);
-            await fetchUserNames(); 
+
+            startSecureGPS();
+            loadHistory(user.uid);
         } else {
             document.getElementById('login-view').classList.remove('hidden');
             document.getElementById('user-dashboard').classList.add('hidden');
         }
     });
 
-    // 3. Get User Names for Look-up
-    async function fetchUserNames() {
-        const q = query(collection(db, "users"));
-        const snap = await getDocs(q);
-        snap.forEach(doc => { nameMap[doc.data().uid] = doc.data().fullName; });
-    }
-
-    // 4. GPS & Map
-    function startGPS() {
+    function startSecureGPS() {
+        if (!navigator.geolocation) return alert("GPS not supported");
         navigator.geolocation.watchPosition((pos) => {
+            isMocked = pos.mocked || (pos.coords && pos.coords.mocked) || false;
             userCoords = [pos.coords.latitude, pos.coords.longitude];
-            document.getElementById('checkinBtn').disabled = false;
-            document.getElementById('checkoutBtn').disabled = false;
-            document.getElementById('checkinBtn').innerText = "CHECK IN";
-            document.getElementById('checkoutBtn').innerText = "CHECK OUT";
+            updateMap(userCoords);
+            
+            const btnIn = document.getElementById('checkinBtn');
+            const btnOut = document.getElementById('checkoutBtn');
+            btnIn.disabled = btnOut.disabled = isMocked;
+            btnIn.innerText = "CHECK IN NOW";
+            btnOut.innerText = "CHECK OUT NOW";
+            document.getElementById('coords').innerText = `GPS: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
         }, null, { enableHighAccuracy: true });
     }
 
-    // 5. Logging Actions
-    async function logAttendance(type) {
-        const loc = document.getElementById('location-name').value || "Office";
-        const rem = document.getElementById('attendance-remarks').value || "";
+    function updateMap(coords) {
+        if (!map) {
+            map = L.map('map').setView(coords, 17);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            marker = L.marker(coords).addTo(map);
+        } else {
+            map.setView(coords);
+            marker.setLatLng(coords);
+        }
+    }
+
+    async function logAction(type) {
+        if (!userCoords || isMocked) return;
+        const loc = document.getElementById('location-name').value || "Mobile Location";
+        const remarks = document.getElementById('attendance-remarks').value || "";
         try {
             await addDoc(collection(db, "attendance"), {
                 uid: auth.currentUser.uid,
                 email: auth.currentUser.email,
-                type: type,
                 locationName: loc,
-                coords: `${userCoords[0]},${userCoords[1]}`,
-                remarks: rem,
+                geo: `${userCoords[0]}, ${userCoords[1]}`,
+                type: type,
+                remarks: remarks,
                 timestamp: serverTimestamp()
             });
-            alert(type + " Saved!");
+            alert(`${type} Recorded!`);
         } catch (e) { alert(e.message); }
     }
 
-    document.getElementById('checkinBtn').onclick = () => logAttendance('Check In');
-    document.getElementById('checkoutBtn').onclick = () => logAttendance('Check Out');
-    document.getElementById('logoutLink').onclick = () => signOut(auth);
-
-    // 6. Data Loading
-    function loadUserHistory(uid) {
+    function loadHistory(uid) {
         const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"));
         onSnapshot(q, (snap) => {
             const list = document.getElementById('history-list');
             list.innerHTML = "";
             snap.forEach(doc => {
                 const d = doc.data();
-                const time = d.timestamp ? d.timestamp.toDate().toLocaleString() : "...";
-                list.innerHTML += `<div class="history-item"><b class="badge ${d.type === 'Check In'?'in':'out'}">${d.type}</b> ${d.locationName} - ${time}</div>`;
+                const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString() : "...";
+                list.innerHTML += `<div class="history-item"><b>${d.type}</b> @ ${d.locationName} <span>${time}</span></div>`;
             });
         });
     }
@@ -192,61 +272,59 @@
             list.innerHTML = "";
             snap.forEach(doc => {
                 const d = doc.data();
-                const name = nameMap[d.uid] || d.email; 
+                const name = staffNames[d.uid] || d.email;
                 const time = d.timestamp ? d.timestamp.toDate().toLocaleString() : "...";
-                list.innerHTML += `<div class="history-item"><b>${name}</b>: ${d.type} @ ${d.locationName} <br><small>${time}</small></div>`;
+                list.innerHTML += `<div class="history-item"><b>${name}</b>: ${d.type} <br><small>${d.locationName} - ${time}</small></div>`;
             });
         });
     }
 
-    // 7. EXCEL EXPORT (CSV)
     document.getElementById('exportBtn').onclick = async () => {
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
-        const snap = await getDocs(q);
-        
-        let csv = "Full Name,Email,Type,Location,Coordinates,Remarks,Time\n";
-        
+        const snap = await getDocs(query(collection(db, "attendance"), orderBy("timestamp", "desc")));
+        let csv = "Email,Full Name,Action,Location,Geo Location,Remarks,Time\n";
         snap.forEach(doc => {
             const d = doc.data();
-            const name = nameMap[d.uid] || "Unknown";
+            const name = staffNames[d.uid] || "Unknown";
             const time = d.timestamp ? d.timestamp.toDate().toLocaleString().replace(/,/g, "") : "";
-            csv += `"${name}","${d.email}","${d.type}","${d.locationName}","${d.coords}","${d.remarks}","${time}"\n`;
+            csv += `"${d.email}","${name}","${d.type}","${d.locationName}","${d.geo}","${d.remarks}","${time}"\n`;
         });
-
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.setAttribute('href', url);
-        a.setAttribute('download', `iMerch_Attendance_${new Date().toLocaleDateString()}.csv`);
+        a.href = url;
+        a.download = `iMerch_Logs_${new Date().toLocaleDateString()}.csv`;
         a.click();
     };
 
-    // 8. Admin Navigation
-    document.getElementById('viewAdminBtn').onclick = () => {
-        document.getElementById('attendance-section').classList.add('hidden');
-        document.getElementById('admin-view').classList.remove('hidden');
+    document.getElementById('checkinBtn').onclick = () => logAction('Check In');
+    document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
+    document.getElementById('logoutLink').onclick = () => signOut(auth);
+    document.getElementById('toggleAdminBtn').onclick = () => {
+        document.getElementById('attendance-section').classList.toggle('hidden');
+        document.getElementById('admin-view').classList.toggle('hidden');
     };
-    document.getElementById('backToUserBtn').onclick = () => {
+    document.getElementById('backBtn').onclick = () => {
         document.getElementById('attendance-section').classList.remove('hidden');
         document.getElementById('admin-view').classList.add('hidden');
-    };
-
-    document.getElementById('login-form').onsubmit = async (e) => {
-        e.preventDefault();
-        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
-        catch (e) { alert("Login Failed"); }
     };
 
     document.getElementById('createAccBtn').onclick = async () => {
         const fullName = document.getElementById('new-fullname').value;
         const email = document.getElementById('new-email').value;
         const pass = document.getElementById('new-pass').value;
+        if (!fullName || !email || !pass) return alert("All fields required.");
         try {
-            const res = await createUserWithEmailAndPassword(auth, email, pass);
-            await addDoc(collection(db, "users"), { uid: res.user.uid, fullName: fullName, email: email });
-            alert("Staff Created!");
-            location.reload(); 
+            const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+            await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName: fullName, email: email, createdAt: serverTimestamp() });
+            alert("Account Created: " + fullName);
+            location.reload();
         } catch (e) { alert(e.message); }
+    };
+
+    document.getElementById('login-form').onsubmit = async (e) => {
+        e.preventDefault();
+        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
+        catch (e) { alert("Login failed."); }
     };
 </script>
 </body>
