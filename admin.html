@@ -16,9 +16,6 @@
         table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
         th, td { padding: 14px; border: 1px solid var(--border); text-align: left; font-size: 14px; }
         th { background: #21262d; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75em; font-weight: bold; }
-        .in { background: var(--green); }
-        .out { background: #da3633; }
         .btn-excel { background: var(--green); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
         .btn-excel:hover { opacity: 0.9; }
     </style>
@@ -51,9 +48,9 @@
                 <tr>
                     <th>Employee Email</th>
                     <th>Date</th>
-                    <th>Time In</th>
-                    <th>Time Out</th>
-                    <th>Hours Worked</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>Location</th>
                 </tr>
             </thead>
             <tbody id="payroll-body">
@@ -78,86 +75,75 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    let allProcessedData = [];
+    let allLogs = [];
 
     onAuthStateChanged(auth, (user) => {
+        // SECURITY CHECK: Only Ron can enter
         if (user && user.email === "ronsarmenta.imerchmedia@gmail.com") {
-            fetchMasterData();
+            loadData();
         } else {
+            alert("Access Denied");
             window.location.href = "index.html";
         }
     });
 
-    function fetchMasterData() {
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "asc"));
+    function loadData() {
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+        
         onSnapshot(q, (snap) => {
-            const logs = [];
-            snap.forEach(doc => logs.push(doc.data()));
+            allLogs = [];
+            if (snap.empty) {
+                document.getElementById('payroll-body').innerHTML = "<tr><td colspan='5' style='text-align:center'>No logs found in database.</td></tr>";
+                document.getElementById('count-display').innerText = "0";
+                return;
+            }
 
-            // Pair "In" and "Out" by Email + Date
-            const report = {};
-            logs.forEach(log => {
-                if (!log.timestamp) return;
-                const dObj = log.timestamp.toDate();
-                const dateKey = dObj.toLocaleDateString();
-                const empKey = log.email;
-                const uniqueKey = `${empKey}_${dateKey}`;
-
-                if (!report[uniqueKey]) {
-                    report[uniqueKey] = { email: empKey, date: dateKey, in: null, out: null };
-                }
-                
-                if (log.type === "Check In") {
-                    if (!report[uniqueKey].in || dObj < report[uniqueKey].in) report[uniqueKey].in = dObj;
-                } else if (log.type === "Check Out") {
-                    if (!report[uniqueKey].out || dObj > report[uniqueKey].out) report[uniqueKey].out = dObj;
-                }
+            snap.forEach(doc => {
+                allLogs.push(doc.data());
             });
 
-            allProcessedData = Object.values(report).sort((a,b) => new Date(b.date) - new Date(a.date));
-            renderTable(allProcessedData);
+            renderRows(allLogs);
         });
     }
 
-    window.renderTable = (data) => {
+    window.renderRows = (data) => {
         const body = document.getElementById('payroll-body');
         body.innerHTML = "";
         document.getElementById('count-display').innerText = data.length;
 
-        data.forEach(row => {
-            let hoursStr = "---";
-            if (row.in && row.out) {
-                const diff = row.out - row.in;
-                const h = Math.floor(diff / 3600000);
-                const m = Math.floor((diff % 3600000) / 60000);
-                hoursStr = `${h}h ${m}m`;
-            }
-
+        data.forEach(log => {
+            const dateObj = log.timestamp ? log.timestamp.toDate() : null;
+            const dateStr = dateObj ? dateObj.toLocaleDateString() : "Pending...";
+            const timeStr = dateObj ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "---";
+            const typeClass = log.type === "Check In" ? "color: #3fb950" : "color: #f85149";
+            
             body.innerHTML += `
                 <tr>
-                    <td>${row.email}</td>
-                    <td>${row.date}</td>
-                    <td style="color: #3fb950">${row.in ? row.in.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '--'}</td>
-                    <td style="color: #f85149">${row.out ? row.out.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '--'}</td>
-                    <td style="font-weight: bold; background: rgba(88, 166, 255, 0.1); color: var(--blue); text-align: center;">${hoursStr}</td>
-                </tr>`;
+                    <td>${log.email}</td>
+                    <td>${dateStr}</td>
+                    <td style="${typeClass}; font-weight:bold;">${log.type}</td>
+                    <td>${timeStr}</td>
+                    <td>${log.locationName || 'N/A'}</td>
+                </tr>
+            `;
         });
     }
 
     window.filterData = () => {
         const term = document.getElementById('adminSearch').value.toLowerCase();
-        const filtered = allProcessedData.filter(item => 
-            item.email.toLowerCase().includes(term) || 
-            item.date.includes(term)
+        const filtered = allLogs.filter(l => 
+            l.email.toLowerCase().includes(term) || 
+            l.type.toLowerCase().includes(term) ||
+            (l.locationName && l.locationName.toLowerCase().includes(term))
         );
-        renderTable(filtered);
-    }
+        renderRows(filtered);
+    };
 
     window.exportToCSV = () => {
-        let csv = "Employee Email,Date,Time In,Time Out,Hours Worked\n";
+        let csv = "Employee Email,Date,Status,Time,Location\n";
         const rows = document.querySelectorAll("#payroll-body tr");
         
-        if (rows.length === 0) {
+        if (rows.length === 0 || allLogs.length === 0) {
             alert("No data found to export!");
             return;
         }
@@ -171,7 +157,7 @@
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.setAttribute("href", url);
-        link.setAttribute("download", `iMerch_Payroll_Export_${new Date().toLocaleDateString()}.csv`);
+        link.setAttribute("download", `iMerch_Logs_${new Date().toLocaleDateString()}.csv`);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
