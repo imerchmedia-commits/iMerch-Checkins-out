@@ -57,6 +57,9 @@
         #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
         input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
         
+        .remember-me { display: flex; align-items: center; gap: 8px; font-size: 0.9em; color: #8b949e; margin-bottom: 15px; cursor: pointer; }
+        .remember-me input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; transition: 0.3s; }
         .btn-checkin { background: var(--green); }
         .btn-checkout { background: var(--red); }
@@ -95,11 +98,17 @@
         </div>
         <h2 style="text-align:center">Secure Attendance</h2>
         <div class="card">
-            <form id="login-form" onsubmit="return false;">
+            <form id="login-form">
                 <input type="email" id="login-email" placeholder="Email Address" required>
                 <input type="password" id="login-pass" placeholder="Password" required>
-                <button type="submit" class="btn" style="background: var(--blue); margin-top:10px;">Login</button>
+                
+                <label class="remember-me">
+                    <input type="checkbox" id="remember-check"> Remember Me
+                </label>
+
+                <button type="submit" id="loginBtn" class="btn" style="background: var(--blue); margin-top:5px;">Login</button>
             </form>
+            <div id="login-error" class="warning hidden"></div>
         </div>
     </div>
 
@@ -150,26 +159,6 @@
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    const toggleBtn = document.getElementById('theme-toggle');
-    const body = document.body;
-    
-    if(localStorage.getItem('theme') === 'light') {
-        body.setAttribute('data-theme', 'light');
-        toggleBtn.innerText = '☀️';
-    }
-
-    toggleBtn.onclick = () => {
-        if(body.getAttribute('data-theme') === 'light') {
-            body.removeAttribute('data-theme');
-            toggleBtn.innerText = '🌙';
-            localStorage.setItem('theme', 'dark');
-        } else {
-            body.setAttribute('data-theme', 'light');
-            toggleBtn.innerText = '☀️';
-            localStorage.setItem('theme', 'light');
-        }
-    };
-
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
@@ -180,6 +169,31 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+
+    // --- REMEMBER ME LOGIC ---
+    const emailField = document.getElementById('login-email');
+    const passField = document.getElementById('login-pass');
+    const rememberCheck = document.getElementById('remember-check');
+
+    if (localStorage.getItem('rememberedEmail')) {
+        emailField.value = localStorage.getItem('rememberedEmail');
+        passField.value = localStorage.getItem('rememberedPass');
+        rememberCheck.checked = true;
+    }
+
+    // --- THEME LOGIC ---
+    const toggleBtn = document.getElementById('theme-toggle');
+    const body = document.body;
+    if(localStorage.getItem('theme') === 'light') {
+        body.setAttribute('data-theme', 'light');
+        toggleBtn.innerText = '☀️';
+    }
+    toggleBtn.onclick = () => {
+        const isLight = body.getAttribute('data-theme') === 'light';
+        body.toggleAttribute('data-theme', !isLight);
+        toggleBtn.innerText = isLight ? '🌙' : '☀️';
+        localStorage.setItem('theme', isLight ? 'dark' : 'light');
+    };
 
     let userCoords = null;
     let isMocked = false;
@@ -203,7 +217,6 @@
 
             document.getElementById('loading-overlay').style.opacity = '0';
             setTimeout(() => document.getElementById('loading-overlay').classList.add('hidden'), 500);
-
             document.getElementById('coords').innerText = `Verified GPS: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
 
             if (isMocked) {
@@ -211,7 +224,6 @@
                 spoofWarning.classList.remove('hidden');
                 geoStatus.classList.add('hidden');
             } else {
-                // Geofence logic removed - Buttons are now enabled anywhere
                 btnIn.disabled = btnOut.disabled = false;
                 btnIn.innerText = "CHECK IN NOW";
                 btnOut.innerText = "CHECK OUT NOW";
@@ -219,13 +231,7 @@
                 geoStatus.classList.remove('hidden');
                 spoofWarning.classList.add('hidden');
             }
-        }, (err) => {
-            console.error("GPS Error: ", err);
-        }, { 
-            enableHighAccuracy: true, 
-            maximumAge: 0, 
-            timeout: 10000 
-        });
+        }, null, { enableHighAccuracy: true });
     }
 
     function updateMap(coords) {
@@ -264,7 +270,8 @@
         if (user) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-dashboard').classList.remove('hidden');
-            if (user.email === "ron.sarmenta@gmail.com" || user.email === "ronsarmenta.imerchmedia@gmail.com") {
+            const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com", "ron.sarmenta@imerchmedia.net"];
+            if (admins.includes(user.email)) {
                 document.getElementById('admin-toggle-area').classList.remove('hidden');
             }
             startSecureGPS();
@@ -275,12 +282,43 @@
         }
     });
 
+    // --- LOGIN WITH BETTER ERROR MESSAGES ---
+    document.getElementById('login-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const email = emailField.value;
+        const pass = passField.value;
+        const errorDiv = document.getElementById('login-error');
+        
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+            errorDiv.classList.add('hidden');
+            
+            // Save credentials if Remember Me is checked
+            if (rememberCheck.checked) {
+                localStorage.setItem('rememberedEmail', email);
+                localStorage.setItem('rememberedPass', pass);
+            } else {
+                localStorage.removeItem('rememberedEmail');
+                localStorage.removeItem('rememberedPass');
+            }
+        } catch (error) {
+            errorDiv.classList.remove('hidden');
+            console.log("Error Code:", error.code);
+            
+            if (error.code === 'auth/user-not-found') {
+                errorDiv.innerText = "❌ User not found. Check your email or register.";
+            } else if (error.code === 'auth/wrong-password') {
+                errorDiv.innerText = "❌ Incorrect password. Please try again.";
+            } else if (error.code === 'auth/invalid-credential') {
+                errorDiv.innerText = "❌ Invalid account details. Ensure user exists.";
+            } else {
+                errorDiv.innerText = "❌ Login Failed: " + error.message;
+            }
+        }
+    };
+
     document.getElementById('checkinBtn').onclick = () => logAction('Check In');
     document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
-    document.getElementById('login-form').onsubmit = async () => {
-        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
-        catch (e) { alert(e.message); }
-    };
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
     function loadHistory(uid) {
@@ -292,7 +330,6 @@
                 const d = doc.data();
                 const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : "...";
                 const remarksHtml = d.remarks ? `<div class="history-remarks">Note: ${d.remarks}</div>` : "";
-                
                 list.innerHTML += `
                     <div class="history-item">
                         <div class="history-row">
