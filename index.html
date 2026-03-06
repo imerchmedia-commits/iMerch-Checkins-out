@@ -3,92 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch Attendance System</title>
+    <title>iMerch - Admin & Attendance</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica; background-color: #0d1117; color: white; margin: 0; padding: 20px; }
-        #map { height: 250px; border-radius: 15px; margin-bottom: 20px; }
-        .card { background: #161b22; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid #30363d; }
-        .status-btn { width: 100%; padding: 15px; border-radius: 30px; border: none; font-weight: bold; cursor: pointer; background: #238636; color: white; margin-top: 10px; }
-        .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #30363d; }
-        .check-in { color: #3fb950; }
-        .check-out { color: #f85149; }
+        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --green: #238636; --red: #da3633; --blue: #58a6ff; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: white; padding: 20px; margin: 0; }
+        .container { max-width: 500px; margin: auto; }
+        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; }
+        #map { height: 200px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
+        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; }
+        .btn-checkin { background: var(--green); }
+        .btn-checkout { background: var(--red); }
+        .btn-admin { background: var(--blue); }
+        .history-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
+        .hidden { display: none; }
+        .badge { font-size: 0.7em; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; }
+        .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
+        .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <div id="address">Locating...</div>
-        <div id="coords" style="font-size: 0.8em; color: #8b949e;">0.0000, 0.0000</div>
+<div class="container">
+    <div style="text-align: right; margin-bottom: 10px;">
+        <button onclick="toggleView()" style="background: none; border: 1px solid var(--border); color: var(--blue); cursor: pointer; padding: 5px 10px; border-radius: 5px;">Switch View</button>
     </div>
 
-    <div id="map"></div>
+    <div id="admin-view" class="hidden">
+        <h2>Admin Dashboard</h2>
+        <div class="card">
+            <h3>Register New Employee</h3>
+            <input type="email" id="new-email" placeholder="Employee Email">
+            <input type="password" id="new-pass" placeholder="Password">
+            <button class="btn btn-admin" onclick="adminCreateUser()">Create User Account</button>
+        </div>
+    </div>
 
-    <button class="status-btn" onclick="handleAttendance()">LOG ATTENDANCE</button>
+    <div id="user-view">
+        <h2 id="display-name">iMerch Attendance</h2>
+        <div class="card">
+            <input type="text" id="location-name" placeholder="Enter Location Name (e.g. Office, Site A)">
+            <div id="map"></div>
+            <div id="coords" style="font-size: 0.8em; color: #8b949e; margin-bottom: 10px;">Detecting GPS...</div>
+            
+            <button class="btn btn-checkin" onclick="logAttendance('Check In')">CHECK IN</button>
+            <button class="btn btn-checkout" onclick="logAttendance('Check Out')">CHECK OUT</button>
+        </div>
 
-    <h3>History</h3>
-    <div id="history-list"></div>
+        <h3>Recent Activity</h3>
+        <div id="history-list"></div>
+    </div>
+</div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } 
-               from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // TODO: REPLACE WITH YOUR FIREBASE CONFIG
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_ID",
-            appId: "YOUR_APP_ID"
-        };
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "YOUR_ID",
+        appId: "YOUR_APP_ID"
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        let userCoords = [14.657906, 121.017815]; // Default from your photo
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
 
-        // Initialize Map
-        const map = L.map('map').setView(userCoords, 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        const marker = L.marker(userCoords).addTo(map);
+    let userCoords = [14.657906, 121.017815]; 
+    const map = L.map('map').setView(userCoords, 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    const marker = L.marker(userCoords).addTo(map);
 
-        // Get Live GPS
-        navigator.geolocation.getCurrentPosition((pos) => {
-            userCoords = [pos.coords.latitude, pos.coords.longitude];
-            map.setView(userCoords, 16);
-            marker.setLatLng(userCoords);
-            document.getElementById('coords').innerText = `${userCoords[0]}, ${userCoords[1]}`;
-        });
+    // Get GPS
+    navigator.geolocation.watchPosition((pos) => {
+        userCoords = [pos.coords.latitude, pos.coords.longitude];
+        map.setView(userCoords, 16);
+        marker.setLatLng(userCoords);
+        document.getElementById('coords').innerText = `GPS: ${userCoords[0].toFixed(6)}, ${userCoords[1].toFixed(6)}`;
+    });
 
-        // Save to Firebase
-        window.handleAttendance = async () => {
+    // ADMIN: Create User
+    window.adminCreateUser = async () => {
+        const email = document.getElementById('new-email').value;
+        const pass = document.getElementById('new-pass').value;
+        try {
+            await createUserWithEmailAndPassword(auth, email, pass);
+            alert("Success: Employee account created!");
+            document.getElementById('new-email').value = "";
+            document.getElementById('new-pass').value = "";
+        } catch (e) { alert(e.message); }
+    };
+
+    // USER: Log Attendance
+    window.logAttendance = async (status) => {
+        const locName = document.getElementById('location-name').value || "Unknown Location";
+        try {
             await addDoc(collection(db, "attendance"), {
-                timestamp: new Date(),
-                location: userCoords,
-                type: "Check In" // You can toggle this based on last record
+                locationName: locName,
+                coords: userCoords,
+                type: status,
+                timestamp: serverTimestamp()
             });
-            alert("Attendance Logged!");
-        };
+            alert(`${status} successful!`);
+        } catch (e) { alert("Error saving: " + e.message); }
+    };
 
-        // Real-time History Sync
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
-        onSnapshot(q, (snapshot) => {
-            const list = document.getElementById('history-list');
-            list.innerHTML = "";
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const date = data.timestamp.toDate();
-                list.innerHTML += `
-                    <div class="history-item">
-                        <span class="${data.type === 'Check In' ? 'check-in' : 'check-out'}">
-                            ${data.type}
-                        </span>
-                        <span>${date.toLocaleTimeString()} - ${date.toLocaleDateString()}</span>
-                    </div>`;
-            });
+    // HISTORY: Live Sync
+    const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+    onSnapshot(q, (snapshot) => {
+        const list = document.getElementById('history-list');
+        list.innerHTML = "";
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            const time = data.timestamp ? data.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "...";
+            list.innerHTML += `
+                <div class="history-item">
+                    <div>
+                        <span class="badge ${data.type === 'Check In' ? 'in' : 'out'}">${data.type}</span>
+                        <div style="margin-top:5px; font-weight:bold">${data.locationName}</div>
+                    </div>
+                    <div style="text-align:right; color:#8b949e;">${time}</div>
+                </div>`;
         });
-    </script>
+    });
+
+    // UI Toggle
+    window.toggleView = () => {
+        document.getElementById('admin-view').classList.toggle('hidden');
+        document.getElementById('user-view').classList.toggle('hidden');
+    };
+</script>
 </body>
 </html>
