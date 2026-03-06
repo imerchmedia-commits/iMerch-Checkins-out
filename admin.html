@@ -3,102 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch - Master Admin & Export</title>
+    <title>iMerch - Master Admin</title>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --blue: #58a6ff; --green: #238636; --red: #da3633; --orange: #f0883e; }
+        :root { 
+            --bg: #0d1117; 
+            --card: #161b22; 
+            --border: #30363d; 
+            --blue: #58a6ff; 
+            --green: #238636; 
+            --red: #da3633; 
+            --orange: #f0883e; 
+            --text-gray: #8b949e;
+        }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: white; padding: 20px; margin: 0; }
-        .container { max-width: 1200px; margin: auto; padding: 20px; }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .search-container { position: relative; margin-bottom: 20px; }
-        .search-box { width: 100%; padding: 15px; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: white; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; }
-        .search-box:focus { border-color: var(--blue); }
+        .container { max-width: 1000px; margin: auto; padding: 10px; }
         
-        /* Enrollment Cards */
-        .enroll-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .enroll-card { background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 8px; border-left: 4px solid var(--blue); }
-        .enroll-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        .enroll-input { padding: 12px; background: var(--bg); border: 1px solid var(--border); color: white; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        /* Header Logo Section matching image_6fac39.png */
+        .header-section { text-align: center; margin-bottom: 30px; }
+        .app-logo { width: 180px; margin-bottom: 10px; }
+        .admin-label { 
+            background: var(--blue); 
+            color: white; 
+            padding: 8px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            display: block; 
+            margin: 10px auto;
+            max-width: 600px;
+            font-size: 14px;
+        }
 
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; position: relative; }
+        /* Enrollment and Stats Cards */
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .card { 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            padding: 20px; 
+            border-radius: 12px;
+        }
+        .card-title { color: var(--blue); font-size: 16px; font-weight: bold; margin-bottom: 15px; display: block; }
         
-        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; margin-top: 10px; }
-        th, td { padding: 14px; border: 1px solid var(--border); text-align: left; font-size: 13px; }
-        th { background: #21262d; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
+        .enroll-input { 
+            width: 100%; 
+            padding: 12px; 
+            background: #0d1117; 
+            border: 1px solid var(--border); 
+            color: white; 
+            border-radius: 8px; 
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .search-box { 
+            width: 100%; 
+            padding: 15px; 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 10px; 
+            color: white; 
+            font-size: 16px; 
+            outline: none; 
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Tables */
+        .table-container { border-radius: 12px; border: 1px solid var(--border); overflow: hidden; background: var(--card); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #21262d; color: var(--blue); padding: 15px; text-align: left; text-transform: uppercase; }
+        td { padding: 12px 15px; border-top: 1px solid var(--border); }
         
-        .btn { border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-excel { background: var(--green); color: white; flex: 1; }
-        .btn-map { background: var(--orange); color: white; flex: 1; }
-        .btn-create { background: var(--blue); color: white; width: 100%; }
-        .btn-bulk { background: #6e7681; color: white; width: 100%; }
-        .btn-delete { background: var(--red); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .btn-bulk-delete { background: var(--red); color: white; width: 100%; display: none; }
+        /* Buttons */
+        .btn { border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+        .btn-blue { background: var(--blue); color: white; }
+        .btn-green { background: var(--green); color: white; }
+        .btn-orange { background: var(--orange); color: white; }
+        .btn-red { background: var(--red); color: white; }
+        .btn:hover { opacity: 0.85; }
         
-        .danger-link { color: #f85149; font-size: 11px; text-decoration: underline; cursor: pointer; position: absolute; bottom: 10px; right: 15px; }
-        .geo-link { color: var(--blue); text-decoration: underline; font-family: monospace; font-weight: bold; }
-        .remarks-text { color: #8b949e; font-style: italic; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        #bulk-status { font-size: 0.8em; margin-top: 10px; color: var(--orange); }
+        .geo-link { color: var(--blue); text-decoration: none; font-weight: bold; }
+        .status-text { font-size: 11px; margin-top: 5px; color: var(--text-gray); }
+
+        @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header-flex">
-        <h2>iMerch Master Logs</h2>
-        <div style="font-size: 0.8em; color: #8b949e;" id="admin-email-display">---</div>
+    <div class="header-section">
+        <img src="Whitei-merch logo.jpg" alt="iMerch Logo" class="app-logo">
+        <div class="admin-label">Admin: Master Management Dashboard</div>
+        <div id="admin-user" style="font-size: 12px; color: var(--text-gray);">---</div>
     </div>
 
-    <div class="enroll-container">
-        <div class="enroll-card">
-            <h4 style="margin-top:0; color: var(--blue);">Enroll Staff (Single)</h4>
-            <div class="enroll-grid">
-                <input type="email" id="new-email" class="enroll-input" placeholder="Staff Email">
-                <input type="password" id="new-pass" class="enroll-input" placeholder="Temporary Password">
-                <button class="btn btn-create" id="createAccBtn">Create Account</button>
+    <div class="grid-layout">
+        <div class="card">
+            <span class="card-title">Staff Enrollment</span>
+            <input type="email" id="new-email" class="enroll-input" placeholder="Staff Email">
+            <input type="password" id="new-pass" class="enroll-input" placeholder="Password">
+            <button class="btn btn-blue" id="createAccBtn">Register New Staff</button>
+        </div>
+
+        <div class="card">
+            <span class="card-title">Bulk Actions</span>
+            <input type="file" id="bulk-csv" class="enroll-input" accept=".csv">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-green" id="bulkUploadBtn" style="font-size: 12px;">Process CSV</button>
+                <button class="btn btn-orange" onclick="exportToCSV()" style="font-size: 12px;">Export Logs</button>
             </div>
-        </div>
-
-        <div class="enroll-card" style="border-left-color: var(--green);">
-            <h4 style="margin-top:0; color: var(--green);">Enroll Staff (Bulk CSV)</h4>
-            <p style="font-size: 0.75em; color: #8b949e; margin-bottom: 10px;">Format: Email, Password (No Header)</p>
-            <div class="enroll-grid">
-                <input type="file" id="bulk-csv" class="enroll-input" accept=".csv">
-                <button class="btn btn-bulk" id="bulkUploadBtn">Upload & Process</button>
-                <div id="bulk-status"></div>
-            </div>
+            <div id="bulk-status" class="status-text">Ready for file...</div>
         </div>
     </div>
 
-    <div class="search-container">
-        <input type="text" id="adminSearch" class="search-box" placeholder="Search Email, Location, Remarks..." onkeyup="filterData()">
-    </div>
+    <input type="text" id="adminSearch" class="search-box" placeholder="Search logs (Email, Location, Remarks)..." onkeyup="filterData()">
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <small style="color: #8b949e;">Entries Found</small>
-            <div id="count-display" style="font-size: 22px; font-weight: bold;">0</div>
-            <span class="danger-link" onclick="deleteAllDatabaseLogs()">Wipe All Database Logs</span>
-        </div>
-        <div class="stat-card" style="display: flex; gap: 10px; align-items: center;">
-            <button class="btn btn-excel" onclick="exportToCSV()">Export to Excel</button>
-            <button class="btn btn-map" onclick="viewAllOnMap()">View Filtered on Map</button>
-            <button id="bulkDeleteBtn" class="btn btn-bulk-delete btn" onclick="deleteFilteredLogs()">Delete All Filtered</button>
-        </div>
-    </div>
-
-    <div style="overflow-x: auto; border-radius: 10px; border: 1px solid var(--border);">
+    <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>Email</th>
-                    <th>Date</th>
+                    <th>Staff Email</th>
+                    <th>Date / Time</th>
                     <th>Status</th>
-                    <th>Time</th>
-                    <th>Location Name</th>
-                    <th>Remarks</th>
-                    <th>Coordinates</th>
-                    <th>Actions</th>
+                    <th>Location</th>
+                    <th>GPS</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="payroll-body"></tbody>
@@ -123,12 +151,11 @@
     const auth = getAuth(app);
 
     let allLogs = [];
-    let currentFiltered = [];
 
     onAuthStateChanged(auth, (user) => {
         const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
         if (user && admins.includes(user.email)) {
-            document.getElementById('admin-email-display').innerText = `Logged in as ${user.email}`;
+            document.getElementById('admin-user').innerText = `Logged in as: ${user.email}`;
             loadData();
         } else {
             window.location.href = "index.html";
@@ -139,39 +166,31 @@
     document.getElementById('createAccBtn').onclick = async () => {
         const email = document.getElementById('new-email').value;
         const pass = document.getElementById('new-pass').value;
+        if(!email || !pass) return alert("Fields cannot be empty");
         try {
             await createUserWithEmailAndPassword(auth, email, pass);
-            alert("Success!");
+            alert("Staff Account Created Successfully");
             document.getElementById('new-email').value = "";
             document.getElementById('new-pass').value = "";
         } catch (e) { alert(e.message); }
     };
 
-    // Bulk Enrollment Logic
+    // Bulk Enrollment
     document.getElementById('bulkUploadBtn').onclick = () => {
         const file = document.getElementById('bulk-csv').files[0];
-        const status = document.getElementById('bulk-status');
-        if (!file) return alert("Select a CSV file.");
-
+        if (!file) return alert("Please select a CSV file first.");
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const rows = e.target.result.split('\n').filter(row => row.trim() !== "");
-            status.innerText = `Processing ${rows.length} accounts...`;
-            
-            let successCount = 0;
-            let failCount = 0;
-
+            const rows = e.target.result.split('\n').filter(r => r.trim() !== "");
+            document.getElementById('bulk-status').innerText = `Processing ${rows.length} rows...`;
             for (let row of rows) {
-                const [email, pass] = row.split(',').map(item => item.trim());
+                const [email, pass] = row.split(',').map(s => s.trim());
                 if (email && pass) {
-                    try {
-                        await createUserWithEmailAndPassword(auth, email, pass);
-                        successCount++;
-                    } catch (err) { failCount++; }
+                    try { await createUserWithEmailAndPassword(auth, email, pass); } catch(err) {}
                 }
             }
-            status.innerText = `Done: ${successCount} Success, ${failCount} Failed.`;
-            alert("Bulk Processing Complete.");
+            document.getElementById('bulk-status').innerText = "Bulk upload complete.";
+            alert("Processing Finished.");
         };
         reader.readAsText(file);
     };
@@ -181,61 +200,56 @@
             allLogs = [];
             snap.forEach(d => allLogs.push({ ...d.data(), id: d.id }));
             allLogs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-            currentFiltered = allLogs;
             renderRows(allLogs);
         });
     }
 
-    window.renderRows = (data) => {
+    function renderRows(data) {
         const body = document.getElementById('payroll-body');
-        body.innerHTML = data.length === 0 ? "<tr><td colspan='8' style='text-align:center'>No logs found.</td></tr>" : "";
-        document.getElementById('count-display').innerText = data.length;
-
+        body.innerHTML = "";
         data.forEach(log => {
-            const dateObj = log.timestamp ? log.timestamp.toDate() : null;
-            const dateStr = dateObj ? dateObj.toLocaleDateString() : "---";
-            const timeStr = dateObj ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "---";
-            const typeClass = log.type === "Check In" ? "color: #3fb950" : "color: #f85149";
+            const dateObj = log.timestamp ? log.timestamp.toDate() : new Date();
+            const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const dateStr = dateObj.toLocaleDateString();
+            const typeStyle = log.type === "Check In" ? "color: #3fb950" : "color: #f85149";
             
             const lat = log.latitude || log.lat;
             const lon = log.longitude || log.lng;
-            const geoDisplay = (lat && lon) ? `<a class="geo-link" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank">${lat.toFixed(4)}, ${lon.toFixed(4)}</a>` : 'N/A';
+            const geoLink = (lat && lon) ? `<a class="geo-link" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank">View Map</a>` : 'No GPS';
 
             body.innerHTML += `
                 <tr>
-                    <td>${log.email}</td>
-                    <td>${dateStr}</td>
-                    <td style="${typeClass}; font-weight:bold;">${log.type}</td>
-                    <td>${timeStr}</td>
-                    <td>${log.locationName || 'N/A'}</td>
-                    <td class="remarks-text" title="${log.remarks || ''}">${log.remarks || '---'}</td>
-                    <td>${geoDisplay}</td>
-                    <td><button class="btn-delete" onclick="deleteLog('${log.id}')">Delete</button></td>
+                    <td style="font-weight:bold;">${log.email}</td>
+                    <td>${dateStr}<br><small style="color:var(--text-gray)">${timeStr}</small></td>
+                    <td style="${typeStyle}; font-weight:bold;">${log.type}</td>
+                    <td>${log.locationName || '---'}</td>
+                    <td>${geoLink}</td>
+                    <td><button onclick="deleteLog('${log.id}')" style="background:none; border:none; color:var(--red); cursor:pointer; font-size:11px;">Delete</button></td>
                 </tr>
             `;
         });
-    };
+    }
+
+    window.deleteLog = async (id) => { if(confirm("Confirm deletion?")) await deleteDoc(doc(db, "attendance", id)); };
 
     window.filterData = () => {
         const term = document.getElementById('adminSearch').value.toLowerCase();
-        currentFiltered = allLogs.filter(l => 
+        const filtered = allLogs.filter(l => 
             l.email.toLowerCase().includes(term) || (l.locationName && l.locationName.toLowerCase().includes(term))
         );
-        renderRows(currentFiltered);
+        renderRows(filtered);
     };
 
-    window.deleteLog = async (id) => { if(confirm("Delete log?")) await deleteDoc(doc(db, "attendance", id)); };
-
     window.exportToCSV = () => {
-        let csv = "Email,Date,Status,Time,Location,Lat,Lon\n";
-        currentFiltered.forEach(l => {
+        let csv = "Email,Date,Time,Status,Location,Lat,Lon\n";
+        allLogs.forEach(l => {
             const d = l.timestamp ? l.timestamp.toDate() : new Date();
-            csv += `"${l.email}","${d.toLocaleDateString()}","${l.type}","${d.toLocaleTimeString()}","${l.locationName || ''}","${l.latitude || ''}","${l.longitude || ''}"\n`;
+            csv += `"${l.email}","${d.toLocaleDateString()}","${d.toLocaleTimeString()}","${l.type}","${l.locationName || ''}","${l.latitude || ''}","${l.longitude || ''}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `iMerch_Export_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `iMerch_Log_Report.csv`;
         a.click();
     };
 </script>
