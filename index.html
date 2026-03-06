@@ -62,13 +62,14 @@
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+    // PROJECT CONFIG (Updated with your API Key)
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT.firebaseapp.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT.appspot.com",
-        messagingSenderId: "YOUR_ID",
-        appId: "YOUR_APP_ID"
+        apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
+        authDomain: "imerch-checkins-out.firebaseapp.com",
+        projectId: "imerch-checkins-out",
+        storageBucket: "imerch-checkins-out.appspot.com",
+        messagingSenderId: "389274092837", // General Placeholder
+        appId: "1:389274092837:web:a1b2c3d4e5f6g7h8" // General Placeholder
     };
 
     const app = initializeApp(firebaseConfig);
@@ -80,15 +81,13 @@
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
     const marker = L.marker(userCoords).addTo(map);
 
-    // Get GPS
     navigator.geolocation.watchPosition((pos) => {
         userCoords = [pos.coords.latitude, pos.coords.longitude];
         map.setView(userCoords, 16);
         marker.setLatLng(userCoords);
         document.getElementById('coords').innerText = `GPS: ${userCoords[0].toFixed(6)}, ${userCoords[1].toFixed(6)}`;
-    });
+    }, (err) => console.log(err), { enableHighAccuracy: true });
 
-    // ADMIN: Create User
     window.adminCreateUser = async () => {
         const email = document.getElementById('new-email').value;
         const pass = document.getElementById('new-pass').value;
@@ -100,9 +99,8 @@
         } catch (e) { alert(e.message); }
     };
 
-    // USER: Log Attendance
     window.logAttendance = async (status) => {
-        const locName = document.getElementById('location-name').value || "Unknown Location";
+        const locName = document.getElementById('location-name').value || "Office Location";
         try {
             await addDoc(collection(db, "attendance"), {
                 locationName: locName,
@@ -111,10 +109,9 @@
                 timestamp: serverTimestamp()
             });
             alert(`${status} successful!`);
-        } catch (e) { alert("Error saving: " + e.message); }
+        } catch (e) { alert("Error: " + e.message); }
     };
 
-    // HISTORY: Live Sync
     const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
     onSnapshot(q, (snapshot) => {
         const list = document.getElementById('history-list');
@@ -133,7 +130,6 @@
         });
     });
 
-    // UI Toggle
     window.toggleView = () => {
         document.getElementById('admin-view').classList.toggle('hidden');
         document.getElementById('user-view').classList.toggle('hidden');
