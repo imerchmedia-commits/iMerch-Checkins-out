@@ -123,7 +123,9 @@
             <img src="logo1.png" alt="iMerch Logo">
         </div>
 
-        
+        <div id="admin-toggle-area" class="hidden">
+            <button id="toggleAdminBtn" class="btn" style="background: var(--blue); font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button>
+        </div>
         
         <div id="attendance-section">
             <div class="card">
@@ -173,20 +175,17 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // --- DOM ELEMENTS ---
     const emailField = document.getElementById('login-email');
     const passField = document.getElementById('login-pass');
     const rememberCheck = document.getElementById('remember-check');
     const errorDiv = document.getElementById('login-error');
 
-    // --- REMEMBER ME LOGIC ---
     if (localStorage.getItem('rememberedEmail')) {
         emailField.value = localStorage.getItem('rememberedEmail');
         passField.value = localStorage.getItem('rememberedPass');
         rememberCheck.checked = true;
     }
 
-    // --- THEME LOGIC ---
     const toggleBtn = document.getElementById('theme-toggle');
     const body = document.body;
     if(localStorage.getItem('theme') === 'light') {
@@ -275,10 +274,20 @@
         if (user) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-dashboard').classList.remove('hidden');
-            const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com", "ron.sarmenta@imerchmedia.net"];
+            
+            // STRICT ADMIN CHECK - Only these 2 emails
+            const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
+            const adminArea = document.getElementById('admin-toggle-area');
+            
             if (admins.includes(user.email)) {
-                document.getElementById('admin-toggle-area').classList.remove('hidden');
+                adminArea.classList.remove('hidden');
+            } else {
+                // If not admin, ensure admin sections are forced hidden
+                adminArea.classList.add('hidden');
+                document.getElementById('admin-view').classList.add('hidden');
+                document.getElementById('attendance-section').classList.remove('hidden');
             }
+
             startSecureGPS();
             loadHistory(user.uid);
         } else {
@@ -287,31 +296,14 @@
         }
     });
 
-    // --- FORGOT PASSWORD LOGIC ---
-    document.getElementById('forgot-pass').onclick = async () => {
-        const email = emailField.value;
-        if (!email) {
-            alert("Please type your email address first.");
-            return;
-        }
-        try {
-            await sendPasswordResetEmail(auth, email);
-            alert("Password reset link sent to: " + email);
-        } catch (error) {
-            alert("Error: " + error.message);
-        }
-    };
-
-    // --- LOGIN LOGIC ---
+    // Login Logic
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
         const email = emailField.value;
         const pass = passField.value;
-        
         try {
             await signInWithEmailAndPassword(auth, email, pass);
             errorDiv.classList.add('hidden');
-            
             if (rememberCheck.checked) {
                 localStorage.setItem('rememberedEmail', email);
                 localStorage.setItem('rememberedPass', pass);
@@ -321,13 +313,7 @@
             }
         } catch (error) {
             errorDiv.classList.remove('hidden');
-            if (error.code === 'auth/user-not-found') {
-                errorDiv.innerText = "❌ Email not found in our records.";
-            } else if (error.code === 'auth/wrong-password') {
-                errorDiv.innerText = "❌ Incorrect password. Try again.";
-            } else {
-                errorDiv.innerText = "❌ Login Error: " + error.message;
-            }
+            errorDiv.innerText = "❌ Login Error: Check credentials.";
         }
     };
 
@@ -356,12 +342,30 @@
         });
     }
 
-    document.getElementById('toggleAdminBtn').onclick = () => { document.getElementById('attendance-section').classList.toggle('hidden'); document.getElementById('admin-view').classList.toggle('hidden'); };
-    document.getElementById('backBtn').onclick = () => { document.getElementById('attendance-section').classList.remove('hidden'); document.getElementById('admin-view').classList.add('hidden'); };
+    // Admin Toggle with Security Check
+    document.getElementById('toggleAdminBtn').onclick = () => { 
+        const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
+        if(admins.includes(auth.currentUser.email)) {
+            document.getElementById('attendance-section').classList.toggle('hidden'); 
+            document.getElementById('admin-view').classList.toggle('hidden'); 
+        } else {
+            alert("Unauthorized access.");
+        }
+    };
+    
+    document.getElementById('backBtn').onclick = () => { 
+        document.getElementById('attendance-section').classList.remove('hidden'); 
+        document.getElementById('admin-view').classList.add('hidden'); 
+    };
+
     document.getElementById('createAccBtn').onclick = async () => {
-        try { await createUserWithEmailAndPassword(auth, document.getElementById('new-email').value, document.getElementById('new-pass').value); alert("Employee Created!"); } catch (e) { alert(e.message); }
+        try { 
+            await createUserWithEmailAndPassword(auth, document.getElementById('new-email').value, document.getElementById('new-pass').value); 
+            alert("Employee Created!"); 
+            document.getElementById('new-email').value = "";
+            document.getElementById('new-pass').value = "";
+        } catch (e) { alert(e.message); }
     };
 </script>
 </body>
 </html>
-
