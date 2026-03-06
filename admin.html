@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>iMerch - Master Admin & Export</title>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --blue: #58a6ff; --green: #238636; --red: #da3633; }
+        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --blue: #58a6ff; --green: #238636; --red: #da3633; --orange: #f0883e; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: white; padding: 20px; margin: 0; }
         .container { max-width: 1100px; margin: auto; padding: 20px; }
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -16,8 +16,9 @@
         table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
         th, td { padding: 14px; border: 1px solid var(--border); text-align: left; font-size: 13px; }
         th { background: #21262d; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
-        .btn-excel { background: var(--green); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn-excel:hover { opacity: 0.9; }
+        .btn-excel { background: var(--green); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; }
+        .btn-map { background: var(--orange); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; }
+        .btn-excel:hover, .btn-map:hover { opacity: 0.9; }
         .btn-delete { background: var(--red); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .btn-delete:hover { background: #f85149; }
         .btn-bulk-delete { background: var(--red); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; display: none; }
@@ -44,8 +45,9 @@
             <div id="count-display" style="font-size: 22px; font-weight: bold;">0</div>
             <span class="danger-link" onclick="deleteAllDatabaseLogs()">Wipe All Database Logs</span>
         </div>
-        <div class="stat-card" style="display: flex; gap: 10px;">
+        <div class="stat-card" style="display: flex; gap: 10px; align-items: center;">
             <button class="btn-excel" onclick="exportToCSV()">Export to Excel</button>
+            <button class="btn-map" onclick="viewAllOnMap()">View Filtered on Map</button>
             <button id="bulkDeleteBtn" class="btn-bulk-delete" onclick="deleteFilteredLogs()">Delete All Filtered</button>
         </div>
     </div>
@@ -148,7 +150,6 @@
             const timeStr = dateObj ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "---";
             const typeClass = log.type === "Check In" ? "color: #3fb950" : "color: #f85149";
             
-            // Geo formatting
             const lat = log.latitude || log.lat;
             const lon = log.longitude || log.lng;
             const geoDisplay = (lat && lon) ? `<a class="geo-link" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank">${lat.toFixed(4)}, ${lon.toFixed(4)}</a>` : 'No Geo Data';
@@ -175,8 +176,32 @@
             (l.latitude && l.latitude.toString().includes(term))
         );
         const bulkBtn = document.getElementById('bulkDeleteBtn');
-        bulkBtn.style.display = (term.length > 0 && currentFiltered.length > 0) ? "block" : "none";
+        const normalBtns = document.querySelectorAll('.btn-excel, .btn-map');
+        
+        if (term.length > 0 && currentFiltered.length > 0) {
+            bulkBtn.style.display = "block";
+            normalBtns.forEach(b => b.style.display = "none");
+        } else {
+            bulkBtn.style.display = "none";
+            normalBtns.forEach(b => b.style.display = "block");
+        }
         renderRows(currentFiltered);
+    };
+
+    // --- MAP VIEW LOGIC ---
+    window.viewAllOnMap = () => {
+        const coords = currentFiltered
+            .filter(l => (l.latitude || l.lat) && (l.longitude || l.lng))
+            .map(l => `${l.latitude || l.lat},${l.longitude || l.lng}`);
+
+        if (coords.length === 0) {
+            alert("No GPS data found in current results.");
+            return;
+        }
+
+        // Use Search Query for multiple markers
+        const mapUrl = `https://www.google.com/maps/search/${coords.join('/')}`;
+        window.open(mapUrl, '_blank');
     };
 
     window.exportToCSV = () => {
