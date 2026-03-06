@@ -131,7 +131,7 @@
         }
     });
 
-    // CLOCK & GPS (Same logic as before, optimized for performance)
+    // CLOCK & GPS
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString([], {hour12: true}); }, 1000);
     
     let userCoords = [14.657906, 121.017815];
@@ -153,19 +153,24 @@
     document.getElementById('checkinBtn').onclick = () => logAction('Check In');
     document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
 
+    // UPDATED LOG ACTION
     async function logAction(type) {
-        const loc = document.getElementById('location-name').value || "Office";
+        const loc = document.getElementById('location-name').value || "Office Site";
         try {
+            // We use serverTimestamp() to ensure Ron sees the same time as the employee
             await addDoc(collection(db, "attendance"), {
                 uid: auth.currentUser.uid,
                 email: auth.currentUser.email,
                 locationName: loc,
                 coords: userCoords,
                 type: type,
-                timestamp: serverTimestamp()
+                timestamp: serverTimestamp() 
             });
-            alert(type + " success!");
-        } catch (e) { alert(e.message); }
+            alert(type + " recorded for " + auth.currentUser.email);
+        } catch (e) { 
+            console.error(e);
+            alert("Sync Error: " + e.message); 
+        }
     }
 
     function loadHistory(uid) {
