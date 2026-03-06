@@ -3,15 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iMerch - Real-Time Attendance</title>
+    <title>iMerch - Secure Attendance</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --green: #238636; --red: #da3633; --blue: #58a6ff; }
         body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: white; padding: 15px; margin: 0; }
         .container { max-width: 450px; margin: auto; }
         .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
+        
+        /* LOGIN STYLING */
+        .input-group { position: relative; width: 100%; margin: 10px 0; }
+        input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; font-size: 16px; }
+        .eye-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #8b949e; width: 24px; height: 24px; display: flex; align-items: center; }
+        
         #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 10px; }
-        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; font-size: 16px; } /* 16px prevents iOS/Android zoom on click */
         #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; }
         .btn-checkin { background: var(--green); }
@@ -31,25 +36,30 @@
     <div id="login-view">
         <h2 style="text-align:center">iMerch Login</h2>
         <div class="card">
-            <input type="email" id="login-email" placeholder="Email Address" autocomplete="email">
-            <input type="password" id="login-pass" placeholder="Password">
-            <button class="btn btn-primary" id="loginBtn">Login to Dashboard</button>
+            <form id="login-form" onsubmit="return false;">
+                <div class="input-group">
+                    <input type="email" id="login-email" placeholder="Email Address" autocomplete="username" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="login-pass" placeholder="Password" autocomplete="current-password" required>
+                    <div class="eye-icon" id="togglePassword">
+                        <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
+            </form>
         </div>
     </div>
 
     <div id="user-dashboard" class="hidden">
         <div id="live-clock">00:00:00</div>
+        <div id="admin-toggle-area" class="hidden"><button id="toggleAdminBtn" class="btn btn-primary" style="font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button></div>
         
-        <div id="admin-toggle-area" class="hidden">
-            <button id="toggleAdminBtn" class="btn btn-primary" style="font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button>
-        </div>
-
         <div id="attendance-section">
             <div class="card">
                 <input type="text" id="location-name" placeholder="Current Location (e.g. Office)">
                 <div id="map"></div>
                 <div id="coords" style="font-size: 0.8em; color: #8b949e; margin-bottom: 15px;">Awaiting GPS...</div>
-                
                 <button class="btn btn-checkin" id="checkinBtn">CHECK IN NOW</button>
                 <button class="btn btn-checkout" id="checkoutBtn">CHECK OUT NOW</button>
             </div>
@@ -63,10 +73,9 @@
                 <input type="email" id="new-email" placeholder="New Employee Email">
                 <input type="password" id="new-pass" placeholder="Temp Password">
                 <button class="btn btn-primary" id="createAccBtn">Create Account</button>
-                <button class="btn" style="background:#30363d" id="backBtn">Back to Tracker</button>
+                <button class="btn" style="background:#30363d" id="backBtn">Back</button>
             </div>
         </div>
-
         <span class="logout-link" id="logoutLink">Logout Account</span>
     </div>
 </div>
@@ -79,4 +88,105 @@
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
-        authDomain: "
+        authDomain: "imerch-checkins-out.firebaseapp.com",
+        projectId: "imerch-checkins-out",
+        storageBucket: "imerch-checkins-out.appspot.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    // TOGGLE PASSWORD VISIBILITY
+    const passwordInput = document.getElementById('login-pass');
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        this.style.color = type === 'text' ? '#58a6ff' : '#8b949e';
+    });
+
+    // LOGIN ACTION
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const pass = passwordInput.value;
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (e) { alert("Login Failed: " + e.message); }
+    });
+
+    // AUTH STATE
+    let historyUnsubscribe;
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('user-dashboard').classList.remove('hidden');
+            if (user.email === "ronsarmenta.imerchmedia@gmail.com") document.getElementById('admin-toggle-area').classList.remove('hidden');
+            initMap();
+            loadHistory(user.uid);
+        } else {
+            document.getElementById('login-view').classList.remove('hidden');
+            document.getElementById('user-dashboard').classList.add('hidden');
+            if(historyUnsubscribe) historyUnsubscribe();
+        }
+    });
+
+    // CLOCK & GPS (Same logic as before, optimized for performance)
+    setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString([], {hour12: true}); }, 1000);
+    
+    let userCoords = [14.657906, 121.017815];
+    let map, marker;
+    function initMap() {
+        if (!map) {
+            map = L.map('map').setView(userCoords, 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            marker = L.marker(userCoords).addTo(map);
+            navigator.geolocation.watchPosition((pos) => {
+                userCoords = [pos.coords.latitude, pos.coords.longitude];
+                map.setView(userCoords, 16);
+                marker.setLatLng(userCoords);
+                document.getElementById('coords').innerText = `GPS Fixed: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
+            }, null, { enableHighAccuracy: true });
+        }
+    }
+
+    document.getElementById('checkinBtn').onclick = () => logAction('Check In');
+    document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
+
+    async function logAction(type) {
+        const loc = document.getElementById('location-name').value || "Office";
+        try {
+            await addDoc(collection(db, "attendance"), {
+                uid: auth.currentUser.uid,
+                email: auth.currentUser.email,
+                locationName: loc,
+                coords: userCoords,
+                type: type,
+                timestamp: serverTimestamp()
+            });
+            alert(type + " success!");
+        } catch (e) { alert(e.message); }
+    }
+
+    function loadHistory(uid) {
+        const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"));
+        historyUnsubscribe = onSnapshot(q, (snap) => {
+            const list = document.getElementById('history-list');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...";
+                list.innerHTML += `<div class="history-item"><span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span><span>${time}</span></div>`;
+            });
+        });
+    }
+
+    document.getElementById('logoutLink').onclick = () => signOut(auth);
+    document.getElementById('toggleAdminBtn').onclick = () => { document.getElementById('attendance-section').classList.toggle('hidden'); document.getElementById('admin-view').classList.toggle('hidden'); };
+    document.getElementById('backBtn').onclick = () => { document.getElementById('attendance-section').classList.remove('hidden'); document.getElementById('admin-view').classList.add('hidden'); };
+    document.getElementById('createAccBtn').onclick = async () => {
+        try { await createUserWithEmailAndPassword(auth, document.getElementById('new-email').value, document.getElementById('new-pass').value); alert("Success!"); } catch (e) { alert(e.message); }
+    };
+</script>
+</body>
+</html>
