@@ -88,23 +88,29 @@
     });
 
     function loadData() {
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+    // We removed orderBy("timestamp") to skip the Index requirement for now
+    const q = collection(db, "attendance"); 
+    
+    onSnapshot(q, (snap) => {
+        allLogs = [];
+        const body = document.getElementById('payroll-body');
         
-        onSnapshot(q, (snap) => {
-            allLogs = [];
-            if (snap.empty) {
-                document.getElementById('payroll-body').innerHTML = "<tr><td colspan='5' style='text-align:center'>No logs found in database.</td></tr>";
-                document.getElementById('count-display').innerText = "0";
-                return;
-            }
+        if (snap.empty) {
+            console.log("No documents found in 'attendance' collection");
+            body.innerHTML = "<tr><td colspan='5' style='text-align:center'>No logs found in database.</td></tr>";
+            return;
+        }
 
-            snap.forEach(doc => {
-                allLogs.push(doc.data());
-            });
-
-            renderRows(allLogs);
+        snap.forEach(doc => {
+            allLogs.push(doc.data());
         });
-    }
+
+        // Manually sort by time in Javascript instead of Firestore
+        allLogs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+        renderRows(allLogs);
+    });
+}
 
     window.renderRows = (data) => {
         const body = document.getElementById('payroll-body');
@@ -166,4 +172,5 @@
 </script>
 </body>
 </html>
+
 
