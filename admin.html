@@ -17,13 +17,11 @@
         .container { max-width: 1000px; margin: auto; }
         .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        /* Stats Styling */
         .stats-container { display: flex; gap: 15px; margin-bottom: 20px; }
         .stat-box { flex: 1; background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; }
         .stat-val { display: block; font-size: 1.8em; font-weight: bold; color: var(--blue); }
         .stat-label { font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px; color: #8b949e; }
 
-        /* Map Container */
         #map { height: 350px; width: 100%; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; z-index: 1; }
 
         .admin-grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
@@ -41,10 +39,8 @@
         #theme-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; z-index: 10000; font-size: 1.5em; }
         .logo-container { text-align: center; margin-bottom: 20px; }
         .logo-container img { max-width: 150px; }
-        .history-remarks { font-size: 0.8em; color: #8b949e; margin-top: 5px; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; }
         .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-align: center; display: block; padding: 20px; font-weight: bold; }
         h3 { border-left: 4px solid var(--blue); padding-left: 10px; margin-top: 0; margin-bottom: 15px; }
-        .leaflet-popup-content-wrapper { background: var(--card); color: var(--text); border: 1px solid var(--border); }
     </style>
 </head>
 <body>
@@ -82,7 +78,8 @@
             <div class="admin-sidebar">
                 <h3>Management</h3>
                 <div class="card">
-                    <input type="email" id="new-email" placeholder="New Staff Email">
+                    <input type="text" id="new-fullname" placeholder="Staff Full Name">
+                    <input type="email" id="new-email" placeholder="Staff Email">
                     <input type="password" id="new-pass" placeholder="Temp Password">
                     <button class="btn" style="background: var(--blue);" id="createAccBtn">Create Account</button>
                 </div>
@@ -93,10 +90,10 @@
                 <h3>Live Staff Map</h3>
                 <div class="card" style="padding: 10px;">
                     <div id="map"></div>
-                    <input type="text" id="admin-search" placeholder="🔍 Search logs...">
+                    <input type="text" id="admin-search" placeholder="🔍 Search by name or email...">
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button id="exportBtn" class="btn" style="background: #238636; flex: 1;">📊 Export</button>
-                        <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1;">🗑️ Wipe</button>
+                        <button id="exportBtn" class="btn" style="background: #238636; flex: 1;">📊 Export to Excel</button>
+                        <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1;">🗑️ Wipe All Logs</button>
                     </div>
                     <div id="admin-master-list" style="max-height: 400px; overflow-y: auto;">
                         <p style="text-align: center; color: #8b949e;">Loading activity...</p>
@@ -111,7 +108,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -125,97 +122,125 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    let masterData = [];
+    let masterLogs = [];
+    let staffMap = {}; 
     let map, markerGroup;
 
-    // Initialize Map
     function initMap() {
         if (map) return;
-        map = L.map('map').setView([14.5995, 120.9842], 12); // Default to Manila
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+        map = L.map('map').setView([14.5995, 120.9842], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         markerGroup = L.layerGroup().addTo(map);
     }
 
-    function updateMap(data) {
-        if (!markerGroup) return;
-        markerGroup.clearLayers();
-        const lastKnown = {};
-
-        // Find the most recent location for each unique staff
-        data.forEach(d => {
-            if (!lastKnown[d.email] && d.latitude && d.longitude) {
-                lastKnown[d.email] = d;
-            }
+    async function loadStaffData() {
+        const snap = await getDocs(collection(db, "users"));
+        snap.forEach(doc => {
+            const data = doc.data();
+            staffMap[data.uid] = data.fullName;
         });
-
-        const bounds = [];
-        Object.values(lastKnown).forEach(pos => {
-            const marker = L.marker([pos.latitude, pos.longitude])
-                .bindPopup(`<b>${pos.email}</b><br>${pos.type}: ${pos.locationName}<br>${pos.timestamp?.toDate().toLocaleTimeString()}`)
-                .addTo(markerGroup);
-            bounds.push([pos.latitude, pos.longitude]);
-        });
-
-        if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
-    }
-
-    const toggleBtn = document.getElementById('theme-toggle');
-    toggleBtn.onclick = () => {
-        const isLight = document.body.getAttribute('data-theme') === 'light';
-        document.body.toggleAttribute('data-theme');
-        toggleBtn.innerText = isLight ? '🌙' : '☀️';
-    };
-
-    function updateStats(data) {
-        const uniqueEmails = new Set(data.map(d => d.email));
-        const today = new Date().toLocaleDateString();
-        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === today).map(d => d.email));
-
-        document.getElementById('total-staff-count').innerText = uniqueEmails.size;
-        document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
     function loadAdminLogs() {
         const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
         onSnapshot(q, (snap) => {
-            masterData = [];
-            snap.forEach(doc => masterData.push(doc.data()));
-            updateStats(masterData);
-            renderAdminLogs(masterData);
-            updateMap(masterData);
+            masterLogs = [];
+            snap.forEach(doc => {
+                const data = doc.data();
+                data.id = doc.id;
+                data.fullName = staffMap[data.uid] || "Unknown Staff";
+                masterLogs.push(data);
+            });
+            updateStats(masterLogs);
+            renderAdminLogs(masterLogs);
         });
     }
 
     function renderAdminLogs(data) {
         const list = document.getElementById('admin-master-list');
-        list.innerHTML = data.length ? "" : "<p style='text-align:center; color:#8b949e;'>No records found.</p>";
+        list.innerHTML = "";
         data.forEach(d => {
-            const date = d.timestamp ? d.timestamp.toDate() : new Date();
+            const date = d.timestamp ? d.timestamp.toDate().toLocaleString() : "Pending...";
             list.innerHTML += `
                 <div class="history-item">
                     <div class="history-row">
-                        <span style="font-weight:bold; color:var(--blue); font-size:0.9em;">${d.email}</span>
-                        <span style="font-size:0.7em; color: #8b949e;">${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                        <span style="font-weight:bold; color:var(--blue);">${d.fullName}</span>
+                        <span style="font-size:0.75em; color:#8b949e;">${date}</span>
                     </div>
                     <div class="history-row" style="margin-top:4px;">
                         <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
+                        <span style="font-size:0.7em;">${d.email}</span>
                     </div>
                 </div>`;
         });
     }
 
-    // Export & Wipe handlers (Same as before)
-    document.getElementById('exportBtn').onclick = () => { /* CSV Logic */ };
-    document.getElementById('wipeLogsBtn').onclick = async () => { /* Wipe Logic */ };
+    function updateStats(data) {
+        const uniqueEmails = new Set(data.map(d => d.email));
+        const today = new Date().toLocaleDateString();
+        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === today).map(d => d.email));
+        document.getElementById('total-staff-count').innerText = uniqueEmails.size;
+        document.getElementById('present-today-count').innerText = presentToday.size;
+    }
 
-    onAuthStateChanged(auth, (user) => {
-        if (user && ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"].includes(user.email)) {
+    // EXPORT TO EXCEL (CSV)
+    document.getElementById('exportBtn').onclick = () => {
+        if (masterLogs.length === 0) return alert("No logs to export.");
+        let csv = "Full Name,Email,Action,Location,Remarks,Date,Time\n";
+        masterLogs.forEach(d => {
+            const dt = d.timestamp ? d.timestamp.toDate() : new Date();
+            csv += `"${d.fullName}","${d.email}","${d.type}","${d.locationName}","${d.remarks || ''}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `iMerch_Attendance_${new Date().toLocaleDateString()}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
+    // WIPE ALL LOGS
+    document.getElementById('wipeLogsBtn').onclick = async () => {
+        if (!confirm("CRITICAL: This will permanently delete ALL attendance logs. Continue?")) return;
+        const batch = writeBatch(db);
+        const snap = await getDocs(collection(db, "attendance"));
+        snap.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        alert("All logs wiped successfully.");
+    };
+
+    // CREATE ACCOUNT WITH FULLNAME
+    document.getElementById('createAccBtn').onclick = async () => {
+        const fullName = document.getElementById('new-fullname').value;
+        const email = document.getElementById('new-email').value;
+        const pass = document.getElementById('new-pass').value;
+
+        if (!fullName || !email || !pass) return alert("Please fill all fields.");
+
+        try {
+            const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+            await addDoc(collection(db, "users"), {
+                uid: userCred.user.uid,
+                fullName: fullName,
+                email: email,
+                createdAt: serverTimestamp()
+            });
+            alert("Staff Account Created for " + fullName);
+            location.reload(); 
+        } catch (e) { alert(e.message); }
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+        const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
+        if (user && admins.includes(user.email)) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
-            setTimeout(initMap, 500); // Wait for view to unhide
+            await loadStaffData();
             loadAdminLogs();
+            setTimeout(initMap, 500);
         } else {
             document.getElementById('login-view').classList.remove('hidden');
             document.getElementById('admin-view').classList.add('hidden');
