@@ -13,9 +13,19 @@
         
         .input-group { position: relative; width: 100%; margin: 10px 0; }
         input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: white; box-sizing: border-box; font-size: 16px; }
-        .eye-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #8b949e; width: 24px; height: 24px; display: flex; align-items: center; }
         
-        #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 10px; }
+        #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 5px; }
+        
+        /* Logo & Animation Styling */
+        .logo-container { text-align: center; margin-bottom: 20px; }
+        .logo-container img { max-width: 160px; height: auto; }
+
+        .fade-in { animation: fadeIn 0.8s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; transition: 0.3s; }
         .btn-checkin { background: var(--green); }
@@ -37,7 +47,10 @@
 
 <div class="container">
     <div id="login-view">
-        <h2 style="text-align:center">iMerch Login</h2>
+        <div class="logo-container fade-in">
+            <img src="logo.jpg" alt="iMerch Logo">
+        </div>
+        <h2 style="text-align:center">Secure Attendance</h2>
         <div class="card">
             <form id="login-form" onsubmit="return false;">
                 <input type="email" id="login-email" placeholder="Email Address" required style="margin-bottom:10px;">
@@ -49,9 +62,13 @@
         </div>
     </div>
 
-    <div id="user-dashboard" class="hidden">
+    <div id="user-dashboard" class="hidden fade-in">
         <div id="live-clock">00:00:00</div>
-        <div id="admin-toggle-area" class="hidden"><button id="toggleAdminBtn" class="btn" style="background: var(--blue); font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button></div>
+        <div class="logo-container">
+            <img src="logo.jpg" alt="iMerch Logo">
+        </div>
+
+        <div id="admin-toggle-area" class="hidden"><button id="toggleAdminBtn" class="btn" style="background: var(--blue); font-size: 0.8em; padding: 8px; margin-bottom: 15px;">Admin: Manage Staff</button></div>
         
         <div id="attendance-section">
             <div class="card">
@@ -88,7 +105,6 @@
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // --- CONFIGURATION ---
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
@@ -96,7 +112,6 @@
         storageBucket: "imerch-checkins-out.firebasestorage.app"
     };
 
-    // UPDATE THESE TO YOUR ACTUAL OFFICE LOCATION
     const OFFICE_LAT = 14.65790; 
     const OFFICE_LNG = 121.01781;
     const MAX_DISTANCE_METERS = 100;
@@ -109,17 +124,13 @@
     let isMocked = false;
     let map, marker, officeCircle;
 
-    // Haversine Formula to calculate distance between two points in meters
     function getDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371e3; // Earth radius in meters
+        const R = 6371e3; 
         const φ1 = lat1 * Math.PI/180;
         const φ2 = lat2 * Math.PI/180;
         const Δφ = (lat2-lat1) * Math.PI/180;
         const Δλ = (lon2-lon1) * Math.PI/180;
-
-        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                  Math.cos(φ1) * Math.cos(φ2) *
-                  Math.sin(Δλ/2) * Math.sin(Δλ/2);
+        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         return R * c;
     }
@@ -128,16 +139,12 @@
 
     function startSecureGPS() {
         if (!navigator.geolocation) return alert("GPS not supported");
-
         navigator.geolocation.watchPosition((pos) => {
             isMocked = pos.mocked || (pos.coords && pos.coords.mocked) || false;
             userCoords = [pos.coords.latitude, pos.coords.longitude];
-            
             updateMap(userCoords);
-            
             const distance = getDistance(userCoords[0], userCoords[1], OFFICE_LAT, OFFICE_LNG);
             const isInside = distance <= MAX_DISTANCE_METERS;
-
             const btnIn = document.getElementById('checkinBtn');
             const btnOut = document.getElementById('checkoutBtn');
             const geoStatus = document.getElementById('geo-status');
@@ -172,15 +179,7 @@
         if (!map) {
             map = L.map('map').setView(coords, 17);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-            
-            // Add blue circle for office fence
-            officeCircle = L.circle([OFFICE_LAT, OFFICE_LNG], {
-                color: '#58a6ff',
-                fillColor: '#58a6ff',
-                fillOpacity: 0.2,
-                radius: MAX_DISTANCE_METERS
-            }).addTo(map);
-            
+            officeCircle = L.circle([OFFICE_LAT, OFFICE_LNG], { color: '#58a6ff', fillOpacity: 0.2, radius: MAX_DISTANCE_METERS }).addTo(map);
             marker = L.marker(coords).addTo(map);
         } else {
             map.setView(coords);
@@ -210,7 +209,10 @@
         if (user) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-dashboard').classList.remove('hidden');
-            if (user.email === "ron.sarmenta@gmail.com") document.getElementById('admin-toggle-area').classList.remove('hidden');
+            // Check if user is Ron Sarmenta
+            if (user.email === "ron.sarmenta@gmail.com" || user.email === "ronsarmenta.imerchmedia@gmail.com") {
+                document.getElementById('admin-toggle-area').classList.remove('hidden');
+            }
             startSecureGPS();
             loadHistory(user.uid);
         } else {
@@ -240,7 +242,6 @@
         });
     }
 
-    // Admin Toggle
     document.getElementById('toggleAdminBtn').onclick = () => { document.getElementById('attendance-section').classList.toggle('hidden'); document.getElementById('admin-view').classList.toggle('hidden'); };
     document.getElementById('backBtn').onclick = () => { document.getElementById('attendance-section').classList.remove('hidden'); document.getElementById('admin-view').classList.add('hidden'); };
     document.getElementById('createAccBtn').onclick = async () => {
