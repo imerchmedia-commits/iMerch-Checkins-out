@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>iMerch - Master Records</title>
+    <style>
+        body { font-family: sans-serif; background: #0d1117; color: white; padding: 40px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #161b22; }
+        th, td { padding: 12px; border: 1px solid #30363d; text-align: left; }
+        th { background: #21262d; color: #58a6ff; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; }
+        .in { background: #238636; }
+        .out { background: #da3633; }
+        .filter-bar { margin-bottom: 20px; display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <h2>iMerch Master Attendance Log</h2>
+    
+    <div class="filter-bar">
+        <input type="text" id="nameFilter" placeholder="Filter by Email..." onkeyup="filterTable()">
+        <button onclick="exportToCSV()" style="background: #238636; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Export to Excel (CSV)</button>
+    </div>
+
+    <table id="master-table">
+        <thead>
+            <tr>
+                <th>Date & Time</th>
+                <th>Employee Email</th>
+                <th>Status</th>
+                <th>Location</th>
+                <th>GPS Coords</th>
+            </tr>
+        </thead>
+        <tbody id="master-body">
+            </tbody>
+    </table>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
+        authDomain: "imerch-checkins-out.firebaseapp.com",
+        projectId: "imerch-checkins-out",
+        storageBucket: "imerch-checkins-out.appspot.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+        if (user && user.email === "ronsarmenta.imerchmedia@gmail.com") {
+            loadAllData();
+        } else {
+            alert("Unauthorized. Admin access only.");
+            window.location.href = "index.html";
+        }
+    });
+
+    function loadAllData() {
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snap) => {
+            const body = document.getElementById('master-body');
+            body.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                const time = d.timestamp ? d.timestamp.toDate().toLocaleString() : "...";
+                body.innerHTML += `
+                    <tr>
+                        <td>${time}</td>
+                        <td>${d.email}</td>
+                        <td><span class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</span></td>
+                        <td>${d.locationName}</td>
+                        <td>${d.coords ? d.coords.join(', ') : 'N/A'}</td>
+                    </tr>`;
+            });
+        });
+    }
+
+    // CSV Export Function
+    window.exportToCSV = () => {
+        let csv = "Date,Email,Status,Location,Coordinates\n";
+        document.querySelectorAll("#master-table tr").forEach(tr => {
+            const data = Array.from(tr.querySelectorAll("td")).map(td => td.innerText).join(",");
+            if(data) csv += data + "\n";
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `iMerch_Report_${new Date().toLocaleDateString()}.csv`;
+        a.click();
+    };
+</script>
+</body>
+</html>
