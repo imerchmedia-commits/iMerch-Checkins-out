@@ -54,14 +54,14 @@
                 </tr>
             </thead>
             <tbody id="payroll-body">
-                </tbody>
+            </tbody>
         </table>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -86,8 +86,26 @@
         }
     });
 
+    // --- ADMIN SELF-LOGGING FUNCTION ---
+    window.logAction = async (type) => {
+        const loc = document.getElementById('location-name')?.value || "Office Site (Admin)";
+        try {
+            await addDoc(collection(db, "attendance"), {
+                uid: auth.currentUser.uid,
+                email: auth.currentUser.email,
+                locationName: loc,
+                coords: [0, 0], // Optional: replace with actual coords if needed
+                type: type,
+                timestamp: serverTimestamp()
+            });
+            alert(type + " recorded for " + auth.currentUser.email);
+        } catch (e) { 
+            console.error("Firebase Error:", e);
+            alert("Sync Error: " + e.message); 
+        }
+    };
+
     function loadData() {
-        // Querying without orderBy for immediate results (no index required)
         const q = collection(db, "attendance"); 
         
         onSnapshot(q, (snap) => {
@@ -102,7 +120,6 @@
                 allLogs.push(doc.data());
             });
 
-            // Manual sort: Latest logs first
             allLogs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
             renderRows(allLogs);
         }, (error) => {
@@ -146,12 +163,10 @@
 
     window.exportToCSV = () => {
         let csv = "Employee Email,Date,Status,Time,Location\n";
-        
         if (allLogs.length === 0) {
             alert("No data found to export!");
             return;
         }
-
         allLogs.forEach(log => {
             const dateObj = log.timestamp ? log.timestamp.toDate() : new Date();
             const date = dateObj.toLocaleDateString();
@@ -159,7 +174,6 @@
             const loc = log.locationName || "N/A";
             csv += `"${log.email}","${date}","${log.type}","${time}","${loc}"\n`;
         });
-
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
