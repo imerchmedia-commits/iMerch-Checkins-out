@@ -121,9 +121,14 @@
         storageBucket: "imerch-checkins-out.firebasestorage.app"
     };
 
+    // Main App (Used for Admin Login)
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+
+    // Secondary App (Used ONLY for creating users without logging the Admin out)
+    const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+    const secondaryAuth = getAuth(secondaryApp);
 
     let masterLogs = [];
     let staffMap = {}; 
@@ -136,7 +141,6 @@
         markerGroup = L.layerGroup().addTo(map);
     }
 
-    // Function to zoom to a specific log entry on the map
     window.zoomToLocation = (lat, lng, name, type) => {
         if (!lat || !lng) return alert("No GPS coordinates for this log.");
         map.setView([lat, lng], 16);
@@ -198,13 +202,9 @@
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
-    // EXPORT TO EXCEL (CSV) with Geo Location
     document.getElementById('exportBtn').onclick = () => {
         if (masterLogs.length === 0) return alert("No logs to export.");
-        
-        // Arranged Header: Full Name, Email, Date, Time, Action, Location, Lat, Lng, Remarks
         let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
-        
         masterLogs.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
             const date = dt.toLocaleDateString().replace(/,/g, '');
@@ -212,10 +212,8 @@
             const lat = d.latitude || "";
             const lng = d.longitude || "";
             const remarks = (d.remarks || "").replace(/"/g, '""');
-
             csv += `"${d.fullName}","${d.email}","${date}","${time}","${d.type}","${d.locationName}","${lat}","${lng}","${remarks}"\n`;
         });
-
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -224,7 +222,6 @@
         a.click();
     };
 
-    // WIPE LOGS
     document.getElementById('wipeLogsBtn').onclick = async () => {
         if (!confirm("Delete all attendance logs permanently?")) return;
         const batch = writeBatch(db);
@@ -234,18 +231,49 @@
         alert("Logs cleared.");
     };
 
-    // CREATE ACCOUNT
+    // UPDATED CREATE ACCOUNT LOGIC
     document.getElementById('createAccBtn').onclick = async () => {
+        const btn = document.getElementById('createAccBtn');
         const fullName = document.getElementById('new-fullname').value;
         const email = document.getElementById('new-email').value;
         const pass = document.getElementById('new-pass').value;
+
         if (!fullName || !email || !pass) return alert("Missing info.");
+        
+        btn.disabled = true;
+        btn.innerText = "Creating...";
+
         try {
-            const userCred = await createUserWithEmailAndPassword(auth, email, pass);
-            await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName, email, createdAt: serverTimestamp() });
-            alert("Created!");
-            location.reload();
-        } catch (e) { alert(e.message); }
+            // Use secondaryAuth to create user so the main Admin session remains active
+            const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+            
+            // Add user details to Firestore
+            await addDoc(collection(db, "users"), { 
+                uid: userCred.user.uid, 
+                fullName, 
+                email, 
+                createdAt: serverTimestamp() 
+            });
+
+            // Log the secondary session out immediately so it doesn't conflict later
+            await signOut(secondaryAuth);
+
+            alert("Account Created Successfully! You are still logged in.");
+            
+            // Clear fields
+            document.getElementById('new-fullname').value = "";
+            document.getElementById('new-email').value = "";
+            document.getElementById('new-pass').value = "";
+            
+            // Refresh staff list locally
+            await loadStaffData();
+            
+        } catch (e) { 
+            alert("Error: " + e.message); 
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Create Account";
+        }
     };
 
     onAuthStateChanged(auth, async (user) => {
