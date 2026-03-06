@@ -4,20 +4,27 @@
     <meta charset="UTF-8">
     <title>iMerch - Master Admin & Export</title>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --blue: #58a6ff; --green: #238636; }
+        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --blue: #58a6ff; --green: #238636; --red: #da3633; --orange: #f0883e; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: white; padding: 20px; margin: 0; }
-        .container { max-width: 1000px; margin: auto; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; padding: 20px; }
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .search-container { position: relative; margin-bottom: 20px; }
-        .search-box { width: 100%; padding: 15px; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: white; font-size: 16px; outline: none; transition: 0.3s; }
+        .search-box { width: 100%; padding: 15px; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: white; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; }
         .search-box:focus { border-color: var(--blue); }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; position: relative; }
         table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
-        th, td { padding: 14px; border: 1px solid var(--border); text-align: left; font-size: 14px; }
+        th, td { padding: 14px; border: 1px solid var(--border); text-align: left; font-size: 13px; }
         th { background: #21262d; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
-        .btn-excel { background: var(--green); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn-excel:hover { opacity: 0.9; }
+        .btn-excel { background: var(--green); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; }
+        .btn-map { background: var(--orange); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; }
+        .btn-excel:hover, .btn-map:hover { opacity: 0.9; }
+        .btn-delete { background: var(--red); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-delete:hover { background: #f85149; }
+        .btn-bulk-delete { background: var(--red); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; display: none; }
+        .danger-link { color: #f85149; font-size: 11px; text-decoration: underline; cursor: pointer; position: absolute; bottom: 10px; right: 15px; }
+        .geo-link { color: var(--blue); text-decoration: none; font-family: monospace; }
+        .geo-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -25,20 +32,23 @@
 <div class="container">
     <div class="header-flex">
         <h2>iMerch Master Logs</h2>
-        <div style="font-size: 0.8em; color: #8b949e;">Logged in as Ron</div>
+        <div style="font-size: 0.8em; color: #8b949e;">Logged in as ron.sarmenta@gmail.com</div>
     </div>
 
     <div class="search-container">
-        <input type="text" id="adminSearch" class="search-box" placeholder="Search Employee Email, Date, or Location..." onkeyup="filterData()">
+        <input type="text" id="adminSearch" class="search-box" placeholder="Search Email, Date, Location, or Coordinates..." onkeyup="filterData()">
     </div>
 
     <div class="stats-grid">
         <div class="stat-card">
             <small style="color: #8b949e;">Entries Found</small>
             <div id="count-display" style="font-size: 22px; font-weight: bold;">0</div>
+            <span class="danger-link" onclick="deleteAllDatabaseLogs()">Wipe All Database Logs</span>
         </div>
-        <div class="stat-card" style="display: flex; align-items: center;">
-            <button class="btn-excel" onclick="exportToCSV()">Export Table to Excel (.csv)</button>
+        <div class="stat-card" style="display: flex; gap: 10px; align-items: center;">
+            <button class="btn-excel" onclick="exportToCSV()">Export to Excel</button>
+            <button class="btn-map" onclick="viewAllOnMap()">View Filtered on Map</button>
+            <button id="bulkDeleteBtn" class="btn-bulk-delete" onclick="deleteFilteredLogs()">Delete All Filtered</button>
         </div>
     </div>
 
@@ -46,29 +56,31 @@
         <table id="payroll-table">
             <thead>
                 <tr>
-                    <th>Employee Email</th>
+                    <th>Email</th>
                     <th>Date</th>
                     <th>Status</th>
-                    <th>Time</th>
-                    <th>Location</th>
+                    <th>Time (hh:mm:ss)</th>
+                    <th>Location Name</th>
+                    <th>Coordinates</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="payroll-body">
-                </tbody>
+            </tbody>
         </table>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
         projectId: "imerch-checkins-out",
-        storageBucket: "imerch-checkins-out.appspot.com"
+        storageBucket: "imerch-checkins-out.firebasestorage.app"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -76,47 +88,75 @@
     const auth = getAuth(app);
 
     let allLogs = [];
+    let currentFiltered = [];
 
     onAuthStateChanged(auth, (user) => {
-        // SECURITY CHECK: Only Ron can enter
-        if (user && user.email === "ronsarmenta.imerchmedia@gmail.com") {
+        if (user && user.email === "ron.sarmenta@gmail.com") {
             loadData();
         } else {
-            alert("Access Denied");
+            alert("Access Denied: Admin privileges required.");
             window.location.href = "index.html";
         }
     });
 
-    function loadData() {
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
-        
-        onSnapshot(q, (snap) => {
-            allLogs = [];
-            if (snap.empty) {
-                document.getElementById('payroll-body').innerHTML = "<tr><td colspan='5' style='text-align:center'>No logs found in database.</td></tr>";
-                document.getElementById('count-display').innerText = "0";
-                return;
+    window.deleteLog = async (docId) => {
+        if (confirm("Permanently delete this log entry?")) {
+            try { await deleteDoc(doc(db, "attendance", docId)); } 
+            catch (e) { alert("Error: " + e.message); }
+        }
+    };
+
+    window.deleteFilteredLogs = async () => {
+        const count = currentFiltered.length;
+        if (confirm(`Delete all ${count} logs currently visible?`)) {
+            const batch = writeBatch(db);
+            currentFiltered.forEach(log => { batch.delete(doc(db, "attendance", log.id)); });
+            await batch.commit();
+            document.getElementById('adminSearch').value = "";
+            alert(`Deleted ${count} entries.`);
+        }
+    };
+
+    window.deleteAllDatabaseLogs = async () => {
+        if (confirm("DANGER: Wipe EVERYTHING?")) {
+            if (confirm("FINAL WARNING: This cannot be undone.")) {
+                const querySnapshot = await getDocs(collection(db, "attendance"));
+                const batch = writeBatch(db);
+                querySnapshot.forEach((doc) => { batch.delete(doc.ref); });
+                await batch.commit();
+                alert("Database wiped.");
             }
+        }
+    };
 
-            snap.forEach(doc => {
-                allLogs.push(doc.data());
-            });
-
+    function loadData() {
+        onSnapshot(collection(db, "attendance"), (snap) => {
+            allLogs = [];
+            snap.forEach(d => allLogs.push({ ...d.data(), id: d.id }));
+            allLogs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+            currentFiltered = allLogs;
             renderRows(allLogs);
         });
     }
 
     window.renderRows = (data) => {
         const body = document.getElementById('payroll-body');
-        body.innerHTML = "";
+        body.innerHTML = data.length === 0 ? "<tr><td colspan='7' style='text-align:center'>No logs found.</td></tr>" : "";
         document.getElementById('count-display').innerText = data.length;
 
         data.forEach(log => {
             const dateObj = log.timestamp ? log.timestamp.toDate() : null;
             const dateStr = dateObj ? dateObj.toLocaleDateString() : "Pending...";
-            const timeStr = dateObj ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "---";
+            
+            // Updated to show seconds
+            const timeStr = dateObj ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : "---";
+            
             const typeClass = log.type === "Check In" ? "color: #3fb950" : "color: #f85149";
             
+            const lat = log.latitude || log.lat;
+            const lon = log.longitude || log.lng;
+            const geoDisplay = (lat && lon) ? `<a class="geo-link" href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank">${lat.toFixed(4)}, ${lon.toFixed(4)}</a>` : 'No Geo Data';
+
             body.innerHTML += `
                 <tr>
                     <td>${log.email}</td>
@@ -124,6 +164,8 @@
                     <td style="${typeClass}; font-weight:bold;">${log.type}</td>
                     <td>${timeStr}</td>
                     <td>${log.locationName || 'N/A'}</td>
+                    <td>${geoDisplay}</td>
+                    <td><button class="btn-delete" onclick="deleteLog('${log.id}')">Delete</button></td>
                 </tr>
             `;
         });
@@ -131,37 +173,51 @@
 
     window.filterData = () => {
         const term = document.getElementById('adminSearch').value.toLowerCase();
-        const filtered = allLogs.filter(l => 
+        currentFiltered = allLogs.filter(l => 
             l.email.toLowerCase().includes(term) || 
-            l.type.toLowerCase().includes(term) ||
-            (l.locationName && l.locationName.toLowerCase().includes(term))
+            (l.locationName && l.locationName.toLowerCase().includes(term)) ||
+            (l.latitude && l.latitude.toString().includes(term))
         );
-        renderRows(filtered);
+        const bulkBtn = document.getElementById('bulkDeleteBtn');
+        const normalBtns = document.querySelectorAll('.btn-excel, .btn-map');
+        
+        if (term.length > 0 && currentFiltered.length > 0) {
+            bulkBtn.style.display = "block";
+            normalBtns.forEach(b => b.style.display = "none");
+        } else {
+            bulkBtn.style.display = "none";
+            normalBtns.forEach(b => b.style.display = "block");
+        }
+        renderRows(currentFiltered);
+    };
+
+    window.viewAllOnMap = () => {
+        const coords = currentFiltered
+            .filter(l => (l.latitude || l.lat) && (l.longitude || l.lng))
+            .map(l => `${l.latitude || l.lat},${l.longitude || l.lng}`);
+
+        if (coords.length === 0) {
+            alert("No GPS data found in current results.");
+            return;
+        }
+        const mapUrl = `https://www.google.com/maps/search/${coords.join('/')}`;
+        window.open(mapUrl, '_blank');
     };
 
     window.exportToCSV = () => {
-        let csv = "Employee Email,Date,Status,Time,Location\n";
-        const rows = document.querySelectorAll("#payroll-body tr");
-        
-        if (rows.length === 0 || allLogs.length === 0) {
-            alert("No data found to export!");
-            return;
-        }
-
-        rows.forEach(tr => {
-            const cols = Array.from(tr.querySelectorAll("td")).map(td => `"${td.innerText.trim()}"`);
-            csv += cols.join(",") + "\n";
+        let csv = "Email,Date,Status,Time,Location,Lat,Lon\n";
+        currentFiltered.forEach(log => {
+            const dateObj = log.timestamp ? log.timestamp.toDate() : new Date();
+            // Export also updated to include seconds
+            const timeWithSeconds = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            csv += `"${log.email}","${dateObj.toLocaleDateString()}","${log.type}","${timeWithSeconds}","${log.locationName || 'N/A'}","${log.latitude || ''}","${log.longitude || ''}"\n`;
         });
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
+        const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `iMerch_Logs_${new Date().toLocaleDateString()}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `iMerch_Geo_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
     };
 </script>
 </body>
