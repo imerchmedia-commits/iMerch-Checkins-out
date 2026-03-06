@@ -59,7 +59,7 @@
                     <th>Email</th>
                     <th>Date</th>
                     <th>Status</th>
-                    <th>Time</th>
+                    <th>Time (hh:mm:ss)</th>
                     <th>Location Name</th>
                     <th>Coordinates</th>
                     <th>Actions</th>
@@ -147,12 +147,15 @@
         data.forEach(log => {
             const dateObj = log.timestamp ? log.timestamp.toDate() : null;
             const dateStr = dateObj ? dateObj.toLocaleDateString() : "Pending...";
-            const timeStr = dateObj ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "---";
+            
+            // Updated to show seconds
+            const timeStr = dateObj ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : "---";
+            
             const typeClass = log.type === "Check In" ? "color: #3fb950" : "color: #f85149";
             
             const lat = log.latitude || log.lat;
             const lon = log.longitude || log.lng;
-            const geoDisplay = (lat && lon) ? `<a class="geo-link" href="https://www.google.com/maps?q=${lat},${lon}" target="_blank">${lat.toFixed(4)}, ${lon.toFixed(4)}</a>` : 'No Geo Data';
+            const geoDisplay = (lat && lon) ? `<a class="geo-link" href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank">${lat.toFixed(4)}, ${lon.toFixed(4)}</a>` : 'No Geo Data';
 
             body.innerHTML += `
                 <tr>
@@ -188,7 +191,6 @@
         renderRows(currentFiltered);
     };
 
-    // --- MAP VIEW LOGIC ---
     window.viewAllOnMap = () => {
         const coords = currentFiltered
             .filter(l => (l.latitude || l.lat) && (l.longitude || l.lng))
@@ -198,8 +200,6 @@
             alert("No GPS data found in current results.");
             return;
         }
-
-        // Use Search Query for multiple markers
         const mapUrl = `https://www.google.com/maps/search/${coords.join('/')}`;
         window.open(mapUrl, '_blank');
     };
@@ -208,7 +208,9 @@
         let csv = "Email,Date,Status,Time,Location,Lat,Lon\n";
         currentFiltered.forEach(log => {
             const dateObj = log.timestamp ? log.timestamp.toDate() : new Date();
-            csv += `"${log.email}","${dateObj.toLocaleDateString()}","${log.type}","${dateObj.toLocaleTimeString()}","${log.locationName || 'N/A'}","${log.latitude || ''}","${log.longitude || ''}"\n`;
+            // Export also updated to include seconds
+            const timeWithSeconds = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            csv += `"${log.email}","${dateObj.toLocaleDateString()}","${log.type}","${timeWithSeconds}","${log.locationName || 'N/A'}","${log.latitude || ''}","${log.longitude || ''}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
