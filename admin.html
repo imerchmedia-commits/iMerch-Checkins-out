@@ -2,79 +2,173 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>iMerch - Master Admin & Export</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iMerch - Secure Attendance</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --blue: #58a6ff; --green: #238636; --red: #da3633; --orange: #f0883e; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: white; padding: 20px; margin: 0; }
-        .container { max-width: 1100px; margin: auto; padding: 20px; }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .search-container { position: relative; margin-bottom: 20px; }
-        .search-box { width: 100%; padding: 15px; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: white; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; }
-        .search-box:focus { border-color: var(--blue); }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; position: relative; }
-        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
-        th, td { padding: 14px; border: 1px solid var(--border); text-align: left; font-size: 13px; }
-        th { background: #21262d; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
-        .btn-excel { background: var(--green); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; }
-        .btn-map { background: var(--orange); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; }
-        .btn-excel:hover, .btn-map:hover { opacity: 0.9; }
-        .btn-delete { background: var(--red); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .btn-delete:hover { background: #f85149; }
-        .btn-bulk-delete { background: var(--red); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; display: none; }
-        .danger-link { color: #f85149; font-size: 11px; text-decoration: underline; cursor: pointer; position: absolute; bottom: 10px; right: 15px; }
-        .geo-link { color: var(--blue); text-decoration: none; font-family: monospace; }
-        .geo-link:hover { text-decoration: underline; }
+        /* Theme Variables */
+        :root { 
+            --bg: #0d1117; 
+            --card: #161b22; 
+            --border: #30363d; 
+            --text: #ffffff;
+            --green: #238636; 
+            --red: #da3633; 
+            --blue: #58a6ff; 
+        }
+
+        [data-theme="light"] {
+            --bg: #f6f8fa;
+            --card: #ffffff;
+            --border: #d0d7de;
+            --text: #1f2328;
+        }
+
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); padding: 15px; margin: 0; overflow-x: hidden; transition: background 0.3s, color 0.3s; }
+        .container { max-width: 450px; margin: auto; }
+        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        #theme-toggle {
+            position: fixed; top: 15px; left: 15px; width: 40px; height: 40px;
+            border-radius: 50%; background: var(--card); border: 1px solid var(--border);
+            color: var(--text); cursor: pointer; display: flex; align-items: center;
+            justify-content: center; z-index: 10000; font-size: 1.2em; transition: 0.3s;
+        }
+
+        .logo-container { text-align: center; margin-bottom: 20px; }
+        .logo-container img { max-width: 160px; height: auto; }
+        
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--blue); border-radius: 50%; animation: spin 1s linear infinite; margin-top: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #live-clock { font-size: 2.2em; font-weight: bold; text-align: center; color: var(--blue); margin-bottom: 5px; }
+        #map { height: 180px; border-radius: 10px; margin: 15px 0; border: 1px solid var(--border); }
+        input { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+        
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 16px; transition: 0.3s; }
+        .btn-checkin { background: var(--green); }
+        .btn-checkout { background: var(--red); }
+        .btn:disabled { background: #30363d; cursor: not-allowed; opacity: 0.6; }
+        
+        .history-item { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
+        .history-row { display: flex; justify-content: space-between; width: 100%; }
+        .history-remarks { font-style: italic; color: #8b949e; margin-top: 4px; font-size: 0.85em; }
+        
+        .hidden { display: none !important; }
+        .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
+        .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
+        .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
+        
+        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-decoration: underline; text-align: center; display: block; padding: 20px; }
+        .warning { color: #f85149; font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; background: rgba(218, 54, 51, 0.1); padding: 8px; border-radius: 5px; }
+        .status-text { color: var(--blue); font-size: 0.85em; text-align: center; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
+<button id="theme-toggle" title="Toggle Dark/Light Mode">🌙</button>
+
+<div id="loading-overlay" class="hidden">
+    <div class="logo-container">
+        <img src="logo1.png" alt="iMerch Logo">
+    </div>
+    <div class="spinner"></div>
+    <p style="margin-top: 15px; color: #8b949e;">Verifying Real-time GPS...</p>
+</div>
+
 <div class="container">
-    <div class="header-flex">
-        <h2>iMerch Master Logs</h2>
-        <div style="font-size: 0.8em; color: #8b949e;">Logged in as ron.sarmenta@gmail.com</div>
-    </div>
-
-    <div class="search-container">
-        <input type="text" id="adminSearch" class="search-box" placeholder="Search Email, Date, Location, or Coordinates..." onkeyup="filterData()">
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card">
-            <small style="color: #8b949e;">Entries Found</small>
-            <div id="count-display" style="font-size: 22px; font-weight: bold;">0</div>
-            <span class="danger-link" onclick="deleteAllDatabaseLogs()">Wipe All Database Logs</span>
+    <div id="login-view" class="fade-in">
+        <div class="logo-container">
+            <img src="logo1.png" alt="iMerch Logo">
         </div>
-        <div class="stat-card" style="display: flex; gap: 10px; align-items: center;">
-            <button class="btn-excel" onclick="exportToCSV()">Export to Excel</button>
-            <button class="btn-map" onclick="viewAllOnMap()">View Filtered on Map</button>
-            <button id="bulkDeleteBtn" class="btn-bulk-delete" onclick="deleteFilteredLogs()">Delete All Filtered</button>
+        <h2 style="text-align:center">Secure Attendance</h2>
+        <div class="card">
+            <form id="login-form" onsubmit="return false;">
+                <input type="email" id="login-email" placeholder="Email Address" required>
+                <input type="password" id="login-pass" placeholder="Password" required>
+                <button type="submit" class="btn" style="background: var(--blue); margin-top:10px;">Login</button>
+            </form>
         </div>
     </div>
 
-    <div style="overflow-x: auto; border-radius: 10px; border: 1px solid var(--border);">
-        <table id="payroll-table">
-            <thead>
-                <tr>
-                    <th>Email</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Time (hh:mm:ss)</th>
-                    <th>Location Name</th>
-                    <th>Coordinates</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="payroll-body">
-            </tbody>
-        </table>
+    <div id="user-dashboard" class="hidden fade-in">
+        <div id="live-clock">00:00:00</div>
+        <div class="logo-container">
+            <img src="logo1.png" alt="iMerch Logo">
+        </div>
+
+        <div id="admin-toggle-area" class="hidden">
+            <button id="toggleAdminBtn" class="btn" style="background: var(--blue); font-size: 0.8em; padding: 8px;">Admin: Manage Staff</button>
+        </div>
+        
+        <div id="attendance-section">
+            <div class="card">
+                <input type="text" id="location-name" placeholder="Current Location (e.g. Field Office)">
+                <div id="map"></div>
+                <div id="coords" style="text-align:center; font-size: 0.8em; color: #8b949e; margin-bottom: 5px;">Checking GPS...</div>
+                
+                <div id="geo-status" class="status-text">GPS Active</div>
+                <div id="spoof-warning" class="warning hidden">⚠️ Fake GPS Detected. Access Denied.</div>
+                
+                <button class="btn btn-checkin" id="checkinBtn" disabled>SYNCING GPS...</button>
+                <button class="btn btn-checkout" id="checkoutBtn" disabled>SYNCING GPS...</button>
+                
+                <input type="text" id="attendance-remarks" placeholder="Add remarks (Optional)" style="margin-top: 10px;">
+            </div>
+            <h3>My Recent Activity</h3>
+            <div id="history-list"></div>
+        </div>
+
+        <div id="admin-view" class="hidden">
+            <h3>Admin: Add Employee</h3>
+            <div class="card">
+                <input type="email" id="new-email" placeholder="New Employee Email">
+                <input type="password" id="new-pass" placeholder="Temp Password">
+                <button class="btn" style="background: var(--blue); margin-top:10px;" id="createAccBtn">Create Account</button>
+                <button class="btn" style="background:#30363d" id="backBtn">Back</button>
+            </div>
+        </div>
+        <span class="logout-link" id="logoutLink">Logout Account</span>
     </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const toggleBtn = document.getElementById('theme-toggle');
+    const body = document.body;
+    
+    if(localStorage.getItem('theme') === 'light') {
+        body.setAttribute('data-theme', 'light');
+        toggleBtn.innerText = '☀️';
+    }
+
+    toggleBtn.onclick = () => {
+        if(body.getAttribute('data-theme') === 'light') {
+            body.removeAttribute('data-theme');
+            toggleBtn.innerText = '🌙';
+            localStorage.setItem('theme', 'dark');
+        } else {
+            body.setAttribute('data-theme', 'light');
+            toggleBtn.innerText = '☀️';
+            localStorage.setItem('theme', 'light');
+        }
+    };
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -87,137 +181,134 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    let allLogs = [];
-    let currentFiltered = [];
+    let userCoords = null;
+    let isMocked = false;
+    let map, marker;
+
+    setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+
+    function startSecureGPS() {
+        document.getElementById('loading-overlay').classList.remove('hidden');
+        if (!navigator.geolocation) return alert("GPS not supported");
+
+        navigator.geolocation.watchPosition((pos) => {
+            isMocked = pos.mocked || (pos.coords && pos.coords.mocked) || false;
+            userCoords = [pos.coords.latitude, pos.coords.longitude];
+            updateMap(userCoords);
+            
+            const btnIn = document.getElementById('checkinBtn');
+            const btnOut = document.getElementById('checkoutBtn');
+            const geoStatus = document.getElementById('geo-status');
+            const spoofWarning = document.getElementById('spoof-warning');
+
+            document.getElementById('loading-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('loading-overlay').classList.add('hidden'), 500);
+
+            document.getElementById('coords').innerText = `Verified GPS: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
+
+            if (isMocked) {
+                btnIn.disabled = btnOut.disabled = true;
+                spoofWarning.classList.remove('hidden');
+                geoStatus.classList.add('hidden');
+            } else {
+                // Geofence logic removed - Buttons are now enabled anywhere
+                btnIn.disabled = btnOut.disabled = false;
+                btnIn.innerText = "CHECK IN NOW";
+                btnOut.innerText = "CHECK OUT NOW";
+                geoStatus.innerText = "✅ GPS Ready";
+                geoStatus.classList.remove('hidden');
+                spoofWarning.classList.add('hidden');
+            }
+        }, (err) => {
+            console.error("GPS Error: ", err);
+        }, { 
+            enableHighAccuracy: true, 
+            maximumAge: 0, 
+            timeout: 10000 
+        });
+    }
+
+    function updateMap(coords) {
+        if (!map) {
+            map = L.map('map').setView(coords, 17);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            marker = L.marker(coords).addTo(map);
+        } else {
+            map.setView(coords);
+            marker.setLatLng(coords);
+        }
+    }
+
+    async function logAction(type) {
+        if (!userCoords || isMocked) return;
+        const loc = document.getElementById('location-name').value || "Mobile Location";
+        const remarks = document.getElementById('attendance-remarks').value || "";
+        try {
+            await addDoc(collection(db, "attendance"), {
+                uid: auth.currentUser.uid,
+                email: auth.currentUser.email,
+                locationName: loc,
+                latitude: userCoords[0],
+                longitude: userCoords[1],
+                type: type,
+                remarks: remarks,
+                timestamp: serverTimestamp(),
+                isMocked: isMocked
+            });
+            document.getElementById('attendance-remarks').value = ""; 
+            alert(`${type} Recorded!`);
+        } catch (e) { alert(e.message); }
+    }
 
     onAuthStateChanged(auth, (user) => {
-        if (user && user.email === "ron.sarmenta@gmail.com") {
-            loadData();
+        if (user) {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('user-dashboard').classList.remove('hidden');
+            if (user.email === "ron.sarmenta@gmail.com" || user.email === "ronsarmenta.imerchmedia@gmail.com") {
+                document.getElementById('admin-toggle-area').classList.remove('hidden');
+            }
+            startSecureGPS();
+            loadHistory(user.uid);
         } else {
-            alert("Access Denied: Admin privileges required.");
-            window.location.href = "index.html";
+            document.getElementById('login-view').classList.remove('hidden');
+            document.getElementById('user-dashboard').classList.add('hidden');
         }
     });
 
-    window.deleteLog = async (docId) => {
-        if (confirm("Permanently delete this log entry?")) {
-            try { await deleteDoc(doc(db, "attendance", docId)); } 
-            catch (e) { alert("Error: " + e.message); }
-        }
+    document.getElementById('checkinBtn').onclick = () => logAction('Check In');
+    document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
+    document.getElementById('login-form').onsubmit = async () => {
+        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
+        catch (e) { alert(e.message); }
     };
+    document.getElementById('logoutLink').onclick = () => signOut(auth);
 
-    window.deleteFilteredLogs = async () => {
-        const count = currentFiltered.length;
-        if (confirm(`Delete all ${count} logs currently visible?`)) {
-            const batch = writeBatch(db);
-            currentFiltered.forEach(log => { batch.delete(doc(db, "attendance", log.id)); });
-            await batch.commit();
-            document.getElementById('adminSearch').value = "";
-            alert(`Deleted ${count} entries.`);
-        }
-    };
-
-    window.deleteAllDatabaseLogs = async () => {
-        if (confirm("DANGER: Wipe EVERYTHING?")) {
-            if (confirm("FINAL WARNING: This cannot be undone.")) {
-                const querySnapshot = await getDocs(collection(db, "attendance"));
-                const batch = writeBatch(db);
-                querySnapshot.forEach((doc) => { batch.delete(doc.ref); });
-                await batch.commit();
-                alert("Database wiped.");
-            }
-        }
-    };
-
-    function loadData() {
-        onSnapshot(collection(db, "attendance"), (snap) => {
-            allLogs = [];
-            snap.forEach(d => allLogs.push({ ...d.data(), id: d.id }));
-            allLogs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-            currentFiltered = allLogs;
-            renderRows(allLogs);
+    function loadHistory(uid) {
+        const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snap) => {
+            const list = document.getElementById('history-list');
+            list.innerHTML = "";
+            snap.forEach(doc => {
+                const d = doc.data();
+                const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : "...";
+                const remarksHtml = d.remarks ? `<div class="history-remarks">Note: ${d.remarks}</div>` : "";
+                
+                list.innerHTML += `
+                    <div class="history-item">
+                        <div class="history-row">
+                            <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
+                            <span>${time}</span>
+                        </div>
+                        ${remarksHtml}
+                    </div>`;
+            });
         });
     }
 
-    window.renderRows = (data) => {
-        const body = document.getElementById('payroll-body');
-        body.innerHTML = data.length === 0 ? "<tr><td colspan='7' style='text-align:center'>No logs found.</td></tr>" : "";
-        document.getElementById('count-display').innerText = data.length;
-
-        data.forEach(log => {
-            const dateObj = log.timestamp ? log.timestamp.toDate() : null;
-            const dateStr = dateObj ? dateObj.toLocaleDateString() : "Pending...";
-            
-            // Updated to show seconds
-            const timeStr = dateObj ? dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : "---";
-            
-            const typeClass = log.type === "Check In" ? "color: #3fb950" : "color: #f85149";
-            
-            const lat = log.latitude || log.lat;
-            const lon = log.longitude || log.lng;
-            const geoDisplay = (lat && lon) ? `<a class="geo-link" href="https://www.google.com/maps/search/?api=1&query=${lat},${lon}" target="_blank">${lat.toFixed(4)}, ${lon.toFixed(4)}</a>` : 'No Geo Data';
-
-            body.innerHTML += `
-                <tr>
-                    <td>${log.email}</td>
-                    <td>${dateStr}</td>
-                    <td style="${typeClass}; font-weight:bold;">${log.type}</td>
-                    <td>${timeStr}</td>
-                    <td>${log.locationName || 'N/A'}</td>
-                    <td>${geoDisplay}</td>
-                    <td><button class="btn-delete" onclick="deleteLog('${log.id}')">Delete</button></td>
-                </tr>
-            `;
-        });
-    }
-
-    window.filterData = () => {
-        const term = document.getElementById('adminSearch').value.toLowerCase();
-        currentFiltered = allLogs.filter(l => 
-            l.email.toLowerCase().includes(term) || 
-            (l.locationName && l.locationName.toLowerCase().includes(term)) ||
-            (l.latitude && l.latitude.toString().includes(term))
-        );
-        const bulkBtn = document.getElementById('bulkDeleteBtn');
-        const normalBtns = document.querySelectorAll('.btn-excel, .btn-map');
-        
-        if (term.length > 0 && currentFiltered.length > 0) {
-            bulkBtn.style.display = "block";
-            normalBtns.forEach(b => b.style.display = "none");
-        } else {
-            bulkBtn.style.display = "none";
-            normalBtns.forEach(b => b.style.display = "block");
-        }
-        renderRows(currentFiltered);
-    };
-
-    window.viewAllOnMap = () => {
-        const coords = currentFiltered
-            .filter(l => (l.latitude || l.lat) && (l.longitude || l.lng))
-            .map(l => `${l.latitude || l.lat},${l.longitude || l.lng}`);
-
-        if (coords.length === 0) {
-            alert("No GPS data found in current results.");
-            return;
-        }
-        const mapUrl = `https://www.google.com/maps/search/${coords.join('/')}`;
-        window.open(mapUrl, '_blank');
-    };
-
-    window.exportToCSV = () => {
-        let csv = "Email,Date,Status,Time,Location,Lat,Lon\n";
-        currentFiltered.forEach(log => {
-            const dateObj = log.timestamp ? log.timestamp.toDate() : new Date();
-            // Export also updated to include seconds
-            const timeWithSeconds = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-            csv += `"${log.email}","${dateObj.toLocaleDateString()}","${log.type}","${timeWithSeconds}","${log.locationName || 'N/A'}","${log.latitude || ''}","${log.longitude || ''}"\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `iMerch_Geo_Logs_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
+    document.getElementById('toggleAdminBtn').onclick = () => { document.getElementById('attendance-section').classList.toggle('hidden'); document.getElementById('admin-view').classList.toggle('hidden'); };
+    document.getElementById('backBtn').onclick = () => { document.getElementById('attendance-section').classList.remove('hidden'); document.getElementById('admin-view').classList.add('hidden'); };
+    document.getElementById('createAccBtn').onclick = async () => {
+        try { await createUserWithEmailAndPassword(auth, document.getElementById('new-email').value, document.getElementById('new-pass').value); alert("Employee Created!"); } catch (e) { alert(e.message); }
     };
 </script>
 </body>
