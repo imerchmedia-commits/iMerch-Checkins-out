@@ -12,7 +12,7 @@
         .search-box { width: 100%; padding: 15px; background: var(--card); border: 2px solid var(--border); border-radius: 10px; color: white; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; }
         .search-box:focus { border-color: var(--blue); }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; position: relative; }
         table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 10px; overflow: hidden; }
         th, td { padding: 14px; border: 1px solid var(--border); text-align: left; font-size: 14px; }
         th { background: #21262d; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
@@ -21,6 +21,8 @@
         .btn-delete { background: var(--red); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .btn-delete:hover { background: #f85149; }
         .btn-bulk-delete { background: var(--red); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; display: none; }
+        .danger-link { color: #f85149; font-size: 11px; text-decoration: underline; cursor: pointer; position: absolute; bottom: 10px; right: 15px; }
+        .danger-link:hover { color: white; }
     </style>
 </head>
 <body>
@@ -39,6 +41,7 @@
         <div class="stat-card">
             <small style="color: #8b949e;">Entries Found</small>
             <div id="count-display" style="font-size: 22px; font-weight: bold;">0</div>
+            <span class="danger-link" onclick="deleteAllDatabaseLogs()">Wipe All Database Logs</span>
         </div>
         <div class="stat-card" style="display: flex; gap: 10px;">
             <button class="btn-excel" onclick="exportToCSV()">Export to Excel</button>
@@ -66,7 +69,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, deleteDoc, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -83,7 +86,6 @@
     let allLogs = [];
     let currentFiltered = [];
 
-    // --- ADMIN ACCESS CHECK ---
     onAuthStateChanged(auth, (user) => {
         if (user && user.email === "ron.sarmenta@gmail.com") {
             loadData();
@@ -93,31 +95,40 @@
         }
     });
 
-    // --- DELETE INDIVIDUAL LOG ---
     window.deleteLog = async (docId) => {
         if (confirm("Permanently delete this log entry?")) {
-            try {
-                await deleteDoc(doc(db, "attendance", docId));
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+            try { await deleteDoc(doc(db, "attendance", docId)); } 
+            catch (e) { alert("Error: " + e.message); }
         }
     };
 
-    // --- BULK DELETE FILTERED LOGS ---
+    // --- DELETE ONLY WHAT IS SEARCHED ---
     window.deleteFilteredLogs = async () => {
         const count = currentFiltered.length;
-        if (confirm(`Are you sure you want to delete all ${count} visible logs? This cannot be undone.`)) {
+        if (confirm(`Delete all ${count} logs currently visible in search?`)) {
             const batch = writeBatch(db);
-            currentFiltered.forEach(log => {
-                batch.delete(doc(db, "attendance", log.id));
-            });
+            currentFiltered.forEach(log => { batch.delete(doc(db, "attendance", log.id)); });
             try {
                 await batch.commit();
-                document.getElementById('adminSearch').value = ""; // Clear search
-                alert(`Successfully deleted ${count} entries.`);
-            } catch (e) {
-                alert("Bulk Delete Error: " + e.message);
+                document.getElementById('adminSearch').value = "";
+                alert(`Deleted ${count} filtered entries.`);
+            } catch (e) { alert("Error: " + e.message); }
+        }
+    };
+
+    // --- WIPE EVERYTHING IN THE ENTIRE COLLECTION ---
+    window.deleteAllDatabaseLogs = async () => {
+        const firstCheck = confirm("DANGER: This will delete EVERY log in the iMerch database, even those not shown on screen. Continue?");
+        if (firstCheck) {
+            const secondCheck = confirm("FINAL WARNING: This cannot be undone. Are you absolutely sure?");
+            if (secondCheck) {
+                try {
+                    const querySnapshot = await getDocs(collection(db, "attendance"));
+                    const batch = writeBatch(db);
+                    querySnapshot.forEach((doc) => { batch.delete(doc.ref); });
+                    await batch.commit();
+                    alert("Database wiped successfully.");
+                } catch (e) { alert("Wipe Error: " + e.message); }
             }
         }
     };
@@ -162,11 +173,8 @@
             l.email.toLowerCase().includes(term) || 
             (l.locationName && l.locationName.toLowerCase().includes(term))
         );
-        
-        // Show bulk delete button only when searching/filtering
         const bulkBtn = document.getElementById('bulkDeleteBtn');
         bulkBtn.style.display = (term.length > 0 && currentFiltered.length > 0) ? "block" : "none";
-        
         renderRows(currentFiltered);
     };
 
