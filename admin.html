@@ -43,6 +43,7 @@
         #theme-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; z-index: 10000; font-size: 1.5em; }
         .logo-container { text-align: center; margin-bottom: 20px; }
         .logo-container img { max-width: 150px; }
+        #real-time-clock { font-size: 0.9em; font-weight: bold; color: var(--blue); margin-bottom: 5px; }
         .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-align: center; display: block; padding: 20px; font-weight: bold; }
         h3 { border-left: 4px solid var(--blue); padding-left: 10px; margin-top: 0; margin-bottom: 15px; }
 
@@ -71,7 +72,10 @@
     </div>
 
     <div id="admin-view" class="hidden">
-        <div class="logo-container"><img src="logo1.png"></div>
+        <div class="logo-container">
+            <div id="real-time-clock">Loading Time...</div>
+            <img src="logo1.png">
+        </div>
         
         <div class="stats-container">
             <div class="stat-box">
@@ -167,6 +171,17 @@
     let staffMap = {}; 
     let map, markerGroup;
 
+    // --- REALTIME CLOCK ---
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('real-time-clock').innerText = now.toLocaleString('en-US', { 
+            weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', 
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
+        });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
     const themeBtn = document.getElementById('theme-toggle');
     themeBtn.onclick = () => {
         const body = document.body;
@@ -184,6 +199,36 @@
         map = L.map('map').setView([14.5995, 120.9842], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         markerGroup = L.layerGroup().addTo(map);
+    }
+
+    // --- PLOT ALL LATEST LOCATIONS ---
+    function plotAllStaff() {
+        if (!markerGroup) return;
+        markerGroup.clearLayers();
+        
+        const latestPositions = {};
+        // MasterLogs is sorted by desc timestamp, so the first occurrence of a UID is their latest
+        masterLogs.forEach(log => {
+            if (!latestPositions[log.uid] && log.latitude && log.longitude) {
+                latestPositions[log.uid] = log;
+            }
+        });
+
+        Object.values(latestPositions).forEach(pos => {
+            const name = staffMap[pos.uid]?.name || pos.fullName || "Unknown";
+            const color = pos.type === 'Check In' ? '#3fb950' : '#f85149';
+            
+            const marker = L.circleMarker([pos.latitude, pos.longitude], {
+                radius: 8,
+                fillColor: color,
+                color: "#fff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(markerGroup);
+            
+            marker.bindPopup(`<b>${name}</b><br>${pos.type}<br><small>${pos.timestamp?.toDate().toLocaleString()}</small>`);
+        });
     }
 
     window.zoomToLocation = (lat, lng, name, type) => {
@@ -253,10 +298,10 @@
             });
             updateStats(masterLogs);
             applyFilters();
+            plotAllStaff(); // Re-plot on new data
         });
     }
 
-    // --- UPDATED APPLY FILTERS ---
     function applyFilters() {
         const nameVal = document.getElementById('filter-name').value.toLowerCase().trim();
         const dateFromInput = document.getElementById('filter-date-from').value;
@@ -293,7 +338,6 @@
         renderAdminLogs(filteredLogs);
     }
 
-    // Link the filter button properly
     document.getElementById('applyFiltersBtn').onclick = (e) => {
         e.preventDefault();
         applyFilters();
