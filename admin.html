@@ -154,7 +154,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch, addDoc, serverTimestamp, updateDoc, doc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch, addDoc, serverTimestamp, updateDoc, doc, setDoc, Timestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -175,7 +175,6 @@
     let staffMap = {}; 
     let map, markerGroup;
 
-    // --- REALTIME CLOCK ---
     function updateClock() {
         const now = new Date();
         document.getElementById('real-time-clock').innerText = now.toLocaleString('en-US', { 
@@ -238,6 +237,14 @@
         catch (e) { alert("Error updating status: " + e.message); }
     };
 
+    window.deleteStaff = async (docId, name) => {
+        if (!confirm(`PERMANENT DELETE: Are you sure you want to remove ${name} from the database? This cannot be undone.`)) return;
+        try { 
+            await deleteDoc(doc(db, "users", docId)); 
+            alert(`${name} deleted.`);
+        } catch (e) { alert("Delete failed: " + e.message); }
+    };
+
     function loadStaffData() {
         onSnapshot(collection(db, "users"), (snap) => {
             const directory = document.getElementById('staff-directory-list');
@@ -250,13 +257,22 @@
                 staffMap[data.uid] = { name: data.fullName, status: status }; 
                 directory.innerHTML += `
                     <div class="staff-item">
-                        <div style="overflow: hidden;">
+                        <div style="flex: 1; overflow: hidden;">
                             <div style="font-size: 0.85em; font-weight: bold; white-space: nowrap; text-overflow: ellipsis;">${data.fullName}</div>
                             <div style="font-size: 0.7em; color: ${isActive ? '#3fb950' : '#f85149'};">
                                 <span class="status-dot" style="background: ${isActive ? '#3fb950' : '#f85149'};"></span>${status}
                             </div>
                         </div>
-                        <button class="geo-btn" style="background: ${isActive ? 'var(--red)' : 'var(--green)'};" onclick="toggleStaffStatus('${docId}', '${status}')">${isActive ? 'Deactivate' : 'Activate'}</button>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="geo-btn" style="background: ${isActive ? 'var(--red)' : 'var(--green)'}; padding: 4px 6px;" 
+                                onclick="toggleStaffStatus('${docId}', '${status}')">
+                                ${isActive ? 'Off' : 'On'}
+                            </button>
+                            <button class="geo-btn" style="background: #444; padding: 4px 6px;" 
+                                onclick="deleteStaff('${docId}', '${data.fullName}')">
+                                🗑️
+                            </button>
+                        </div>
                     </div>`;
             });
             updateMasterLogNames();
@@ -338,7 +354,7 @@
         const uniqueEmails = new Set(data.map(d => d.email).filter(e => e));
         const todayStr = new Date().toLocaleDateString();
         const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === todayStr).map(d => d.email));
-        document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length || uniqueEmails.size;
+        document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length;
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
@@ -427,79 +443,48 @@
         finally { btn.disabled = false; btn.innerText = "📦 Backup JSON"; }
     };
 
-    // --- NEW IMPORT FEATURE LOGIC ---
     const importBtn = document.getElementById('importBtn');
     const importFile = document.getElementById('importFile');
-
     importBtn.onclick = () => importFile.click();
 
     importFile.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
                 const data = JSON.parse(event.target.result);
-                
-                // Security/Format Check
-                if (data.system !== "iMerch Secured Attendance") {
-                    return alert("Invalid file format. Please use an official iMerch backup file.");
-                }
-
-                const confirmRestore = confirm(`Warning: This will restore ${data.staffDirectory.length} staff and ${data.attendanceLogs.length} logs. Duplicates will be overwritten if IDs match. Proceed?`);
-                if (!confirmRestore) return;
-
+                if (data.system !== "iMerch Secured Attendance") return alert("Invalid format.");
+                if (!confirm(`Restore ${data.staffDirectory.length} staff?`)) return;
                 importBtn.disabled = true;
-                importBtn.innerText = "Restoring...";
-
-                // Helper to chunk data into batches (Firestore limit is 500 per batch)
                 const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
-
-                // 1. Restore Staff Directory
                 const userChunks = chunk(data.staffDirectory, 400);
                 for (const batchData of userChunks) {
                     const batch = writeBatch(db);
                     batchData.forEach(item => {
                         const { id, ...cleanData } = item;
-                        // Handle serverTimestamp conversion back to Firestore objects
-                        if (cleanData.createdAt && cleanData.createdAt.seconds) {
-                            cleanData.createdAt = new Timestamp(cleanData.createdAt.seconds, cleanData.createdAt.nanoseconds);
-                        }
+                        if (cleanData.createdAt?.seconds) cleanData.createdAt = new Timestamp(cleanData.createdAt.seconds, cleanData.createdAt.nanoseconds);
                         batch.set(doc(db, "users", id), cleanData, { merge: true });
                     });
                     await batch.commit();
                 }
-
-                // 2. Restore Attendance Logs
                 const logChunks = chunk(data.attendanceLogs, 400);
                 for (const batchData of logChunks) {
                     const batch = writeBatch(db);
                     batchData.forEach(item => {
                         const { id, ...cleanData } = item;
-                        if (cleanData.timestamp && cleanData.timestamp.seconds) {
-                            cleanData.timestamp = new Timestamp(cleanData.timestamp.seconds, cleanData.timestamp.nanoseconds);
-                        }
+                        if (cleanData.timestamp?.seconds) cleanData.timestamp = new Timestamp(cleanData.timestamp.seconds, cleanData.timestamp.nanoseconds);
                         batch.set(doc(db, "attendance", id), cleanData, { merge: true });
                     });
                     await batch.commit();
                 }
-
-                alert("System successfully restored from backup!");
-                window.location.reload(); // Refresh to sync everything
-
-            } catch (err) {
-                console.error(err);
-                alert("Error importing file: " + err.message);
-            } finally {
-                importBtn.disabled = false;
-                importBtn.innerText = "📥 Restore Backup";
-                importFile.value = ""; // Clear input
-            }
+                alert("Restore complete!");
+                window.location.reload();
+            } catch (err) { alert("Import failed."); } 
+            finally { importBtn.disabled = false; importFile.value = ""; }
         };
         reader.readAsText(file);
     };
-
 </script>
 </body>
 </html>
