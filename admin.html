@@ -27,8 +27,9 @@
         .admin-grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
         @media (max-width: 850px) { .admin-grid { grid-template-columns: 1fr; } }
 
-        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 14px; transition: 0.3s; }
+        
         .history-item { padding: 12px 0; border-bottom: 1px solid var(--border); transition: 0.2s; }
         .history-item:hover { background: rgba(255,255,255,0.03); }
         .history-row { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -44,9 +45,12 @@
         .logo-container img { max-width: 150px; }
         .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-align: center; display: block; padding: 20px; font-weight: bold; }
         h3 { border-left: 4px solid var(--blue); padding-left: 10px; margin-top: 0; margin-bottom: 15px; }
+
+        .filter-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
+        @media (max-width: 600px) { .filter-row { grid-template-columns: 1fr; } }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
 <button id="theme-toggle">🌙</button>
 
@@ -93,11 +97,31 @@
                 <h3>Live Staff Map</h3>
                 <div class="card" style="padding: 10px;">
                     <div id="map"></div>
-                    <input type="text" id="admin-search" placeholder="🔍 Search by name or email...">
+                    
+                    <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.9em; color: var(--blue);">Search & Filter Logs</h4>
+                        <div class="filter-row">
+                            <div>
+                                <label style="font-size: 0.7em; color: #8b949e;">Name/Email</label>
+                                <input type="text" id="filter-name" placeholder="Search staff...">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.7em; color: #8b949e;">Date From</label>
+                                <input type="date" id="filter-date-from">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.7em; color: #8b949e;">Date To</label>
+                                <input type="date" id="filter-date-to">
+                            </div>
+                            <button id="applyFiltersBtn" class="btn" style="background: var(--blue); margin-bottom: 10px; height: 45px;">🔍 Filter</button>
+                        </div>
+                    </div>
+
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button id="exportBtn" class="btn" style="background: #238636; flex: 1;">📊 Export to Excel</button>
+                        <button id="exportBtn" class="btn" style="background: #238636; flex: 1;">📊 Export Search to Excel</button>
                         <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1;">🗑️ Wipe All Logs</button>
                     </div>
+
                     <div id="admin-master-list" style="max-height: 400px; overflow-y: auto;">
                         <p style="text-align: center; color: #8b949e;">Loading activity...</p>
                     </div>
@@ -124,13 +148,26 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-
     const secondaryApp = initializeApp(firebaseConfig, "Secondary");
     const secondaryAuth = getAuth(secondaryApp);
 
     let masterLogs = [];
+    let filteredLogs = [];
     let staffMap = {}; 
     let map, markerGroup;
+
+    // --- THEME TOGGLE LOGIC ---
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.onclick = () => {
+        const body = document.body;
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.setAttribute('data-theme', 'light');
+            themeBtn.innerText = "☀️";
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            themeBtn.innerText = "🌙";
+        }
+    };
 
     function initMap() {
         if (map) return;
@@ -140,20 +177,14 @@
     }
 
     window.zoomToLocation = (lat, lng, name, type) => {
-        if (!lat || !lng) return alert("No GPS coordinates for this log.");
+        if (!lat || !lng) return alert("No GPS coordinates.");
         map.setView([lat, lng], 16);
-        L.popup()
-            .setLatLng([lat, lng])
-            .setContent(`<b>${name}</b><br>${type}`)
-            .openOn(map);
+        L.popup().setLatLng([lat, lng]).setContent(`<b>${name}</b><br>${type}`).openOn(map);
     };
 
     async function loadStaffData() {
         const snap = await getDocs(collection(db, "users"));
-        snap.forEach(doc => {
-            const data = doc.data();
-            staffMap[data.uid] = data.fullName;
-        });
+        snap.forEach(doc => { staffMap[doc.data().uid] = doc.data().fullName; });
     }
 
     function loadAdminLogs() {
@@ -162,22 +193,49 @@
             masterLogs = [];
             snap.forEach(doc => {
                 const data = doc.data();
-                data.id = doc.id;
                 data.fullName = staffMap[data.uid] || "Unknown Staff";
                 masterLogs.push(data);
             });
             updateStats(masterLogs);
-            renderAdminLogs(masterLogs);
+            applyFilters(); // Initial render
         });
     }
 
+    function applyFilters() {
+        const nameVal = document.getElementById('filter-name').value.toLowerCase();
+        const dateFrom = document.getElementById('filter-date-from').value;
+        const dateTo = document.getElementById('filter-date-to').value;
+
+        filteredLogs = masterLogs.filter(log => {
+            const matchesName = log.fullName.toLowerCase().includes(nameVal) || (log.email && log.email.toLowerCase().includes(nameVal));
+            
+            let matchesDate = true;
+            if (log.timestamp) {
+                const logDate = log.timestamp.toDate();
+                logDate.setHours(0,0,0,0);
+                if (dateFrom) {
+                    const from = new Date(dateFrom); from.setHours(0,0,0,0);
+                    if (logDate < from) matchesDate = false;
+                }
+                if (dateTo) {
+                    const to = new Date(dateTo); to.setHours(0,0,0,0);
+                    if (logDate > to) matchesDate = false;
+                }
+            }
+            return matchesName && matchesDate;
+        });
+
+        renderAdminLogs(filteredLogs);
+    }
+
+    document.getElementById('applyFiltersBtn').onclick = applyFilters;
+
     function renderAdminLogs(data) {
         const list = document.getElementById('admin-master-list');
-        list.innerHTML = "";
+        list.innerHTML = data.length ? "" : '<p style="text-align:center;color:#8b949e;">No matching logs found.</p>';
         data.forEach(d => {
             const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString() : "Pending";
             const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
-            
             list.innerHTML += `
                 <div class="history-item">
                     <div class="history-row">
@@ -200,78 +258,37 @@
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
-    // --- UPDATED EXPORT LOGIC ---
     document.getElementById('exportBtn').onclick = () => {
-        if (masterLogs.length === 0) return alert("No logs to export.");
-
-        // Sort by Full Name (Alphabetical) then Timestamp (Newest first)
-        const sortedLogs = [...masterLogs].sort((a, b) => {
-            const nameA = (a.fullName || "").toLowerCase();
-            const nameB = (b.fullName || "").toLowerCase();
-            if (nameA < nameB) return -1;
-            if (nameA > nameB) return 1;
-            return (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0);
-        });
-
+        if (filteredLogs.length === 0) return alert("No results to export.");
         let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
-        sortedLogs.forEach(d => {
+        filteredLogs.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            const date = dt.toLocaleDateString().replace(/,/g, '');
-            const time = dt.toLocaleTimeString().replace(/,/g, '');
-            const lat = d.latitude || "";
-            const lng = d.longitude || "";
-            const remarks = (d.remarks || "").replace(/"/g, '""');
-            csv += `"${d.fullName}","${d.email}","${date}","${time}","${d.type}","${d.locationName}","${lat}","${lng}","${remarks}"\n`;
+            csv += `"${d.fullName}","${d.email}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName}","${d.latitude}","${d.longitude}","${(d.remarks || "")}"\n`;
         });
-
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = `iMerch_Grouped_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+        a.href = URL.createObjectURL(blob);
+        a.download = `iMerch_Filtered_Logs_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
 
-    document.getElementById('wipeLogsBtn').onclick = async () => {
-        if (!confirm("Delete all attendance logs permanently?")) return;
-        const batch = writeBatch(db);
-        const snap = await getDocs(collection(db, "attendance"));
-        snap.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-        alert("Logs cleared.");
-    };
-
+    // Account creation and logout logic remains the same
     document.getElementById('createAccBtn').onclick = async () => {
         const btn = document.getElementById('createAccBtn');
         const fullName = document.getElementById('new-fullname').value;
         const email = document.getElementById('new-email').value;
         const pass = document.getElementById('new-pass').value;
-
         if (!fullName || !email || !pass) return alert("Missing info.");
-        
-        btn.disabled = true;
-        btn.innerText = "Creating...";
-
+        btn.disabled = true; btn.innerText = "Creating...";
         try {
             const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-            await addDoc(collection(db, "users"), { 
-                uid: userCred.user.uid, 
-                fullName, 
-                email, 
-                createdAt: serverTimestamp() 
-            });
+            await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName, email, createdAt: serverTimestamp() });
             await signOut(secondaryAuth);
-            alert("Account Created Successfully! You are still logged in.");
-            document.getElementById('new-fullname').value = "";
-            document.getElementById('new-email').value = "";
-            document.getElementById('new-pass').value = "";
+            alert("Account Created!");
+            document.getElementById('new-fullname').value = ""; document.getElementById('new-email').value = ""; document.getElementById('new-pass').value = "";
             await loadStaffData();
-        } catch (e) { 
-            alert("Error: " + e.message); 
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "Create Account";
-        }
+        } catch (e) { alert("Error: " + e.message); } 
+        finally { btn.disabled = false; btn.innerText = "Create Account"; }
     };
 
     onAuthStateChanged(auth, async (user) => {
@@ -295,6 +312,14 @@
     };
 
     document.getElementById('logoutLink').onclick = () => signOut(auth);
+    document.getElementById('wipeLogsBtn').onclick = async () => {
+        if (!confirm("Wipe all logs?")) return;
+        const batch = writeBatch(db);
+        const snap = await getDocs(collection(db, "attendance"));
+        snap.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        alert("Logs cleared.");
+    };
 </script>
 </body>
 </html>
