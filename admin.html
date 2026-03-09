@@ -231,7 +231,6 @@
                         </button>
                     </div>`;
             });
-            // Re-map master names and refresh list whenever staff data changes
             updateMasterLogNames();
             applyFilters();
         });
@@ -239,7 +238,7 @@
 
     function updateMasterLogNames() {
         masterLogs.forEach(log => {
-            log.fullName = staffMap[log.uid]?.name || "Unknown Staff";
+            log.fullName = staffMap[log.uid]?.name || log.fullName || "Unknown Staff";
         });
     }
 
@@ -249,7 +248,8 @@
             masterLogs = [];
             snap.forEach(doc => {
                 const data = doc.data();
-                data.fullName = staffMap[data.uid]?.name || "Unknown Staff";
+                // Link the name from staffMap if it exists
+                data.fullName = staffMap[data.uid]?.name || data.fullName || "Unknown Staff";
                 masterLogs.push(data);
             });
             updateStats(masterLogs);
@@ -261,22 +261,27 @@
 
     function applyFilters() {
         const nameVal = document.getElementById('filter-name').value.toLowerCase();
-        const dateFrom = document.getElementById('filter-date-from').value;
-        const dateTo = document.getElementById('filter-date-to').value;
+        const dateFromInput = document.getElementById('filter-date-from').value;
+        const dateToInput = document.getElementById('filter-date-to').value;
 
         filteredLogs = masterLogs.filter(log => {
-            const matchesName = (log.fullName || "").toLowerCase().includes(nameVal) || (log.email && log.email.toLowerCase().includes(nameVal));
+            // Updated name check to look at current staffMap or existing log data
+            const currentName = staffMap[log.uid]?.name || log.fullName || "";
+            const matchesName = currentName.toLowerCase().includes(nameVal) || (log.email && log.email.toLowerCase().includes(nameVal));
             
             let matchesDate = true;
             if (log.timestamp) {
                 const logDate = log.timestamp.toDate();
                 logDate.setHours(0,0,0,0);
-                if (dateFrom) {
-                    const from = new Date(dateFrom); from.setHours(0,0,0,0);
+                
+                if (dateFromInput) {
+                    const from = new Date(dateFromInput); 
+                    from.setHours(0,0,0,0);
                     if (logDate < from) matchesDate = false;
                 }
-                if (dateTo) {
-                    const to = new Date(dateTo); to.setHours(0,0,0,0);
+                if (dateToInput) {
+                    const to = new Date(dateToInput); 
+                    to.setHours(0,0,0,0);
                     if (logDate > to) matchesDate = false;
                 }
             }
@@ -294,33 +299,35 @@
         data.forEach(d => {
             const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString() : "Pending";
             const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
+            const displayName = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
+            
             list.innerHTML += `
                 <div class="history-item">
                     <div class="history-row">
-                        <span style="font-weight:bold; color:var(--blue);">${d.fullName}</span>
+                        <span style="font-weight:bold; color:var(--blue);">${displayName}</span>
                         <span style="font-size:0.75em; color:#8b949e;">${date} ${time}</span>
                     </div>
                     <div class="history-row" style="margin-top:4px; align-items: center;">
-                        <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
-                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${d.fullName}', '${d.type}')">📍 Show</button>
+                        <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName || 'N/A'}</span>
+                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${displayName}', '${d.type}')">📍 Show</button>
                     </div>
                 </div>`;
         });
     }
 
     function updateStats(data) {
-        const uniqueEmails = new Set(data.map(d => d.email));
-        const today = new Date().toLocaleDateString();
-        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === today).map(d => d.email));
-        document.getElementById('total-staff-count').innerText = uniqueEmails.size;
+        const uniqueEmails = new Set(data.map(d => d.email).filter(e => e));
+        const todayStr = new Date().toLocaleDateString();
+        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === todayStr).map(d => d.email));
+        document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length || uniqueEmails.size;
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
     const handleExport = () => {
         if (filteredLogs.length === 0) return alert("No results to export.");
         const sortedLogs = [...filteredLogs].sort((a, b) => {
-            const nameA = (a.fullName || "").toLowerCase();
-            const nameB = (b.fullName || "").toLowerCase();
+            const nameA = (staffMap[a.uid]?.name || a.fullName || "").toLowerCase();
+            const nameB = (staffMap[b.uid]?.name || b.fullName || "").toLowerCase();
             if (nameA < nameB) return -1;
             if (nameA > nameB) return 1;
             return (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0);
@@ -331,7 +338,8 @@
             const dateStr = dt.toLocaleDateString().replace(/,/g, '');
             const timeStr = dt.toLocaleTimeString().replace(/,/g, '');
             const remarks = (d.remarks || "").replace(/"/g, '""');
-            csv += `"${d.fullName}","${d.email}","${dateStr}","${timeStr}","${d.type}","${d.locationName}","${d.latitude}","${d.longitude}","${remarks}"\n`;
+            const name = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
+            csv += `"${name}","${d.email || ''}","${dateStr}","${timeStr}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${remarks}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const a = document.createElement('a');
