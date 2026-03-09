@@ -132,6 +132,7 @@
 
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                         <button id="exportBtn" class="btn export-trigger" style="background: #238636; flex: 1;">📊 Export Search to Excel</button>
+                        <button id="archiveBtn" class="btn" style="background: #fb8c00; flex: 1;">📦 Archive & Backup System</button>
                         <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1;">🗑️ Wipe All Logs</button>
                     </div>
 
@@ -454,6 +455,50 @@
         snap.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
         alert("Logs cleared.");
+    };
+
+    // --- ARCHIVE & BACKUP LOGIC ---
+    document.getElementById('archiveBtn').onclick = async () => {
+        const btn = document.getElementById('archiveBtn');
+        if (!confirm("This will download a complete backup of all Staff and Attendance logs. Proceed?")) return;
+        
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+        
+        try {
+            // 1. Get all Attendance Logs
+            const attendanceSnap = await getDocs(collection(db, "attendance"));
+            const attendanceData = attendanceSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // 2. Get all Staff Directory
+            const userSnap = await getDocs(collection(db, "users"));
+            const userData = userSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Create the backup package
+            const backup = {
+                backupDate: new Date().toISOString(),
+                system: "iMerch Secured Attendance",
+                staffDirectory: userData,
+                attendanceLogs: attendanceData
+            };
+            
+            // Convert to JSON and download
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `iMerch_FULL_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            alert("System backup successful! Keep this file safe.");
+        } catch (e) {
+            alert("Backup failed: " + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "📦 Archive & Backup System";
+        }
     };
 </script>
 </body>
