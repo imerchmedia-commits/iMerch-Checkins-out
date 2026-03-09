@@ -225,6 +225,7 @@
     let userStatus = "Active"; 
     let map, marker;
     let lastActionType = null; 
+    let lastLocationName = "";
 
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
@@ -284,19 +285,22 @@
         }
     }
 
-    // Toggle Button Logic: One Check-In, One Check-Out per sequence
     function updateButtonUI() {
         const btnIn = document.getElementById('checkinBtn');
         const btnOut = document.getElementById('checkoutBtn');
+        const locInput = document.getElementById('location-name');
 
         if (lastActionType === "Check In") {
             btnIn.classList.add('hidden');
             btnOut.classList.remove('hidden');
             btnOut.disabled = false;
+            // Feature: Auto-fill last check-in location for easy checkout
+            if (lastLocationName) locInput.value = lastLocationName;
         } else {
             btnIn.classList.remove('hidden');
             btnOut.classList.add('hidden');
             btnIn.disabled = false;
+            locInput.value = ""; // Reset for new check-in
         }
     }
 
@@ -373,12 +377,13 @@
             list.innerHTML = "";
             
             if (!snap.empty) {
-                // Determine next button based on most recent activity
                 const latestDoc = snap.docs[0].data();
                 lastActionType = latestDoc.type;
+                lastLocationName = latestDoc.locationName || ""; // Save name for auto-fill
                 updateButtonUI();
             } else {
                 lastActionType = null;
+                lastLocationName = "";
                 updateButtonUI();
             }
 
