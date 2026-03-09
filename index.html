@@ -176,7 +176,6 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // --- THEME TOGGLE LOGIC ---
     const toggleBtn = document.getElementById('theme-toggle');
     const body = document.body;
     const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -212,7 +211,6 @@
         rememberCheck.checked = true;
     }
 
-    // --- FORGOT PASSWORD ---
     document.getElementById('forgot-pass').onclick = async () => {
         const email = emailField.value;
         if (!email) { alert("Please enter email address."); return; }
@@ -230,7 +228,6 @@
 
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-    // Secure Status Verification
     async function checkUserStatus(uid) {
         const q = query(collection(db, "users"), where("uid", "==", uid));
         onSnapshot(q, (snap) => {
@@ -287,7 +284,7 @@
         }
     }
 
-    // Toggle Button Visibility/State based on last action
+    // Toggle Button Logic: One Check-In, One Check-Out per sequence
     function updateButtonUI() {
         const btnIn = document.getElementById('checkinBtn');
         const btnOut = document.getElementById('checkoutBtn');
@@ -376,7 +373,7 @@
             list.innerHTML = "";
             
             if (!snap.empty) {
-                // Get the very first (most recent) entry to determine the button state
+                // Determine next button based on most recent activity
                 const latestDoc = snap.docs[0].data();
                 lastActionType = latestDoc.type;
                 updateButtonUI();
