@@ -183,13 +183,17 @@
         L.popup().setLatLng([lat, lng]).setContent(`<b>${name}</b><br>${type}`).openOn(map);
     };
 
-    // UPDATED: Real-time Staff Name Syncing
+    // UPDATED: Real-time Staff Name & Status Syncing
     function loadStaffData() {
         onSnapshot(collection(db, "users"), (snap) => {
             snap.forEach(doc => { 
-                staffMap[doc.data().uid] = doc.data().fullName; 
+                const data = doc.data();
+                // Store both name and status
+                staffMap[data.uid] = { 
+                    name: data.fullName, 
+                    status: data.status || "Active" 
+                }; 
             });
-            // Re-apply filters to update names in the UI list if they were missing
             if (masterLogs.length > 0) applyFilters();
         });
     }
@@ -200,7 +204,8 @@
             masterLogs = [];
             snap.forEach(doc => {
                 const data = doc.data();
-                data.fullName = staffMap[data.uid] || "Unknown Staff";
+                // Fetch name from our new nested object structure
+                data.fullName = staffMap[data.uid]?.name || "Unknown Staff";
                 masterLogs.push(data);
             });
             updateStats(masterLogs);
@@ -306,11 +311,17 @@
         btn.disabled = true; btn.innerText = "Creating...";
         try {
             const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-            await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName, email, createdAt: serverTimestamp() });
+            // UPDATED: Now includes status: "Active"
+            await addDoc(collection(db, "users"), { 
+                uid: userCred.user.uid, 
+                fullName, 
+                email, 
+                status: "Active",
+                createdAt: serverTimestamp() 
+            });
             await signOut(secondaryAuth);
             alert("Account Created!");
             document.getElementById('new-fullname').value = ""; document.getElementById('new-email').value = ""; document.getElementById('new-pass').value = "";
-            // Removal of await here because loadStaffData is now a listener
             loadStaffData();
         } catch (e) { alert("Error: " + e.message); } 
         finally { btn.disabled = false; btn.innerText = "Create Account"; }
@@ -321,10 +332,7 @@
         if (user && admins.includes(user.email)) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
-            
-            // Replaced await call with standard listener call
             loadStaffData();
-            
             loadAdminLogs();
             setTimeout(initMap, 500);
         } else {
