@@ -217,6 +217,21 @@
         rememberCheck.checked = true;
     }
 
+    // --- FORGOT PASSWORD ---
+    document.getElementById('forgot-pass').onclick = async () => {
+        const email = emailField.value;
+        if (!email) {
+            alert("Please enter your email address first to reset your password.");
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert("Password reset email sent! Check your inbox.");
+        } catch (error) {
+            alert("Error: " + error.message);
+        }
+    };
+
     let userCoords = null;
     let isMocked = false;
     let map, marker;
