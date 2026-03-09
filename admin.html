@@ -248,7 +248,6 @@
             masterLogs = [];
             snap.forEach(doc => {
                 const data = doc.data();
-                // Link the name from staffMap if it exists
                 data.fullName = staffMap[data.uid]?.name || data.fullName || "Unknown Staff";
                 masterLogs.push(data);
             });
@@ -257,41 +256,50 @@
         });
     }
 
-    document.getElementById('filter-name').addEventListener('input', applyFilters);
-
+    // --- UPDATED APPLY FILTERS ---
     function applyFilters() {
-        const nameVal = document.getElementById('filter-name').value.toLowerCase();
+        const nameVal = document.getElementById('filter-name').value.toLowerCase().trim();
         const dateFromInput = document.getElementById('filter-date-from').value;
         const dateToInput = document.getElementById('filter-date-to').value;
 
         filteredLogs = masterLogs.filter(log => {
-            // Updated name check to look at current staffMap or existing log data
-            const currentName = staffMap[log.uid]?.name || log.fullName || "";
-            const matchesName = currentName.toLowerCase().includes(nameVal) || (log.email && log.email.toLowerCase().includes(nameVal));
+            const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
+            const currentEmail = (log.email || "").toLowerCase();
+            const matchesName = currentName.includes(nameVal) || currentEmail.includes(nameVal);
             
             let matchesDate = true;
-            if (log.timestamp) {
+            if (log.timestamp && log.timestamp.toDate) {
                 const logDate = log.timestamp.toDate();
-                logDate.setHours(0,0,0,0);
+                const logDateOnly = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
                 
                 if (dateFromInput) {
-                    const from = new Date(dateFromInput); 
-                    from.setHours(0,0,0,0);
-                    if (logDate < from) matchesDate = false;
+                    const from = new Date(dateFromInput);
+                    const fromTime = new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime();
+                    if (logDateOnly < fromTime) matchesDate = false;
                 }
+                
                 if (dateToInput) {
-                    const to = new Date(dateToInput); 
-                    to.setHours(0,0,0,0);
-                    if (logDate > to) matchesDate = false;
+                    const to = new Date(dateToInput);
+                    const toTime = new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime();
+                    if (logDateOnly > toTime) matchesDate = false;
                 }
+            } else if (dateFromInput || dateToInput) {
+                matchesDate = false;
             }
+
             return matchesName && matchesDate;
         });
 
         renderAdminLogs(filteredLogs);
     }
 
-    document.getElementById('applyFiltersBtn').onclick = applyFilters;
+    // Link the filter button properly
+    document.getElementById('applyFiltersBtn').onclick = (e) => {
+        e.preventDefault();
+        applyFilters();
+    };
+
+    document.getElementById('filter-name').addEventListener('input', applyFilters);
 
     function renderAdminLogs(data) {
         const list = document.getElementById('admin-master-list');
