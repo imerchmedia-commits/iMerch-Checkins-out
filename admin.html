@@ -118,13 +118,15 @@
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button id="exportBtn" class="btn" style="background: #238636; flex: 1;">📊 Export Search to Excel</button>
+                        <button id="exportBtn" class="btn export-trigger" style="background: #238636; flex: 1;">📊 Export Search to Excel</button>
                         <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1;">🗑️ Wipe All Logs</button>
                     </div>
 
                     <div id="admin-master-list" style="max-height: 400px; overflow-y: auto;">
                         <p style="text-align: center; color: #8b949e;">Loading activity...</p>
                     </div>
+                    
+                    <button id="exportBtnBottom" class="btn export-trigger" style="background: #238636; margin-top: 15px;">📊 Download Results Below</button>
                 </div>
             </div>
         </div>
@@ -156,7 +158,6 @@
     let staffMap = {}; 
     let map, markerGroup;
 
-    // --- THEME TOGGLE LOGIC ---
     const themeBtn = document.getElementById('theme-toggle');
     themeBtn.onclick = () => {
         const body = document.body;
@@ -197,9 +198,12 @@
                 masterLogs.push(data);
             });
             updateStats(masterLogs);
-            applyFilters(); // Initial render
+            applyFilters();
         });
     }
+
+    // LIVE SEARCH: Updates instantly as you type or delete
+    document.getElementById('filter-name').addEventListener('input', applyFilters);
 
     function applyFilters() {
         const nameVal = document.getElementById('filter-name').value.toLowerCase();
@@ -258,21 +262,37 @@
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
-    document.getElementById('exportBtn').onclick = () => {
+    // EXPORT LOGIC: Restored sorting per username then timestamp
+    const handleExport = () => {
         if (filteredLogs.length === 0) return alert("No results to export.");
-        let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
-        filteredLogs.forEach(d => {
-            const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            csv += `"${d.fullName}","${d.email}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName}","${d.latitude}","${d.longitude}","${(d.remarks || "")}"\n`;
+
+        const sortedLogs = [...filteredLogs].sort((a, b) => {
+            const nameA = (a.fullName || "").toLowerCase();
+            const nameB = (b.fullName || "").toLowerCase();
+            if (nameA < nameB) return -1;
+            if (nameA > nameB) return 1;
+            return (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0);
         });
+
+        let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
+        sortedLogs.forEach(d => {
+            const dt = d.timestamp ? d.timestamp.toDate() : new Date();
+            const dateStr = dt.toLocaleDateString().replace(/,/g, '');
+            const timeStr = dt.toLocaleTimeString().replace(/,/g, '');
+            const remarks = (d.remarks || "").replace(/"/g, '""');
+            csv += `"${d.fullName}","${d.email}","${dateStr}","${timeStr}","${d.type}","${d.locationName}","${d.latitude}","${d.longitude}","${remarks}"\n`;
+        });
+
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `iMerch_Filtered_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `iMerch_Grouped_Logs_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
 
-    // Account creation and logout logic remains the same
+    document.getElementById('exportBtn').onclick = handleExport;
+    document.getElementById('exportBtnBottom').onclick = handleExport;
+
     document.getElementById('createAccBtn').onclick = async () => {
         const btn = document.getElementById('createAccBtn');
         const fullName = document.getElementById('new-fullname').value;
