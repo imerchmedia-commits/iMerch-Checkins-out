@@ -130,10 +130,13 @@
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button id="exportBtn" class="btn export-trigger" style="background: #238636; flex: 1;">📊 Export Search to Excel</button>
-                        <button id="archiveBtn" class="btn" style="background: #fb8c00; flex: 1;">📦 Archive & Backup System</button>
-                        <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1;">🗑️ Wipe All Logs</button>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <button id="exportBtn" class="btn export-trigger" style="background: #238636; flex: 1; min-width: 120px;">📊 Export Excel</button>
+                        <button id="archiveBtn" class="btn" style="background: #fb8c00; flex: 1; min-width: 120px;">📦 Backup JSON</button>
+                        <button id="importBtn" class="btn" style="background: #8250df; flex: 1; min-width: 120px;">📥 Restore Backup</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                        
+                        <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1; min-width: 120px;">🗑️ Wipe Logs</button>
                     </div>
 
                     <div id="admin-master-list" style="max-height: 400px; overflow-y: auto;">
@@ -151,7 +154,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch, addDoc, serverTimestamp, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch, addDoc, serverTimestamp, updateDoc, doc, setDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -202,13 +205,10 @@
         markerGroup = L.layerGroup().addTo(map);
     }
 
-    // --- PLOT ALL LATEST LOCATIONS ---
     function plotAllStaff() {
         if (!markerGroup) return;
         markerGroup.clearLayers();
-        
         const latestPositions = {};
-        // MasterLogs is sorted by desc timestamp, so the first occurrence of a UID is their latest
         masterLogs.forEach(log => {
             if (!latestPositions[log.uid] && log.latitude && log.longitude) {
                 latestPositions[log.uid] = log;
@@ -218,16 +218,9 @@
         Object.values(latestPositions).forEach(pos => {
             const name = staffMap[pos.uid]?.name || pos.fullName || "Unknown";
             const color = pos.type === 'Check In' ? '#3fb950' : '#f85149';
-            
             const marker = L.circleMarker([pos.latitude, pos.longitude], {
-                radius: 8,
-                fillColor: color,
-                color: "#fff",
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
+                radius: 8, fillColor: color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8
             }).addTo(markerGroup);
-            
             marker.bindPopup(`<b>${name}</b><br>${pos.type}<br><small>${pos.timestamp?.toDate().toLocaleString()}</small>`);
         });
     }
@@ -241,27 +234,20 @@
     window.toggleStaffStatus = async (docId, currentStatus) => {
         const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
         if (!confirm(`Set this staff member to ${newStatus}?`)) return;
-        try {
-            const staffRef = doc(db, "users", docId);
-            await updateDoc(staffRef, { status: newStatus });
-        } catch (e) {
-            alert("Error updating status: " + e.message);
-        }
+        try { await updateDoc(doc(db, "users", docId), { status: newStatus }); } 
+        catch (e) { alert("Error updating status: " + e.message); }
     };
 
     function loadStaffData() {
         onSnapshot(collection(db, "users"), (snap) => {
             const directory = document.getElementById('staff-directory-list');
             directory.innerHTML = ""; 
-            
             snap.forEach(documentDoc => { 
                 const data = documentDoc.data();
                 const docId = documentDoc.id;
                 const status = data.status || "Active";
                 const isActive = status === "Active";
-
                 staffMap[data.uid] = { name: data.fullName, status: status }; 
-
                 directory.innerHTML += `
                     <div class="staff-item">
                         <div style="overflow: hidden;">
@@ -270,11 +256,7 @@
                                 <span class="status-dot" style="background: ${isActive ? '#3fb950' : '#f85149'};"></span>${status}
                             </div>
                         </div>
-                        <button class="geo-btn" 
-                                style="background: ${isActive ? 'var(--red)' : 'var(--green)'};" 
-                                onclick="toggleStaffStatus('${docId}', '${status}')">
-                            ${isActive ? 'Deactivate' : 'Activate'}
-                        </button>
+                        <button class="geo-btn" style="background: ${isActive ? 'var(--red)' : 'var(--green)'};" onclick="toggleStaffStatus('${docId}', '${status}')">${isActive ? 'Deactivate' : 'Activate'}</button>
                     </div>`;
             });
             updateMasterLogNames();
@@ -283,9 +265,7 @@
     }
 
     function updateMasterLogNames() {
-        masterLogs.forEach(log => {
-            log.fullName = staffMap[log.uid]?.name || log.fullName || "Unknown Staff";
-        });
+        masterLogs.forEach(log => { log.fullName = staffMap[log.uid]?.name || log.fullName || "Unknown Staff"; });
     }
 
     function loadAdminLogs() {
@@ -299,7 +279,7 @@
             });
             updateStats(masterLogs);
             applyFilters();
-            plotAllStaff(); // Re-plot on new data
+            plotAllStaff();
         });
     }
 
@@ -312,38 +292,25 @@
             const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
             const currentEmail = (log.email || "").toLowerCase();
             const matchesName = currentName.includes(nameVal) || currentEmail.includes(nameVal);
-            
             let matchesDate = true;
             if (log.timestamp && log.timestamp.toDate) {
                 const logDate = log.timestamp.toDate();
                 const logDateOnly = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
-                
                 if (dateFromInput) {
                     const from = new Date(dateFromInput);
-                    const fromTime = new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime();
-                    if (logDateOnly < fromTime) matchesDate = false;
+                    if (logDateOnly < new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime()) matchesDate = false;
                 }
-                
                 if (dateToInput) {
                     const to = new Date(dateToInput);
-                    const toTime = new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime();
-                    if (logDateOnly > toTime) matchesDate = false;
+                    if (logDateOnly > new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime()) matchesDate = false;
                 }
-            } else if (dateFromInput || dateToInput) {
-                matchesDate = false;
-            }
-
+            } else if (dateFromInput || dateToInput) { matchesDate = false; }
             return matchesName && matchesDate;
         });
-
         renderAdminLogs(filteredLogs);
     }
 
-    document.getElementById('applyFiltersBtn').onclick = (e) => {
-        e.preventDefault();
-        applyFilters();
-    };
-
+    document.getElementById('applyFiltersBtn').onclick = (e) => { e.preventDefault(); applyFilters(); };
     document.getElementById('filter-name').addEventListener('input', applyFilters);
 
     function renderAdminLogs(data) {
@@ -353,7 +320,6 @@
             const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString() : "Pending";
             const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
             const displayName = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
-            
             list.innerHTML += `
                 <div class="history-item">
                     <div class="history-row">
@@ -378,21 +344,11 @@
 
     const handleExport = () => {
         if (filteredLogs.length === 0) return alert("No results to export.");
-        const sortedLogs = [...filteredLogs].sort((a, b) => {
-            const nameA = (staffMap[a.uid]?.name || a.fullName || "").toLowerCase();
-            const nameB = (staffMap[b.uid]?.name || b.fullName || "").toLowerCase();
-            if (nameA < nameB) return -1;
-            if (nameA > nameB) return 1;
-            return (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0);
-        });
         let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
-        sortedLogs.forEach(d => {
+        [...filteredLogs].forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            const dateStr = dt.toLocaleDateString().replace(/,/g, '');
-            const timeStr = dt.toLocaleTimeString().replace(/,/g, '');
-            const remarks = (d.remarks || "").replace(/"/g, '""');
             const name = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
-            csv += `"${name}","${d.email || ''}","${dateStr}","${timeStr}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${remarks}"\n`;
+            csv += `"${name}","${d.email || ''}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${(d.remarks || "").replace(/"/g, '""')}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const a = document.createElement('a');
@@ -413,13 +369,7 @@
         btn.disabled = true; btn.innerText = "Creating...";
         try {
             const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-            await addDoc(collection(db, "users"), { 
-                uid: userCred.user.uid, 
-                fullName, 
-                email, 
-                status: "Active",
-                createdAt: serverTimestamp() 
-            });
+            await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName, email, status: "Active", createdAt: serverTimestamp() });
             await signOut(secondaryAuth);
             alert("Account Created!");
             document.getElementById('new-fullname').value = ""; document.getElementById('new-email').value = ""; document.getElementById('new-pass').value = "";
@@ -432,9 +382,7 @@
         if (user && admins.includes(user.email)) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
-            loadStaffData();
-            loadAdminLogs();
-            setTimeout(initMap, 500);
+            loadStaffData(); loadAdminLogs(); setTimeout(initMap, 500);
         } else {
             document.getElementById('login-view').classList.remove('hidden');
             document.getElementById('admin-view').classList.add('hidden');
@@ -457,49 +405,101 @@
         alert("Logs cleared.");
     };
 
-    // --- ARCHIVE & BACKUP LOGIC ---
     document.getElementById('archiveBtn').onclick = async () => {
         const btn = document.getElementById('archiveBtn');
-        if (!confirm("This will download a complete backup of all Staff and Attendance logs. Proceed?")) return;
-        
-        btn.disabled = true;
-        btn.innerText = "Processing...";
-        
+        if (!confirm("Download a complete backup?")) return;
+        btn.disabled = true; btn.innerText = "Processing...";
         try {
-            // 1. Get all Attendance Logs
-            const attendanceSnap = await getDocs(collection(db, "attendance"));
-            const attendanceData = attendanceSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // 2. Get all Staff Directory
-            const userSnap = await getDocs(collection(db, "users"));
-            const userData = userSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // Create the backup package
+            const aSnap = await getDocs(collection(db, "attendance"));
+            const uSnap = await getDocs(collection(db, "users"));
             const backup = {
                 backupDate: new Date().toISOString(),
                 system: "iMerch Secured Attendance",
-                staffDirectory: userData,
-                attendanceLogs: attendanceData
+                staffDirectory: uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                attendanceLogs: aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
             };
-            
-            // Convert to JSON and download
             const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url;
+            a.href = URL.createObjectURL(blob);
             a.download = `iMerch_FULL_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
-            
-            alert("System backup successful! Keep this file safe.");
-        } catch (e) {
-            alert("Backup failed: " + e.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "📦 Archive & Backup System";
-        }
+        } catch (e) { alert("Backup failed: " + e.message); } 
+        finally { btn.disabled = false; btn.innerText = "📦 Backup JSON"; }
     };
+
+    // --- NEW IMPORT FEATURE LOGIC ---
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+
+    importBtn.onclick = () => importFile.click();
+
+    importFile.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = JSON.parse(event.target.result);
+                
+                // Security/Format Check
+                if (data.system !== "iMerch Secured Attendance") {
+                    return alert("Invalid file format. Please use an official iMerch backup file.");
+                }
+
+                const confirmRestore = confirm(`Warning: This will restore ${data.staffDirectory.length} staff and ${data.attendanceLogs.length} logs. Duplicates will be overwritten if IDs match. Proceed?`);
+                if (!confirmRestore) return;
+
+                importBtn.disabled = true;
+                importBtn.innerText = "Restoring...";
+
+                // Helper to chunk data into batches (Firestore limit is 500 per batch)
+                const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
+
+                // 1. Restore Staff Directory
+                const userChunks = chunk(data.staffDirectory, 400);
+                for (const batchData of userChunks) {
+                    const batch = writeBatch(db);
+                    batchData.forEach(item => {
+                        const { id, ...cleanData } = item;
+                        // Handle serverTimestamp conversion back to Firestore objects
+                        if (cleanData.createdAt && cleanData.createdAt.seconds) {
+                            cleanData.createdAt = new Timestamp(cleanData.createdAt.seconds, cleanData.createdAt.nanoseconds);
+                        }
+                        batch.set(doc(db, "users", id), cleanData, { merge: true });
+                    });
+                    await batch.commit();
+                }
+
+                // 2. Restore Attendance Logs
+                const logChunks = chunk(data.attendanceLogs, 400);
+                for (const batchData of logChunks) {
+                    const batch = writeBatch(db);
+                    batchData.forEach(item => {
+                        const { id, ...cleanData } = item;
+                        if (cleanData.timestamp && cleanData.timestamp.seconds) {
+                            cleanData.timestamp = new Timestamp(cleanData.timestamp.seconds, cleanData.timestamp.nanoseconds);
+                        }
+                        batch.set(doc(db, "attendance", id), cleanData, { merge: true });
+                    });
+                    await batch.commit();
+                }
+
+                alert("System successfully restored from backup!");
+                window.location.reload(); // Refresh to sync everything
+
+            } catch (err) {
+                console.error(err);
+                alert("Error importing file: " + err.message);
+            } finally {
+                importBtn.disabled = false;
+                importBtn.innerText = "📥 Restore Backup";
+                importFile.value = ""; // Clear input
+            }
+        };
+        reader.readAsText(file);
+    };
+
 </script>
 </body>
 </html>
