@@ -148,6 +148,7 @@
         <div id="admin-view" class="hidden">
             <h3>Admin: Add Employee</h3>
             <div class="card">
+                <input type="text" id="new-name" placeholder="Employee Full Name">
                 <input type="email" id="new-email" placeholder="New Employee Email">
                 <input type="password" id="new-pass" placeholder="Temp Password">
                 <button class="btn" style="background: var(--blue); margin-top:10px;" id="createAccBtn">Create Account</button>
@@ -161,7 +162,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -178,16 +179,11 @@
     // --- THEME TOGGLE LOGIC ---
     const toggleBtn = document.getElementById('theme-toggle');
     const body = document.body;
-
     const savedTheme = localStorage.getItem('theme') || 'dark';
     if (savedTheme === 'light') {
         body.setAttribute('data-theme', 'light');
         toggleBtn.innerText = '☀️';
         toggleBtn.style.color = '#ffa500';
-    } else {
-        body.removeAttribute('data-theme');
-        toggleBtn.innerText = '🌙';
-        toggleBtn.style.color = 'var(--text)';
     }
 
     toggleBtn.onclick = () => {
@@ -204,7 +200,6 @@
             localStorage.setItem('theme', 'light');
         }
     };
-    // --------------------------
 
     const emailField = document.getElementById('login-email');
     const passField = document.getElementById('login-pass');
@@ -220,23 +215,33 @@
     // --- FORGOT PASSWORD ---
     document.getElementById('forgot-pass').onclick = async () => {
         const email = emailField.value;
-        if (!email) {
-            alert("Please enter your email address first to reset your password.");
-            return;
-        }
+        if (!email) { alert("Please enter email address."); return; }
         try {
             await sendPasswordResetEmail(auth, email);
-            alert("Password reset email sent! Check your inbox.");
-        } catch (error) {
-            alert("Error: " + error.message);
-        }
+            alert("Password reset email sent!");
+        } catch (error) { alert("Error: " + error.message); }
     };
 
     let userCoords = null;
     let isMocked = false;
+    let userStatus = "Active"; 
     let map, marker;
 
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+
+    // Secure Status Verification
+    async function checkUserStatus(uid) {
+        const q = query(collection(db, "users"), where("uid", "==", uid));
+        onSnapshot(q, (snap) => {
+            if (!snap.empty) {
+                userStatus = snap.docs[0].data().status || "Active";
+                if (userStatus !== "Active") {
+                    alert("Account Deactivated. Please contact HR.");
+                    signOut(auth);
+                }
+            }
+        });
+    }
 
     function startSecureGPS() {
         document.getElementById('loading-overlay').classList.remove('hidden');
@@ -256,10 +261,9 @@
             setTimeout(() => document.getElementById('loading-overlay').classList.add('hidden'), 500);
             document.getElementById('coords').innerText = `Verified GPS: ${userCoords[0].toFixed(5)}, ${userCoords[1].toFixed(5)}`;
 
-            if (isMocked) {
+            if (isMocked || userStatus !== "Active") {
                 btnIn.disabled = btnOut.disabled = true;
-                spoofWarning.classList.remove('hidden');
-                geoStatus.classList.add('hidden');
+                if (isMocked) spoofWarning.classList.remove('hidden');
             } else {
                 btnIn.disabled = btnOut.disabled = false;
                 btnIn.innerText = "CHECK IN NOW";
@@ -283,7 +287,7 @@
     }
 
     async function logAction(type) {
-        if (!userCoords || isMocked) return;
+        if (!userCoords || isMocked || userStatus !== "Active") return;
         const loc = document.getElementById('location-name').value || "Mobile Location";
         const remarks = document.getElementById('attendance-remarks').value || "";
         try {
@@ -300,21 +304,19 @@
             });
             document.getElementById('attendance-remarks').value = ""; 
             alert(`${type} Recorded!`);
-        } catch (e) { alert(e.message); }
+        } catch (e) { alert("Insufficient Permissions. Ensure your account is Active."); }
     }
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-dashboard').classList.remove('hidden');
+            checkUserStatus(user.uid);
+            
             const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
             const adminArea = document.getElementById('admin-toggle-area');
             if (admins.includes(user.email)) {
                 adminArea.classList.remove('hidden');
-            } else {
-                adminArea.classList.add('hidden');
-                document.getElementById('admin-view').classList.add('hidden');
-                document.getElementById('attendance-section').classList.remove('hidden');
             }
             startSecureGPS();
             loadHistory(user.uid);
@@ -326,14 +328,12 @@
 
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
-        const email = emailField.value;
-        const pass = passField.value;
         try {
-            await signInWithEmailAndPassword(auth, email, pass);
+            await signInWithEmailAndPassword(auth, emailField.value, passField.value);
             errorDiv.classList.add('hidden');
             if (rememberCheck.checked) {
-                localStorage.setItem('rememberedEmail', email);
-                localStorage.setItem('rememberedPass', pass);
+                localStorage.setItem('rememberedEmail', emailField.value);
+                localStorage.setItem('rememberedPass', passField.value);
             } else {
                 localStorage.removeItem('rememberedEmail');
                 localStorage.removeItem('rememberedPass');
@@ -355,28 +355,22 @@
             list.innerHTML = "";
             snap.forEach(doc => {
                 const d = doc.data();
-                const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : "...";
-                const remarksHtml = d.remarks ? `<div class="history-remarks">Note: ${d.remarks}</div>` : "";
+                const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...";
                 list.innerHTML += `
                     <div class="history-item">
                         <div class="history-row">
                             <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName}</span>
                             <span>${time}</span>
                         </div>
-                        ${remarksHtml}
+                        ${d.remarks ? `<div class="history-remarks">Note: ${d.remarks}</div>` : ""}
                     </div>`;
             });
         });
     }
 
     document.getElementById('toggleAdminBtn').onclick = () => { 
-        const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
-        if(admins.includes(auth.currentUser.email)) {
-            document.getElementById('attendance-section').classList.toggle('hidden'); 
-            document.getElementById('admin-view').classList.toggle('hidden'); 
-        } else {
-            alert("Unauthorized access.");
-        }
+        document.getElementById('attendance-section').classList.toggle('hidden'); 
+        document.getElementById('admin-view').classList.toggle('hidden'); 
     };
     
     document.getElementById('backBtn').onclick = () => { 
@@ -385,9 +379,22 @@
     };
 
     document.getElementById('createAccBtn').onclick = async () => {
+        const name = document.getElementById('new-name').value;
+        const email = document.getElementById('new-email').value;
+        const pass = document.getElementById('new-pass').value;
+        if(!name || !email || !pass) return alert("Fill all fields.");
+        
         try { 
-            await createUserWithEmailAndPassword(auth, document.getElementById('new-email').value, document.getElementById('new-pass').value); 
+            const userCred = await createUserWithEmailAndPassword(auth, email, pass); 
+            // Create the User Profile in Firestore
+            await addDoc(collection(db, "users"), {
+                uid: userCred.user.uid,
+                email: email,
+                fullName: name,
+                status: "Active"
+            });
             alert("Employee Created!"); 
+            document.getElementById('new-name').value = "";
             document.getElementById('new-email').value = "";
             document.getElementById('new-pass').value = "";
         } catch (e) { alert(e.message); }
