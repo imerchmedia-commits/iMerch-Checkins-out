@@ -162,7 +162,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -226,6 +226,7 @@
     let isMocked = false;
     let userStatus = "Active"; 
     let map, marker;
+    let isSubmitting = false; // Flag to prevent multi-clicks
 
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
@@ -287,10 +288,32 @@
     }
 
     async function logAction(type) {
-        if (!userCoords || isMocked || userStatus !== "Active") return;
-        const loc = document.getElementById('location-name').value || "Mobile Location";
+        if (!userCoords || isMocked || userStatus !== "Active" || isSubmitting) return;
+
+        const loc = document.getElementById('location-name').value.trim() || "Mobile Location";
         const remarks = document.getElementById('attendance-remarks').value || "";
+
+        isSubmitting = true; // Block further clicks immediately
+
         try {
+            // Check if this action (Check In or Out) already exists for this location
+            const q = query(
+                collection(db, "attendance"),
+                where("uid", "==", auth.currentUser.uid),
+                where("locationName", "==", loc),
+                where("type", "==", type),
+                limit(1)
+            );
+
+            const checkSnap = await getDocs(q);
+
+            if (!checkSnap.empty) {
+                alert(`Duplicate Action: You have already recorded a ${type} for "${loc}".`);
+                isSubmitting = false;
+                return;
+            }
+
+            // If no duplicate found, proceed with adding the document
             await addDoc(collection(db, "attendance"), {
                 uid: auth.currentUser.uid,
                 email: auth.currentUser.email,
@@ -304,7 +327,11 @@
             });
             document.getElementById('attendance-remarks').value = ""; 
             alert(`${type} Recorded!`);
-        } catch (e) { alert("Insufficient Permissions. Ensure your account is Active."); }
+        } catch (e) { 
+            alert("Error: " + e.message); 
+        } finally {
+            isSubmitting = false; // Re-enable clicks after logic is done
+        }
     }
 
     onAuthStateChanged(auth, (user) => {
@@ -402,4 +429,3 @@
 </script>
 </body>
 </html>
-
