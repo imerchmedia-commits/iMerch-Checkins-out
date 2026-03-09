@@ -183,9 +183,15 @@
         L.popup().setLatLng([lat, lng]).setContent(`<b>${name}</b><br>${type}`).openOn(map);
     };
 
-    async function loadStaffData() {
-        const snap = await getDocs(collection(db, "users"));
-        snap.forEach(doc => { staffMap[doc.data().uid] = doc.data().fullName; });
+    // UPDATED: Real-time Staff Name Syncing
+    function loadStaffData() {
+        onSnapshot(collection(db, "users"), (snap) => {
+            snap.forEach(doc => { 
+                staffMap[doc.data().uid] = doc.data().fullName; 
+            });
+            // Re-apply filters to update names in the UI list if they were missing
+            if (masterLogs.length > 0) applyFilters();
+        });
     }
 
     function loadAdminLogs() {
@@ -202,7 +208,6 @@
         });
     }
 
-    // LIVE SEARCH: Updates instantly as you type or delete
     document.getElementById('filter-name').addEventListener('input', applyFilters);
 
     function applyFilters() {
@@ -262,7 +267,6 @@
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
-    // EXPORT LOGIC: Restored sorting per username then timestamp
     const handleExport = () => {
         if (filteredLogs.length === 0) return alert("No results to export.");
 
@@ -306,7 +310,8 @@
             await signOut(secondaryAuth);
             alert("Account Created!");
             document.getElementById('new-fullname').value = ""; document.getElementById('new-email').value = ""; document.getElementById('new-pass').value = "";
-            await loadStaffData();
+            // Removal of await here because loadStaffData is now a listener
+            loadStaffData();
         } catch (e) { alert("Error: " + e.message); } 
         finally { btn.disabled = false; btn.innerText = "Create Account"; }
     };
@@ -316,7 +321,10 @@
         if (user && admins.includes(user.email)) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
-            await loadStaffData();
+            
+            // Replaced await call with standard listener call
+            loadStaffData();
+            
             loadAdminLogs();
             setTimeout(initMap, 500);
         } else {
