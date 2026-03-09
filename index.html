@@ -137,7 +137,7 @@
                 <div id="spoof-warning" class="warning hidden">⚠️ Fake GPS Detected. Access Denied.</div>
                 
                 <button class="btn btn-checkin" id="checkinBtn" disabled>SYNCING GPS...</button>
-                <button class="btn btn-checkout" id="checkoutBtn" disabled>SYNCING GPS...</button>
+                <button class="btn btn-checkout hidden" id="checkoutBtn" disabled>SYNCING GPS...</button>
                 
                 <input type="text" id="attendance-remarks" placeholder="Add remarks (Optional)" style="margin-top: 10px;">
             </div>
@@ -226,6 +226,7 @@
     let isMocked = false;
     let userStatus = "Active"; 
     let map, marker;
+    let lastActionType = null; // Track current attendance state
 
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
@@ -265,7 +266,7 @@
                 btnIn.disabled = btnOut.disabled = true;
                 if (isMocked) spoofWarning.classList.remove('hidden');
             } else {
-                btnIn.disabled = btnOut.disabled = false;
+                updateButtonUI(); // Refresh UI based on state and GPS
                 btnIn.innerText = "CHECK IN NOW";
                 btnOut.innerText = "CHECK OUT NOW";
                 geoStatus.innerText = "✅ GPS Ready";
@@ -286,10 +287,33 @@
         }
     }
 
+    // Toggle Button Visibility/State
+    function updateButtonUI() {
+        const btnIn = document.getElementById('checkinBtn');
+        const btnOut = document.getElementById('checkoutBtn');
+
+        if (lastActionType === "Check In") {
+            btnIn.classList.add('hidden');
+            btnOut.classList.remove('hidden');
+            btnOut.disabled = false;
+        } else {
+            btnIn.classList.remove('hidden');
+            btnOut.classList.add('hidden');
+            btnIn.disabled = false;
+        }
+    }
+
     async function logAction(type) {
         if (!userCoords || isMocked || userStatus !== "Active") return;
+        
+        if (type === lastActionType) {
+            alert("Action already recorded.");
+            return;
+        }
+
         const loc = document.getElementById('location-name').value || "Mobile Location";
         const remarks = document.getElementById('attendance-remarks').value || "";
+        
         try {
             await addDoc(collection(db, "attendance"), {
                 uid: auth.currentUser.uid,
@@ -303,8 +327,10 @@
                 isMocked: isMocked
             });
             document.getElementById('attendance-remarks').value = ""; 
-            alert(`${type} Recorded!`);
-        } catch (e) { alert("Insufficient Permissions. Ensure your account is Active."); }
+            alert(`${type} Recorded Successfully!`);
+        } catch (e) { 
+            alert("Error: Insufficient Permissions or Account Deactivated."); 
+        }
     }
 
     onAuthStateChanged(auth, (user) => {
@@ -353,8 +379,16 @@
         onSnapshot(q, (snap) => {
             const list = document.getElementById('history-list');
             list.innerHTML = "";
+            let isFirst = true;
+
             snap.forEach(doc => {
                 const d = doc.data();
+                if (isFirst) {
+                    lastActionType = d.type;
+                    updateButtonUI();
+                    isFirst = false;
+                }
+
                 const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...";
                 list.innerHTML += `
                     <div class="history-item">
@@ -365,6 +399,11 @@
                         ${d.remarks ? `<div class="history-remarks">Note: ${d.remarks}</div>` : ""}
                     </div>`;
             });
+
+            if (snap.empty) {
+                lastActionType = null;
+                updateButtonUI();
+            }
         });
     }
 
@@ -386,7 +425,6 @@
         
         try { 
             const userCred = await createUserWithEmailAndPassword(auth, email, pass); 
-            // Create the User Profile in Firestore
             await addDoc(collection(db, "users"), {
                 uid: userCred.user.uid,
                 email: email,
