@@ -137,7 +137,7 @@
                 <div id="spoof-warning" class="warning hidden">⚠️ Fake GPS Detected. Access Denied.</div>
                 
                 <button class="btn btn-checkin" id="checkinBtn" disabled>SYNCING GPS...</button>
-                <button class="btn btn-checkout hidden" id="checkoutBtn" disabled>SYNCING GPS...</button>
+                <button class="btn btn-checkout" id="checkoutBtn" disabled>SYNCING GPS...</button>
                 
                 <input type="text" id="attendance-remarks" placeholder="Add remarks (Optional)" style="margin-top: 10px;">
             </div>
@@ -176,6 +176,7 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // --- THEME TOGGLE LOGIC ---
     const toggleBtn = document.getElementById('theme-toggle');
     const body = document.body;
     const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -211,6 +212,7 @@
         rememberCheck.checked = true;
     }
 
+    // --- FORGOT PASSWORD ---
     document.getElementById('forgot-pass').onclick = async () => {
         const email = emailField.value;
         if (!email) { alert("Please enter email address."); return; }
@@ -224,11 +226,10 @@
     let isMocked = false;
     let userStatus = "Active"; 
     let map, marker;
-    let lastActionType = null; 
-    let lastLocationName = "";
 
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
+    // Secure Status Verification
     async function checkUserStatus(uid) {
         const q = query(collection(db, "users"), where("uid", "==", uid));
         onSnapshot(q, (snap) => {
@@ -264,7 +265,7 @@
                 btnIn.disabled = btnOut.disabled = true;
                 if (isMocked) spoofWarning.classList.remove('hidden');
             } else {
-                updateButtonUI(); 
+                btnIn.disabled = btnOut.disabled = false;
                 btnIn.innerText = "CHECK IN NOW";
                 btnOut.innerText = "CHECK OUT NOW";
                 geoStatus.innerText = "✅ GPS Ready";
@@ -285,31 +286,10 @@
         }
     }
 
-    function updateButtonUI() {
-        const btnIn = document.getElementById('checkinBtn');
-        const btnOut = document.getElementById('checkoutBtn');
-        const locInput = document.getElementById('location-name');
-
-        if (lastActionType === "Check In") {
-            btnIn.classList.add('hidden');
-            btnOut.classList.remove('hidden');
-            btnOut.disabled = false;
-            // Feature: Auto-fill last check-in location for easy checkout
-            if (lastLocationName) locInput.value = lastLocationName;
-        } else {
-            btnIn.classList.remove('hidden');
-            btnOut.classList.add('hidden');
-            btnIn.disabled = false;
-            locInput.value = ""; // Reset for new check-in
-        }
-    }
-
     async function logAction(type) {
         if (!userCoords || isMocked || userStatus !== "Active") return;
-        
         const loc = document.getElementById('location-name').value || "Mobile Location";
         const remarks = document.getElementById('attendance-remarks').value || "";
-        
         try {
             await addDoc(collection(db, "attendance"), {
                 uid: auth.currentUser.uid,
@@ -323,10 +303,8 @@
                 isMocked: isMocked
             });
             document.getElementById('attendance-remarks').value = ""; 
-            alert(`${type} Recorded Successfully!`);
-        } catch (e) { 
-            alert("Error: Insufficient Permissions or Account Deactivated."); 
-        }
+            alert(`${type} Recorded!`);
+        } catch (e) { alert("Insufficient Permissions. Ensure your account is Active."); }
     }
 
     onAuthStateChanged(auth, (user) => {
@@ -375,18 +353,6 @@
         onSnapshot(q, (snap) => {
             const list = document.getElementById('history-list');
             list.innerHTML = "";
-            
-            if (!snap.empty) {
-                const latestDoc = snap.docs[0].data();
-                lastActionType = latestDoc.type;
-                lastLocationName = latestDoc.locationName || ""; // Save name for auto-fill
-                updateButtonUI();
-            } else {
-                lastActionType = null;
-                lastLocationName = "";
-                updateButtonUI();
-            }
-
             snap.forEach(doc => {
                 const d = doc.data();
                 const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : "...";
@@ -420,6 +386,7 @@
         
         try { 
             const userCred = await createUserWithEmailAndPassword(auth, email, pass); 
+            // Create the User Profile in Firestore
             await addDoc(collection(db, "users"), {
                 uid: userCred.user.uid,
                 email: email,
@@ -435,3 +402,4 @@
 </script>
 </body>
 </html>
+
