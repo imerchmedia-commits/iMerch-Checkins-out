@@ -121,12 +121,10 @@
         storageBucket: "imerch-checkins-out.firebasestorage.app"
     };
 
-    // Main App (Used for Admin Login)
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // Secondary App (Used ONLY for creating users without logging the Admin out)
     const secondaryApp = initializeApp(firebaseConfig, "Secondary");
     const secondaryAuth = getAuth(secondaryApp);
 
@@ -202,10 +200,21 @@
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
+    // --- UPDATED EXPORT LOGIC ---
     document.getElementById('exportBtn').onclick = () => {
         if (masterLogs.length === 0) return alert("No logs to export.");
+
+        // Sort by Full Name (Alphabetical) then Timestamp (Newest first)
+        const sortedLogs = [...masterLogs].sort((a, b) => {
+            const nameA = (a.fullName || "").toLowerCase();
+            const nameB = (b.fullName || "").toLowerCase();
+            if (nameA < nameB) return -1;
+            if (nameA > nameB) return 1;
+            return (b.timestamp?.toMillis() || 0) - (a.timestamp?.toMillis() || 0);
+        });
+
         let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
-        masterLogs.forEach(d => {
+        sortedLogs.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
             const date = dt.toLocaleDateString().replace(/,/g, '');
             const time = dt.toLocaleTimeString().replace(/,/g, '');
@@ -214,11 +223,12 @@
             const remarks = (d.remarks || "").replace(/"/g, '""');
             csv += `"${d.fullName}","${d.email}","${date}","${time}","${d.type}","${d.locationName}","${lat}","${lng}","${remarks}"\n`;
         });
+
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `iMerch_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `iMerch_Grouped_Logs_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
 
@@ -231,7 +241,6 @@
         alert("Logs cleared.");
     };
 
-    // UPDATED CREATE ACCOUNT LOGIC
     document.getElementById('createAccBtn').onclick = async () => {
         const btn = document.getElementById('createAccBtn');
         const fullName = document.getElementById('new-fullname').value;
@@ -244,30 +253,19 @@
         btn.innerText = "Creating...";
 
         try {
-            // Use secondaryAuth to create user so the main Admin session remains active
             const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-            
-            // Add user details to Firestore
             await addDoc(collection(db, "users"), { 
                 uid: userCred.user.uid, 
                 fullName, 
                 email, 
                 createdAt: serverTimestamp() 
             });
-
-            // Log the secondary session out immediately so it doesn't conflict later
             await signOut(secondaryAuth);
-
             alert("Account Created Successfully! You are still logged in.");
-            
-            // Clear fields
             document.getElementById('new-fullname').value = "";
             document.getElementById('new-email').value = "";
             document.getElementById('new-pass').value = "";
-            
-            // Refresh staff list locally
             await loadStaffData();
-            
         } catch (e) { 
             alert("Error: " + e.message); 
         } finally {
