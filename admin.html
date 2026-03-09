@@ -49,7 +49,6 @@
         .filter-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
         @media (max-width: 600px) { .filter-row { grid-template-columns: 1fr; } }
 
-        /* NEW: Directory Styling */
         .staff-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
         .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
@@ -168,7 +167,6 @@
     let staffMap = {}; 
     let map, markerGroup;
 
-    // Theme Toggle
     const themeBtn = document.getElementById('theme-toggle');
     themeBtn.onclick = () => {
         const body = document.body;
@@ -194,11 +192,9 @@
         L.popup().setLatLng([lat, lng]).setContent(`<b>${name}</b><br>${type}`).openOn(map);
     };
 
-    // NEW: Function to toggle status in Firestore
     window.toggleStaffStatus = async (docId, currentStatus) => {
         const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
         if (!confirm(`Set this staff member to ${newStatus}?`)) return;
-        
         try {
             const staffRef = doc(db, "users", docId);
             await updateDoc(staffRef, { status: newStatus });
@@ -207,7 +203,6 @@
         }
     };
 
-    // UPDATED: Builds the sidebar list and updates the internal map
     function loadStaffData() {
         onSnapshot(collection(db, "users"), (snap) => {
             const directory = document.getElementById('staff-directory-list');
@@ -219,10 +214,8 @@
                 const status = data.status || "Active";
                 const isActive = status === "Active";
 
-                // Update internal staff map for logs
                 staffMap[data.uid] = { name: data.fullName, status: status }; 
 
-                // Add to sidebar UI
                 directory.innerHTML += `
                     <div class="staff-item">
                         <div style="overflow: hidden;">
@@ -238,7 +231,15 @@
                         </button>
                     </div>`;
             });
-            if (masterLogs.length > 0) applyFilters();
+            // Re-map master names and refresh list whenever staff data changes
+            updateMasterLogNames();
+            applyFilters();
+        });
+    }
+
+    function updateMasterLogNames() {
+        masterLogs.forEach(log => {
+            log.fullName = staffMap[log.uid]?.name || "Unknown Staff";
         });
     }
 
@@ -264,7 +265,7 @@
         const dateTo = document.getElementById('filter-date-to').value;
 
         filteredLogs = masterLogs.filter(log => {
-            const matchesName = log.fullName.toLowerCase().includes(nameVal) || (log.email && log.email.toLowerCase().includes(nameVal));
+            const matchesName = (log.fullName || "").toLowerCase().includes(nameVal) || (log.email && log.email.toLowerCase().includes(nameVal));
             
             let matchesDate = true;
             if (log.timestamp) {
