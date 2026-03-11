@@ -24,7 +24,8 @@
         .center-logo { height: 45px; width: auto; }
 
         .controls { display: flex; gap: 8px; z-index: 10; }
-        .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; }
+        .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .logout-btn { background: var(--red); color: white; border: none; font-weight: bold; }
 
         .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .stat-box { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
@@ -88,8 +89,9 @@
             </div>
             <div class="center-brand"><img src="../logo1.png" class="center-logo"></div>
             <div class="controls">
-                <button class="icon-btn" id="themeToggle">🌓</button>
-                <button onclick="location.reload()" class="icon-btn">🔄</button>
+                <button class="icon-btn" id="themeToggle" title="Toggle Theme">🌓</button>
+                <button onclick="location.reload()" class="icon-btn" title="Refresh">🔄</button>
+                <button id="logoutBtn" class="icon-btn logout-btn" title="Logout">🚪</button>
             </div>
         </div>
 
@@ -119,7 +121,7 @@
                         <div id="pop-store" style="font-size: 0.75rem; color: #8b949e;">---</div>
                         <div id="pop-time" style="font-size: 0.7rem; color: var(--accent); margin-top: 3px;">---</div>
                     </div>
-                    <iframe id="main-map" loading="lazy" src="https://maps.google.com/maps?q=Philippines&t=&z=13&ie=UTF8&iwloc=&output=embed"></iframe>
+                    <iframe id="main-map" src="https://maps.google.com/maps?q=14.5826,121.0526&z=15&output=embed"></iframe>
                 </div>
             </div>
 
@@ -151,7 +153,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem"];
@@ -176,11 +178,13 @@
         const dateInput = document.getElementById('dateFilter');
         dateInput.valueAsDate = new Date();
 
+        // Stable focusMap Function
         window.focusMap = function(lat, lng, name, store, time, type, date) {
             const map = document.getElementById('main-map');
             const pop = document.getElementById('map-pop-info');
-            // Fixed URL format for better compatibility
-            map.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed`;
+            
+            // Mas stable na URL format para sa dynamic coordinates
+            map.src = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
             
             document.getElementById('pop-name').innerText = name;
             document.getElementById('pop-store').innerText = store;
@@ -188,9 +192,25 @@
             const popStatus = document.getElementById('pop-status');
             popStatus.innerText = type.toUpperCase();
             popStatus.style.background = type === "Check In" ? "#238636" : "#f85149";
+            
             pop.style.display = 'block';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
+
+        // Logout logic
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if(confirm("Sigurado ka bang gusto mong mag-logout?")) {
+                signOut(auth).then(() => {
+                    window.location.href = "../index.html";
+                });
+            }
+        });
+
+        // Theme toggle logic
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const current = document.body.getAttribute('data-theme');
+            document.body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+        });
 
         function showNotification(staffName) {
             if (Notification.permission === "granted" && !notifiedStaff.has(staffName)) {
@@ -207,7 +227,7 @@
             attendanceChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Check In', 'Check Out'],
+                    labels: ['In', 'Out'],
                     datasets: [{
                         data: [0, 0],
                         backgroundColor: ['#238636', '#f85149'],
@@ -226,7 +246,7 @@
             if (user) {
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
-                initChart();
+                if (!attendanceChart) initChart();
                 startMonitoring();
                 if (Notification.permission === "default") {
                     Notification.requestPermission();
@@ -237,7 +257,6 @@
         });
 
         function startMonitoring() {
-            // Clean up previous listeners to avoid permission/memory errors
             if (unsubscribeLogs) unsubscribeLogs();
             if (unsubscribeStaff) unsubscribeStaff();
             notifiedStaff.clear();
@@ -273,7 +292,6 @@
                         const log = doc.data();
                         const staffName = log.name || (log.email ? log.email.split('@')[0] : "Unknown");
                         const ts = log.timestamp ? log.timestamp.toDate() : new Date();
-                        
                         const timeStr = ts.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                         const dateStr = ts.toLocaleDateString();
                         
@@ -329,17 +347,11 @@
 
                     attendanceChart.data.datasets[0].data = [inCount, outCount];
                     attendanceChart.update();
-                }, (error) => {
-                    console.error("Firestore Error:", error);
                 });
             });
         }
 
         dateInput.addEventListener('change', startMonitoring);
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            const current = document.body.getAttribute('data-theme');
-            document.body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-        });
     </script>
 </body>
 </html>
