@@ -47,9 +47,9 @@
         #main-map { width: 100%; height: 100%; border: 0; display: none; }
         .map-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--secondary-text); font-size: 0.8rem; text-align: center; padding: 20px; }
 
-        .table-container { overflow-x: auto; margin-top: 20px; max-height: 600px; }
+        .table-container { overflow-x: auto; margin-top: 20px; max-height: 600px; border-radius: 12px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: rgba(88, 166, 255, 0.1); color: var(--accent); font-size: 0.75rem; padding: 15px; text-align: center; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 5; }
+        th { background: rgba(88, 166, 255, 0.1); color: var(--accent); font-size: 0.75rem; padding: 15px; text-align: center; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 5; backdrop-filter: blur(5px); }
         td { padding: 15px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.9rem; }
         
         .status-tag { padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; }
@@ -66,7 +66,7 @@
 
     <div id="loading-screen" style="position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000;">
         <div style="width:40px; height:40px; border:4px solid var(--border); border-top:4px solid var(--accent); border-radius:50%; animation:spin 1s linear infinite;"></div>
-        <p style="margin-top:15px; color:var(--secondary-text); font-size: 0.8rem; letter-spacing:2px;">OPTIMIZING DASHBOARD...</p>
+        <p style="margin-top:15px; color:var(--secondary-text); font-size: 0.8rem; letter-spacing:2px;">POWERING UP SYSTEM...</p>
     </div>
 
     <div id="main-content" style="display:none;">
@@ -185,9 +185,9 @@
             mapFrame.style.display = 'block';
             mapFrame.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=en&z=14&output=embed`;
             
-            extLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
+            extLink.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
             extLink.style.display = 'inline-block';
-            mapTitle.innerText = `📍 LOCATION: ${name.split(' ')[0]}`;
+            mapTitle.innerText = `📍 ${name.split(' ')[0]}`;
         };
 
         function initCharts() {
@@ -254,7 +254,7 @@
             
             onSnapshot(q, (snap) => {
                 currentLogs = snap.docs.map(doc => doc.data());
-                requestAnimationFrame(renderData);
+                renderData();
                 
                 compChart.data.datasets[0].data[0] = currentLogs.length;
                 compChart.update('none');
@@ -262,26 +262,40 @@
             });
         }
 
+        // --- OPTIMIZED RENDERING ENGINE ---
         function renderData() {
             const search = document.getElementById('logSearch').value.toLowerCase();
             const body = document.getElementById('logsBody');
             const summary = document.getElementById('userSummaryList');
             
-            const tableFragment = document.createDocumentFragment();
-            let counts = {};
-            let matchCount = 0;
-
-            currentLogs.forEach(log => {
+            // 1. Filter Data First
+            const filtered = currentLogs.filter(log => {
                 const email = (log.email || log.staffEmail || "").toLowerCase();
                 const name = log.name || log.staffName || staffRegistry[email] || email.split('@')[0] || "Unknown";
                 const branch = log.locationName || log.branch || "---";
-                const type = log.type || "Check-in";
+                if (adminExclusion.includes(name)) return false;
+                return name.toLowerCase().includes(search) || branch.toLowerCase().includes(search);
+            });
 
-                if (adminExclusion.includes(name)) return;
+            // 2. Clear Body
+            body.innerHTML = "";
+            
+            // 3. Batched Rendering (Para iwas lag)
+            const batchSize = 20;
+            let index = 0;
 
-                if (name.toLowerCase().includes(search) || branch.toLowerCase().includes(search)) {
-                    matchCount++;
+            function renderNextBatch() {
+                const fragment = document.createDocumentFragment();
+                const end = Math.min(index + batchSize, filtered.length);
+
+                for (let i = index; i < end; i++) {
+                    const log = filtered[i];
+                    const email = (log.email || log.staffEmail || "").toLowerCase();
+                    const name = log.name || log.staffName || staffRegistry[email] || email.split('@')[0] || "Unknown";
+                    const branch = log.locationName || log.branch || "---";
+                    const type = log.type || "Check-in";
                     const time = log.timestamp ? format12H(log.timestamp.toDate()) : '--:-- --';
+
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td style="color:var(--accent); font-weight:bold;">${time}</td>
@@ -290,39 +304,51 @@
                         <td>${branch}</td>
                         <td><button onclick="loadStaffMap(${log.latitude}, ${log.longitude}, '${name}')" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:8px; cursor:pointer;">📍</button></td>
                     `;
-                    tableFragment.appendChild(tr);
+                    fragment.appendChild(tr);
                 }
+
+                body.appendChild(fragment);
+                index = end;
+
+                if (index < filtered.length) {
+                    setTimeout(renderNextBatch, 0); 
+                }
+            }
+
+            renderNextBatch();
+
+            // 4. Update Stats & Performance Chart
+            let counts = {};
+            currentLogs.forEach(log => {
+                const name = log.name || log.staffName || staffRegistry[(log.email || "").toLowerCase()] || "Unknown";
+                if (adminExclusion.includes(name)) return;
+                const type = log.type || "Check-in";
                 if(type.toLowerCase().includes('in')) counts[name] = (counts[name] || 0) + 1;
             });
 
-            body.innerHTML = "";
-            body.appendChild(tableFragment);
-
-            // Update Chart
             const names = Object.keys(counts);
-            perfChart.data.labels = names.map(n => n.split(' ')[0]);
-            perfChart.data.datasets[0].data = names.map(n => counts[n]);
-            perfChart.update('none');
-
             document.getElementById('presentCount').innerText = names.length;
 
-            // Summary List Optimization
-            summary.innerHTML = names.map(name => {
-                const val = counts[name];
-                const per = Math.min((val/DAILY_TARGET)*100, 100);
-                return `<div style="margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:4px;"><span>${name}</span><span>${val}/${DAILY_TARGET}</span></div>
-                    <div style="height:6px; background:var(--border); border-radius:10px;"><div style="width:${per}%; height:100%; background:var(--accent); border-radius:10px;"></div></div>
-                </div>`;
-            }).join('');
+            requestAnimationFrame(() => {
+                perfChart.data.labels = names.map(n => n.split(' ')[0]);
+                perfChart.data.datasets[0].data = names.map(n => counts[n]);
+                perfChart.update('none');
+
+                summary.innerHTML = names.map(name => {
+                    const val = counts[name];
+                    const per = Math.min((val/DAILY_TARGET)*100, 100);
+                    return `<div style="margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:4px;"><span>${name}</span><span>${val}/${DAILY_TARGET}</span></div>
+                        <div style="height:6px; background:var(--border); border-radius:10px;"><div style="width:${per}%; height:100%; background:var(--accent); border-radius:10px;"></div></div>
+                    </div>`;
+                }).join('');
+            });
         }
 
-        // Debounced Search
+        // Debounced Search Input
         document.getElementById('logSearch').addEventListener('input', () => {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                requestAnimationFrame(renderData);
-            }, 300);
+            searchTimeout = setTimeout(renderData, 300);
         });
 
         document.getElementById('themeToggle').addEventListener('click', () => {
