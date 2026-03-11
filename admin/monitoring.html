@@ -46,7 +46,6 @@
         .info-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .card-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 15px; color: var(--accent); display: flex; align-items: center; justify-content: space-between; }
         
-        /* Map App Button styling */
         #externalMapLink { 
             font-size: 0.65rem; 
             background: var(--green); 
@@ -66,18 +65,11 @@
         .progress-container { width: 100%; background: var(--border); height: 6px; border-radius: 10px; margin-top: 6px; overflow: hidden; }
         .progress-fill { height: 100%; transition: width 0.5s ease; border-radius: 10px; }
 
-        .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { background: rgba(0,0,0,0.15); color: var(--secondary-text); text-transform: uppercase; font-size: 0.75rem; font-weight: 700; padding: 18px; letter-spacing: 1px; text-align: center; border-bottom: 2px solid var(--border); }
-        td { padding: 16px 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        tr:last-child td { border-bottom: none; }
+        td { padding: 16px 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; text-align: center; }
         tr:hover { background: rgba(88, 166, 255, 0.04); }
-
-        .col-staff { width: 25%; }
-        .col-type { width: 15%; }
-        .col-location { width: 30%; }
-        .col-time { width: 15%; }
-        .col-action { width: 15%; }
 
         .staff-info { display: flex; flex-direction: column; align-items: center; }
         .email-top { font-weight: 500; color: var(--secondary-text); font-size: 0.8rem; }
@@ -89,7 +81,7 @@
 
         .filter-section { display: flex; gap: 12px; margin-bottom: 20px; }
         .date-input, .search-box { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 8px; outline: none; font-size: 0.9rem; transition: 0.2s; }
-        .date-input:focus, .search-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15); }
+        .date-input:focus, .search-box:focus { border-color: var(--accent); }
         .search-box { flex-grow: 1; }
 
         #loading-screen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
@@ -145,7 +137,7 @@
             <div class="info-card">
                 <div class="card-title">
                     <span>📍 LIVE FIELD MONITORING</span>
-                    <a id="externalMapLink" target="_blank">📲 OPEN IN APP</a>
+                    <a id="externalMapLink" target="_blank">📲 OPEN IN MAPS</a>
                 </div>
                 <div class="map-container">
                     <iframe id="main-map" src="about:blank"></iframe>
@@ -169,11 +161,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th class="col-staff">Staff Details</th>
-                        <th class="col-type">Activity</th>
-                        <th class="col-location">Branch Location</th>
-                        <th class="col-time">Time Log</th>
-                        <th class="col-action">Map Action</th>
+                        <th style="width: 25%;">Staff Details</th>
+                        <th style="width: 15%;">Activity</th>
+                        <th style="width: 25%;">Branch Location</th>
+                        <th style="width: 15%;">Time Log</th>
+                        <th style="width: 20%;">Map Action</th>
                     </tr>
                 </thead>
                 <tbody id="logsBody"></tbody>
@@ -212,28 +204,30 @@
         const logSearch = document.getElementById('logSearch');
         dateInput.valueAsDate = new Date();
 
+        // Theme Toggle
         document.getElementById('themeToggle').addEventListener('click', () => {
             const body = document.body;
             const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             body.setAttribute('data-theme', newTheme);
         });
 
+        // Signout
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth).then(() => window.location.href = "../index.html");
         });
 
-        // RE-OPTIMIZED FOCUS MAP FUNCTION (Fixes the 404 and adds App Link)
+        // OPTIMIZED MAP FUNCTION - Fast Loading & Clean URLs
         window.focusMap = function(lat, lng, details) {
             const map = document.getElementById('main-map');
             const extLink = document.getElementById('externalMapLink');
             if (!lat || !lng) return;
 
-            const cleanDetails = details.replace(/[^a-zA-Z0-9 | :]/g, '');
+            const cleanDetails = encodeURIComponent(details.replace(/[^a-zA-Z0-9 | :]/g, ''));
             
-            // Fixed String Interpolation (Removed the extra 0)
-            const mapUrl = `http://googleusercontent.com/maps.google.com/maps?q=${lat},${lng}+(${encodeURIComponent(cleanDetails)})&t=m&z=17&output=embed`;
+            // Fixed Embed URL (Faster response)
+            const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}&hl=en&z=16&output=embed`;
             
-            // App URL specifically for deep-linking
+            // Mobile-Friendly Deep Link
             const appUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
             
             map.src = mapUrl;
@@ -275,24 +269,19 @@
             let activeStaff = {}; 
 
             currentLogs.forEach(log => {
-                let rawEmail = log.email || "---";
+                let rawEmail = log.email || log.staffEmail || "---";
                 let email = rawEmail.toLowerCase();
-                let fallbackName = rawEmail.includes('@') ? rawEmail.split('@')[0] : rawEmail;
-                let staffName = log.name || staffRegistry[email] || staffRegistry[rawEmail] || fallbackName;
+                let staffName = log.name || log.staffName || staffRegistry[email] || rawEmail.split('@')[0];
 
                 if (adminExclusion.includes(staffName) || adminExclusion.includes(email)) return; 
 
-                const store = log.locationName || log.storeName || log.branch || "---";
-                const statusText = log.type || log.status || "Activity";
+                const store = log.locationName || log.branch || "---";
+                const statusText = log.type || "Activity";
                 
                 if (staffName.toLowerCase().includes(searchTerm) || email.toLowerCase().includes(searchTerm) || store.toLowerCase().includes(searchTerm)) {
                     const ts = log.timestamp ? log.timestamp.toDate() : new Date();
                     const timeStr = ts.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                     const statusClass = (statusText.toLowerCase().includes("in")) ? "in" : "out";
-
-                    const markerColor = statusClass === "in" ? "IN" : "OUT";
-                    const mapLabel = `${staffName} | ${markerColor} | ${store}`;
-                    const safeLabel = mapLabel.replace(/'/g, "\\'");
 
                     logsBody.innerHTML += `
                         <tr>
@@ -305,8 +294,8 @@
                             <td><span class="status-tag ${statusClass}">${statusText}</span></td>
                             <td style="color:var(--text); font-weight:600;">${store}</td>
                             <td style="font-weight:700; color:var(--accent)">${timeStr}</td>
-                            <td class="col-action">
-                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${safeLabel}')" style="background:var(--green); border:none; color:white; border-radius:6px; font-size:0.65rem; font-weight:700; cursor:pointer; padding:8px 16px; transition: 0.2s;">VIEW MAP</button>` : '--'}
+                            <td>
+                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}')" style="background:var(--green); border:none; color:white; border-radius:6px; font-size:0.65rem; font-weight:700; cursor:pointer; padding:8px 16px; transition: 0.2s;">VIEW MAP</button>` : '--'}
                             </td>
                         </tr>`;
                 }
@@ -372,10 +361,7 @@
                 currentLogs = snapshot.docs.map(doc => doc.data());
                 if (currentLogs.length > 0 && firstLoad) {
                     const latest = currentLogs.find(l => l.latitude && !adminExclusion.includes(l.name));
-                    if (latest) {
-                        const lbl = `Latest Activity: ${latest.name || 'Staff'}`;
-                        focusMap(latest.latitude, latest.longitude, lbl);
-                    }
+                    if (latest) focusMap(latest.latitude, latest.longitude, latest.name || 'Staff');
                     firstLoad = false;
                 }
                 renderData();
