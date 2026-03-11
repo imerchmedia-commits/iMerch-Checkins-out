@@ -159,7 +159,7 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Admin at system exclusions (mga hindi dapat lumitaw sa monitoring list)
+        // Inalis na si Arem sa listahan
         const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta"];
         const DAILY_TARGET = 6;
 
@@ -178,6 +178,9 @@
         let unsubscribeLogs = null;
         let unsubscribeStaff = null;
         let firstLoad = true;
+        
+        // Dito natin ise-save ang email -> name mapping
+        let staffRegistry = {}; 
         let masterStaffList = [];
         let currentLogs = [];
 
@@ -207,7 +210,7 @@
             document.getElementById('pop-time').innerText = `${date} at ${time}`;
             const popStatus = document.getElementById('pop-status');
             popStatus.innerText = type.toUpperCase();
-            popStatus.style.background = (type === "Check In" || type === "In") ? "#238636" : "#f85149";
+            popStatus.style.background = (type === "Check In" || type === "In" || type === "IN") ? "#238636" : "#f85149";
             pop.style.display = 'block';
         };
 
@@ -263,15 +266,17 @@
             let activeStaff = {}; 
 
             currentLogs.forEach(log => {
-                // Priority ang Full Name mula sa database
-                const staffName = log.name || log.staffName || log.userName || "Unknown Staff";
+                // ETO ANG UPDATE: Kung email ang nasa field, i-convert sa Full Name
+                let rawName = log.name || log.staffName || log.userName || log.email || "Unknown Staff";
+                let staffName = staffRegistry[rawName] || rawName; // Gamitin ang registry kung available
+
                 const store = log.locationName || log.storeName || log.branch || "---";
+                const statusText = log.type || log.status || "Activity";
                 
                 if (staffName.toLowerCase().includes(searchTerm) || store.toLowerCase().includes(searchTerm)) {
                     const ts = log.timestamp ? log.timestamp.toDate() : new Date();
                     const timeStr = ts.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                     const dateStr = ts.toLocaleDateString();
-                    const statusText = log.type || log.status || "Activity";
                     const statusClass = (statusText === "Check In" || statusText === "In" || statusText === "IN") ? "in" : "out";
 
                     const safeName = staffName.replace(/'/g, "\\'");
@@ -289,15 +294,12 @@
                         </tr>`;
                 }
 
-                // Count visits (Check In only)
-                if(log.type === "Check In" || log.status === "In" || log.type === "IN") {
+                // Bilangin ang visits
+                if(statusText === "Check In" || statusText === "In" || statusText === "IN") {
                     activeStaff[staffName] = (activeStaff[staffName] || 0) + 1;
-                } else if (!activeStaff[staffName]) {
-                    activeStaff[staffName] = 0;
                 }
             });
 
-            // Filter out admins from the progress summary
             const presentList = Object.keys(activeStaff).filter(n => !adminExclusion.includes(n) && n !== "Unknown Staff");
             
             attendanceChart.data.labels = presentList;
@@ -337,11 +339,19 @@
             // Sync with staff_members collection
             unsubscribeStaff = onSnapshot(collection(db, "staff_members"), (staffSnapshot) => {
                 masterStaffList = [];
+                staffRegistry = {}; // Reset registry
+                
                 staffSnapshot.forEach(doc => {
                     const data = doc.data();
                     const name = data.name || data.staffName || data.userName;
-                    // I-monitor lang ang mga wala sa adminExclusion
-                    if (name && !adminExclusion.includes(name)) masterStaffList.push(name);
+                    const email = data.email;
+
+                    // I-link ang email sa pangalan para sa mapping
+                    if (email && name) staffRegistry[email] = name;
+                    
+                    if (name && !adminExclusion.includes(name) && name !== "Arem") {
+                         masterStaffList.push(name);
+                    }
                 });
                 renderData();
             });
@@ -363,7 +373,8 @@
                     const latest = currentLogs.find(l => l.latitude);
                     if (latest) {
                         const ts = latest.timestamp.toDate();
-                        const sName = latest.name || latest.staffName || "Staff";
+                        const raw = latest.name || latest.staffName || latest.email || "Staff";
+                        const sName = staffRegistry[raw] || raw;
                         focusMap(latest.latitude, latest.longitude, sName, latest.locationName || "Location", ts.toLocaleTimeString(), latest.type || "In", ts.toLocaleDateString());
                     }
                     firstLoad = false;
