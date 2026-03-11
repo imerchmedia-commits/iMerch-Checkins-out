@@ -130,7 +130,7 @@
 
             <div class="info-card">
                 <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 STAFF MANAGEMENT SUMMARY</div>
-                <div style="height: 150px;">
+                <div style="height: 180px;">
                     <canvas id="attendanceChart"></canvas>
                 </div>
                 <div style="font-size: 0.7rem; color: #8b949e; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">STAFF PROGRESS (Goal: 6)</div>
@@ -159,7 +159,8 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta"];
+        // UPDATED: Added "Arem" to exclusions
+        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem", "Arem Tester"];
         const DAILY_TARGET = 6;
 
         const firebaseConfig = {
@@ -194,12 +195,10 @@
             signOut(auth).then(() => window.location.href = "../index.html");
         });
 
-        // FIXED: Improved focusMap with better URL and string handling
         window.focusMap = function(lat, lng, name, store, time, type, date) {
             const map = document.getElementById('main-map');
             const pop = document.getElementById('map-pop-info');
-            // Using standard Google Maps Embed URL
-            const newUrl = `https://maps.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed`;
+            const newUrl = `https://maps.google.com/maps?q=${lat},${lng}&hl=en&z=14&output=embed`;
             
             if (map.src !== newUrl) map.src = newUrl;
             
@@ -219,9 +218,9 @@
                 data: {
                     labels: [],
                     datasets: [{
-                        label: 'Check-ins',
+                        label: 'Visits',
                         data: [],
-                        backgroundColor: '#58a6ff',
+                        backgroundColor: [], // Dynamic color
                         borderRadius: 4
                     }]
                 },
@@ -230,7 +229,15 @@
                     plugins: { legend: { display: false } },
                     scales: { 
                         y: { beginAtZero: true, ticks: { color: '#8b949e', stepSize: 1 } },
-                        x: { ticks: { color: '#8b949e', font: { size: 9 } } }
+                        x: { 
+                            ticks: { 
+                                color: '#8b949e', 
+                                font: { size: 10, weight: 'bold' },
+                                autoSkip: false,
+                                maxRotation: 45,
+                                minRotation: 0
+                            } 
+                        }
                     }
                 }
             });
@@ -247,7 +254,6 @@
             }
         });
 
-        // FIXED: Massive "Unknown Staff" protection
         function renderData() {
             const searchTerm = logSearch.value.toLowerCase();
             const logsBody = document.getElementById('logsBody');
@@ -257,7 +263,6 @@
             let activeStaff = {}; 
 
             currentLogs.forEach(log => {
-                // FALLBACK CHAIN: name -> staffName -> userName -> email -> Unknown
                 const staffName = log.name || log.staffName || log.userName || log.email || "Unknown Staff";
                 const store = log.locationName || log.storeName || log.branch || "---";
                 
@@ -268,7 +273,6 @@
                     const statusText = log.type || log.status || "Activity";
                     const statusClass = (statusText === "Check In" || statusText === "In" || statusText === "IN") ? "in" : "out";
 
-                    // Sanitize names for button JS call
                     const safeName = staffName.replace(/'/g, "\\'");
                     const safeStore = store.replace(/'/g, "\\'");
 
@@ -291,11 +295,17 @@
                 }
             });
 
-            // Summary calculation
+            // Summary calculation and Chart Update
             const presentList = Object.keys(activeStaff).filter(n => !adminExclusion.includes(n) && n !== "Unknown Staff");
             
             attendanceChart.data.labels = presentList;
             attendanceChart.data.datasets[0].data = presentList.map(name => activeStaff[name]);
+            
+            // Color Coding Logic
+            attendanceChart.data.datasets[0].backgroundColor = presentList.map(name => 
+                activeStaff[name] >= DAILY_TARGET ? '#238636' : '#58a6ff'
+            );
+            
             attendanceChart.update();
 
             const absentList = masterStaffList.filter(name => !presentList.includes(name));
@@ -345,8 +355,7 @@
             unsubscribeLogs = onSnapshot(q, (snapshot) => {
                 currentLogs = [];
                 snapshot.forEach(doc => {
-                    const data = doc.data();
-                    currentLogs.push(data);
+                    currentLogs.push(doc.data());
                 });
 
                 if (currentLogs.length > 0 && firstLoad) {
