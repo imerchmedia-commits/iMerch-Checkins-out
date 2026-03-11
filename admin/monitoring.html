@@ -36,7 +36,7 @@
 
         .info-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; display: flex; flex-direction: column; }
         
-        .map-container { position: relative; width: 100%; height: 450px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--border); }
+        .map-container { position: relative; width: 100%; height: 450px; border-radius: 8px; overflow: hidden; background: #111; border: 1px solid var(--border); }
         #main-map { width: 100%; height: 100%; border: 0; }
         
         #map-pop-info { 
@@ -119,7 +119,7 @@
                         <div id="pop-store" style="font-size: 0.75rem; color: #8b949e;">---</div>
                         <div id="pop-time" style="font-size: 0.7rem; color: var(--accent); margin-top: 3px;">---</div>
                     </div>
-                    <iframe id="main-map" loading="lazy" src="about:blank"></iframe>
+                    <iframe id="main-map" loading="lazy" src="https://maps.google.com/maps?q=Philippines&t=&z=13&ie=UTF8&iwloc=&output=embed"></iframe>
                 </div>
             </div>
 
@@ -169,21 +169,19 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        if (Notification.permission !== "granted") {
-            Notification.requestPermission();
-        }
-
         let attendanceChart;
-        let unsubscribe = null;
+        let unsubscribeLogs = null;
+        let unsubscribeStaff = null;
 
         const dateInput = document.getElementById('dateFilter');
         dateInput.valueAsDate = new Date();
 
-        // Updated for 12hr Display in Map Pop-info
         window.focusMap = function(lat, lng, name, store, time, type, date) {
             const map = document.getElementById('main-map');
             const pop = document.getElementById('map-pop-info');
-            map.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=en;z=16&output=embed`;
+            // Fixed URL format for better compatibility
+            map.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed`;
+            
             document.getElementById('pop-name').innerText = name;
             document.getElementById('pop-store').innerText = store;
             document.getElementById('pop-time').innerText = `${date} at ${time}`;
@@ -230,11 +228,18 @@
                 document.getElementById('main-content').style.display = 'block';
                 initChart();
                 startMonitoring();
-            } else { window.location.href = "../index.html"; }
+                if (Notification.permission === "default") {
+                    Notification.requestPermission();
+                }
+            } else { 
+                window.location.href = "../index.html"; 
+            }
         });
 
         function startMonitoring() {
-            if (unsubscribe) unsubscribe();
+            // Clean up previous listeners to avoid permission/memory errors
+            if (unsubscribeLogs) unsubscribeLogs();
+            if (unsubscribeStaff) unsubscribeStaff();
             notifiedStaff.clear();
 
             const selectedDate = new Date(dateInput.value);
@@ -242,11 +247,11 @@
             const endOfDay = new Date(selectedDate.setHours(23,59,59,999));
 
             const staffQ = query(collection(db, "staff_members"));
-            onSnapshot(staffQ, (staffSnapshot) => {
+            unsubscribeStaff = onSnapshot(staffQ, (staffSnapshot) => {
                 let masterStaffList = [];
                 staffSnapshot.forEach(doc => {
                     const name = doc.data().name;
-                    if (!adminExclusion.includes(name)) masterStaffList.push(name);
+                    if (name && !adminExclusion.includes(name)) masterStaffList.push(name);
                 });
 
                 const q = query(
@@ -256,7 +261,7 @@
                     orderBy("timestamp", "desc")
                 );
                 
-                unsubscribe = onSnapshot(q, (snapshot) => {
+                unsubscribeLogs = onSnapshot(q, (snapshot) => {
                     const logsBody = document.getElementById('logsBody');
                     const userSummaryList = document.getElementById('userSummaryList');
                     let inCount = 0; let outCount = 0;
@@ -266,10 +271,9 @@
 
                     snapshot.forEach((doc) => {
                         const log = doc.data();
-                        const staffName = log.name || log.email.split('@')[0];
+                        const staffName = log.name || (log.email ? log.email.split('@')[0] : "Unknown");
                         const ts = log.timestamp ? log.timestamp.toDate() : new Date();
                         
-                        // FORMAT TO 12HR AM/PM
                         const timeStr = ts.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                         const dateStr = ts.toLocaleDateString();
                         
@@ -325,6 +329,8 @@
 
                     attendanceChart.data.datasets[0].data = [inCount, outCount];
                     attendanceChart.update();
+                }, (error) => {
+                    console.error("Firestore Error:", error);
                 });
             });
         }
