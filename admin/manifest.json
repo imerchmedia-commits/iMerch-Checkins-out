@@ -1,0 +1,20 @@
+{
+  "short_name": "iMerch Admin",
+  "name": "iMerch Admin Portal",
+  "icons": [
+    {
+      "src": "im.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "im.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "admin.html",
+  "display": "standalone",
+  "theme_color": "#0d1117",
+  "background_color": "#0d1117"
+}
