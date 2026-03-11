@@ -90,12 +90,14 @@
 
         <div class="admin-grid">
             <div class="admin-sidebar">
-                <h3>Create Staff</h3>
-                <div class="card">
-                    <input type="text" id="new-fullname" placeholder="Staff Full Name">
-                    <input type="email" id="new-email" placeholder="Staff Email">
-                    <input type="password" id="new-pass" placeholder="Temp Password">
-                    <button class="btn" style="background: var(--blue);" id="createAccBtn">Create Account</button>
+                <div id="creator-section">
+                    <h3>Create Staff</h3>
+                    <div class="card">
+                        <input type="text" id="new-fullname" placeholder="Staff Full Name">
+                        <input type="email" id="new-email" placeholder="Staff Email">
+                        <input type="password" id="new-pass" placeholder="Temp Password">
+                        <button class="btn" style="background: var(--blue);" id="createAccBtn">Create Account</button>
+                    </div>
                 </div>
 
                 <h3>Staff Directory</h3>
@@ -130,7 +132,7 @@
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                    <div id="danger-zone" style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
                         <button id="exportBtn" class="btn export-trigger" style="background: #238636; flex: 1; min-width: 120px;">📊 Export Excel</button>
                         <button id="archiveBtn" class="btn" style="background: #fb8c00; flex: 1; min-width: 120px;">📦 Backup JSON</button>
                         <button id="importBtn" class="btn" style="background: #8250df; flex: 1; min-width: 120px;">📥 Restore Backup</button>
@@ -263,7 +265,7 @@
                                 <span class="status-dot" style="background: ${isActive ? '#3fb950' : '#f85149'};"></span>${status}
                             </div>
                         </div>
-                        <div style="display: flex; gap: 4px;">
+                        <div class="staff-controls" style="display: flex; gap: 4px;">
                             <button class="geo-btn" style="background: ${isActive ? 'var(--red)' : 'var(--green)'}; padding: 4px 6px;" 
                                 onclick="toggleStaffStatus('${docId}', '${status}')">
                                 ${isActive ? 'Off' : 'On'}
@@ -277,6 +279,7 @@
             });
             updateMasterLogNames();
             applyFilters();
+            checkUserRole(); // Apply restriction if needed
         });
     }
 
@@ -351,11 +354,27 @@
     }
 
     function updateStats(data) {
-        const uniqueEmails = new Set(data.map(d => d.email).filter(e => e));
         const todayStr = new Date().toLocaleDateString();
         const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === todayStr).map(d => d.email));
         document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length;
         document.getElementById('present-today-count').innerText = presentToday.size;
+    }
+
+    // Role-based visibility check
+    function checkUserRole() {
+        const user = auth.currentUser;
+        if (!user) return;
+        const restricted = ["joy.biazon@imerchmedia.net", "glenn.hernandez@imerchmedia.com"];
+        if (restricted.includes(user.email.toLowerCase())) {
+            // Hide Buttons & Sections
+            document.getElementById('danger-zone').classList.add('hidden');
+            document.getElementById('creator-section').classList.add('hidden');
+            document.getElementById('exportBtnBottom').classList.add('hidden');
+            
+            // Hide control buttons inside staff directory (On/Off/Delete)
+            const controls = document.querySelectorAll('.staff-controls');
+            controls.forEach(c => c.classList.add('hidden'));
+        }
     }
 
     const handleExport = () => {
@@ -394,8 +413,13 @@
     };
 
     onAuthStateChanged(auth, async (user) => {
-        const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
-        if (user && admins.includes(user.email)) {
+        const admins = [
+            "ron.sarmenta@gmail.com", 
+            "ronsarmenta.imerchmedia@gmail.com",
+            "joy.biazon@imerchmedia.net",
+            "glenn.hernandez@imerchmedia.com"
+        ];
+        if (user && admins.includes(user.email.toLowerCase())) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
             loadStaffData(); loadAdminLogs(); setTimeout(initMap, 500);
@@ -412,6 +436,7 @@
     };
 
     document.getElementById('logoutLink').onclick = () => signOut(auth);
+    
     document.getElementById('wipeLogsBtn').onclick = async () => {
         if (!confirm("Wipe all logs?")) return;
         const batch = writeBatch(db);
