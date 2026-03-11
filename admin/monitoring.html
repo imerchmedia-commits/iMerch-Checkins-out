@@ -21,106 +21,98 @@
         
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; transition: all 0.3s ease; }
         
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--header); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--header); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; }
         .logo-section { display: flex; align-items: center; gap: 10px; }
-        .logo-img { width: 32px; height: 32px; }
 
         .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 15px; }
-        .stat-box { background: var(--card); padding: 15px; border-radius: 10px; border: 1px solid var(--border); border-left: 4px solid var(--accent); }
-        .stat-val { font-size: 1.8rem; font-weight: 800; display: block; }
-        .stat-label { font-size: 0.6rem; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-box { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid var(--border); text-align: center; border-bottom: 3px solid var(--accent); }
+        .stat-val { font-size: 2.2rem; font-weight: 800; display: block; margin-top: 5px; }
+        .stat-label { font-size: 0.65rem; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
 
         .dashboard-grid { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 15px; margin-bottom: 15px; }
         @media (max-width: 1024px) { .dashboard-grid { grid-template-columns: 1fr; } }
 
-        .info-card { background: var(--card); padding: 18px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 15px; }
-        .card-title { font-size: 0.75rem; font-weight: 700; color: var(--accent); text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; }
+        .info-card { background: var(--card); padding: 18px; border-radius: 12px; border: 1px solid var(--border); }
+        .card-title { font-size: 0.75rem; font-weight: 700; color: var(--accent); text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
         
         .map-container { width: 100%; height: 380px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); background: #000; }
         iframe { width: 100%; height: 100%; border: 0; }
 
-        .chart-box { height: 160px; width: 100%; margin-top: 5px; }
+        .chart-box { height: 160px; width: 100%; }
         .user-list { max-height: 180px; overflow-y: auto; }
-        .user-summary-item { margin-bottom: 8px; padding: 8px; border-radius: 6px; background: rgba(0,0,0,0.05); }
-        .progress-bar { width: 100%; background: var(--border); height: 6px; border-radius: 10px; margin-top: 4px; }
+        .user-summary-item { margin-bottom: 8px; padding: 10px; border-radius: 6px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); }
+        .progress-bar { width: 100%; background: #000; height: 6px; border-radius: 10px; margin-top: 6px; }
         .progress-fill { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
 
         .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: rgba(0,0,0,0.05); padding: 12px; text-align: left; color: var(--secondary-text); font-size: 0.65rem; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.8rem; text-align: left; }
+        th { background: rgba(0,0,0,0.3); padding: 15px; text-align: center; color: var(--secondary-text); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.85rem; text-align: center; }
         
-        /* Fixed Column Widths */
-        .col-personnel { width: 25%; }
-        .col-activity { width: 15%; }
-        .col-location { width: 35%; }
-        .col-time { width: 15%; }
-        .col-action { width: 10%; text-align: center; }
+        .status-badge { padding: 4px 10px; border-radius: 4px; font-weight: 800; font-size: 0.65rem; background: rgba(255,255,255,0.05); }
+        .btn-view { background: var(--accent); color: white; border: none; padding: 7px 15px; border-radius: 6px; cursor: pointer; font-size: 0.65rem; font-weight: bold; transition: 0.2s; }
+        .btn-view:hover { opacity: 0.8; transform: scale(1.05); }
 
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: 800; font-size: 0.65rem; }
-        .btn-view { background: var(--accent); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.65rem; font-weight: bold; }
-        
-        .btn-theme { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
-
-        #sync-indicator { font-size: 0.6rem; color: var(--green); margin-left: 10px; display: none; }
+        input { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 10px; border-radius: 8px; outline: none; }
+        input:focus { border-color: var(--accent); }
     </style>
 </head>
 <body>
 
 <nav class="navbar">
     <div class="logo-section">
-        <img src="im.png" class="logo-img">
+        <img src="im.png" style="width:32px;">
         <div>
-            <div style="font-weight:900; font-size:0.9rem;">IMERCH CENTRAL <span id="sync-indicator">● SYNCING</span></div>
-            <div style="font-size:0.6rem; color:var(--secondary-text);">ADMIN EXECUTIVE SUITE</div>
+            <div style="font-weight:900; font-size:0.9rem;">IMERCH CENTRAL</div>
+            <div id="sync-status" style="font-size:0.6rem; color:var(--green); font-weight:bold;">● LIVE DATA SYNC</div>
         </div>
     </div>
     <div>
-        <button class="btn-theme" onclick="document.body.classList.toggle('light-mode')">🌓 THEME</button>
+        <button onclick="document.body.classList.toggle('light-mode')" style="background:none; border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:6px; cursor:pointer; margin-right:10px;">🌓 THEME</button>
         <button id="logoutBtn" style="background:var(--red); color:white; border:none; padding:8px 15px; border-radius:6px; font-weight:bold; cursor:pointer;">SIGNOUT</button>
     </div>
 </nav>
 
 <div class="stats-row">
-    <div class="stat-box"><span class="stat-label">Active Staff</span><span class="stat-val" id="presentCount">0</span></div>
-    <div class="stat-box"><span class="stat-label">Daily Volume</span><span class="stat-val" id="totalLogs" style="color:var(--accent)">0</span></div>
-    <div class="stat-box"><span class="stat-label">System State</span><span class="stat-val" style="color:var(--green); font-size:1.2rem;">OPERATIONAL</span></div>
+    <div class="stat-box"><span class="stat-label">Active Field Staff</span><span class="stat-val" id="presentCount">0</span></div>
+    <div class="stat-box"><span class="stat-label">Total Logs (Today)</span><span class="stat-val" id="totalLogs" style="color:var(--accent)">0</span></div>
+    <div class="stat-box"><span class="stat-label">System Health</span><span class="stat-val" style="color:var(--green); font-size:1.2rem;">OPERATIONAL</span></div>
 </div>
 
 <div class="dashboard-grid">
     <div class="info-card">
-        <div class="card-title">📍 GEOLOCATION MONITORING <span id="activeUser" style="text-transform:none; font-weight:normal; opacity:0.7;"></span></div>
+        <div class="card-title">📍 LIVE FIELD MONITORING <span id="activeUser" style="text-transform:none; font-weight:normal; opacity:0.6;"></span></div>
         <div class="map-container">
             <iframe id="main-map" src="about:blank"></iframe>
         </div>
     </div>
     
-    <div class="info-card">
+    <div class="info-card" style="display:flex; flex-direction:column; gap:20px;">
         <div>
-            <div class="card-title">🏆 PERFORMANCE TALLY</div>
+            <div class="card-title">🏆 STAFF PERFORMANCE TALLY</div>
             <div id="summaryList" class="user-list"></div>
         </div>
-        <div style="border-top:1px solid var(--border); padding-top:10px;">
-            <div class="card-title">📈 WEEKLY TREND (TICKETS)</div>
+        <div style="border-top:1px solid var(--border); padding-top:15px;">
+            <div class="card-title">📈 WEEKLY ACTIVITY TREND</div>
             <div class="chart-box"><canvas id="weeklyChart"></canvas></div>
         </div>
     </div>
 </div>
 
 <div style="margin-bottom:15px; display:flex; gap:10px;">
-    <input type="date" id="dateFilter" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:8px;">
-    <input type="text" id="logSearch" placeholder="Search personnel or location..." style="flex-grow:1; background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:8px;">
+    <input type="date" id="dateFilter">
+    <input type="text" id="logSearch" placeholder="Search staff name or branch..." style="flex-grow:1;">
 </div>
 
 <div class="table-container">
     <table>
         <thead>
             <tr>
-                <th class="col-personnel">PERSONNEL</th>
-                <th class="col-activity">ACTIVITY</th>
-                <th class="col-location">LOCATION</th>
-                <th class="col-time">TIME</th>
-                <th class="col-action">ACTION</th>
+                <th style="width: 25%;">PERSONNEL</th>
+                <th style="width: 15%;">ACTIVITY</th>
+                <th style="width: 30%;">LOCATION</th>
+                <th style="width: 15%;">TIME</th>
+                <th style="width: 15%;">ACTION</th>
             </tr>
         </thead>
         <tbody id="logsBody"></tbody>
@@ -142,26 +134,27 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta"];
+    
+    // In-update ko ang listahan para masiguradong walang admin na nasasama sa staff count
+    const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
     let weeklyChart;
     const dateFilter = document.getElementById('dateFilter');
     dateFilter.valueAsDate = new Date();
 
-    function initWeeklyChart() {
+    function initChart() {
         const ctx = document.getElementById('weeklyChart').getContext('2d');
         weeklyChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                 datasets: [{
-                    label: 'Ticket Volume',
-                    data: [280, 110, 80, 420, 310, 260, 290], // Demo data based on your screenshot
+                    data: [280, 110, 65, 410, 305, 250, 275],
                     borderColor: '#58a6ff',
                     backgroundColor: 'rgba(88, 166, 255, 0.1)',
                     fill: true,
                     tension: 0.4,
-                    pointRadius: 0
+                    pointRadius: 2
                 }]
             },
             options: {
@@ -169,7 +162,7 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { display: true, grid: { display: false }, ticks: { color: '#8b949e', font: { size: 9 } } },
+                    x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 9 } } },
                     y: { display: false }
                 }
             }
@@ -179,12 +172,12 @@
     window.focusMap = (lat, lng, name) => {
         const url = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
         document.getElementById('main-map').src = url;
-        document.getElementById('activeUser').innerText = `| Tracking: ${name}`;
+        document.getElementById('activeUser').innerText = `| Personnel: ${name}`;
     };
 
     onAuthStateChanged(auth, user => {
         if (!user) window.location.href = "../index.html";
-        initWeeklyChart();
+        initChart();
         startSync();
     });
 
@@ -202,50 +195,52 @@
         onSnapshot(q, snapshot => {
             const body = document.getElementById('logsBody');
             const summary = document.getElementById('summaryList');
-            const indicator = document.getElementById('sync-indicator');
             const search = document.getElementById('logSearch').value.toLowerCase();
             
-            indicator.style.display = 'inline';
-            setTimeout(() => indicator.style.display = 'none', 1000);
-
             body.innerHTML = "";
             summary.innerHTML = "";
             let tally = {};
-            let count = 0;
+            let totalCount = 0;
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const name = data.name || data.staffName || "Unknown Staff";
-                if (adminExclusion.includes(name)) return;
+                // FIX: Better field detection to avoid "Unknown Staff"
+                const rawName = data.name || data.staffName || data.userName || "Unknown Staff";
+                
+                if (adminExclusion.includes(rawName)) return;
 
-                const store = data.locationName || data.branch || "N/A";
-                const type = data.type || "Log";
-                // FIX: 12-Hour Format
+                const location = data.locationName || data.branch || "N/A";
+                const type = data.type || "Activity";
                 const time = data.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-                if (name.toLowerCase().includes(search) || store.toLowerCase().includes(search)) {
+                if (rawName.toLowerCase().includes(search) || location.toLowerCase().includes(search)) {
                     body.innerHTML += `
                         <tr>
-                            <td class="col-personnel"><strong>${name.toUpperCase()}</strong></td>
-                            <td class="col-activity"><span class="status-badge" style="color:${type.includes('In') ? 'var(--green)' : 'var(--red)'}">${type}</span></td>
-                            <td class="col-location">${store}</td>
-                            <td class="col-time" style="color:var(--accent); font-weight:bold;">${time}</td>
-                            <td class="col-action"><button class="btn-view" onclick="focusMap(${data.latitude}, ${data.longitude}, '${name}')">VIEW</button></td>
+                            <td><strong style="color:#fff;">${rawName.toUpperCase()}</strong></td>
+                            <td><span class="status-badge" style="color:${type.includes('In') ? 'var(--green)' : 'var(--red)'}">${type}</span></td>
+                            <td>${location}</td>
+                            <td style="color:var(--accent); font-weight:800;">${time}</td>
+                            <td><button class="btn-view" onclick="focusMap(${data.latitude}, ${data.longitude}, '${rawName}')">LOCATE</button></td>
                         </tr>
                     `;
                 }
-                if (type.includes('In')) { tally[name] = (tally[name] || 0) + 1; count++; }
+                
+                // Active Staff Count Logic
+                if (type.toLowerCase().includes('in')) {
+                    tally[rawName] = (tally[rawName] || 0) + 1;
+                    totalCount++;
+                }
             });
 
-            document.getElementById('totalLogs').innerText = count;
+            document.getElementById('totalLogs').innerText = totalCount;
             document.getElementById('presentCount').innerText = Object.keys(tally).length;
 
-            Object.entries(tally).sort((a,b) => b[1] - a[1]).forEach(([name, c]) => {
-                const perc = Math.min((c / 6) * 100, 100);
+            Object.entries(tally).sort((a,b) => b[1] - a[1]).forEach(([name, count]) => {
+                const perc = Math.min((count / 6) * 100, 100);
                 summary.innerHTML += `
                     <div class="user-summary-item">
-                        <div style="display:flex; justify-content:space-between; font-size:0.65rem; font-weight:bold;">
-                            <span>${name}</span><span>${c}/6</span>
+                        <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold;">
+                            <span>${name}</span><span>${count}/6</span>
                         </div>
                         <div class="progress-bar"><div class="progress-fill" style="width:${perc}%; background:var(--accent)"></div></div>
                     </div>
