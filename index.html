@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iMerch - Secure Attendance</title>
+
     <link rel="icon" type="image/png" href="im.png">
+    <link rel="shortcut icon" type="image/x-icon" href="im.png">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         /* Theme Variables */
@@ -68,6 +71,7 @@
         .btn-checkout { background: var(--red); }
         .btn:disabled { background: #30363d; cursor: not-allowed; opacity: 0.6; }
         
+        /* RECENT ACTIVITY STYLING */
         .history-item { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
         .history-row { display: flex; justify-content: space-between; width: 100%; }
         .history-remarks { font-style: italic; color: #8b949e; margin-top: 4px; font-size: 0.85em; }
@@ -142,6 +146,7 @@
                 
                 <input type="text" id="attendance-remarks" placeholder="Add remarks (Optional)" style="margin-top: 10px;">
             </div>
+            
             <h3>My Recent Activity</h3>
             <div id="history-list"></div>
         </div>
@@ -227,7 +232,7 @@
     let isMocked = false;
     let userStatus = "Active"; 
     let map, marker;
-    let isSubmitting = false; // Flag to prevent multi-clicks
+    let isSubmitting = false; 
 
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
@@ -294,10 +299,9 @@
         const loc = document.getElementById('location-name').value.trim() || "Mobile Location";
         const remarks = document.getElementById('attendance-remarks').value || "";
 
-        isSubmitting = true; // Block further clicks immediately
+        isSubmitting = true; 
 
         try {
-            // Check if this action (Check In or Out) already exists for this location
             const q = query(
                 collection(db, "attendance"),
                 where("uid", "==", auth.currentUser.uid),
@@ -314,7 +318,6 @@
                 return;
             }
 
-            // If no duplicate found, proceed with adding the document
             await addDoc(collection(db, "attendance"), {
                 uid: auth.currentUser.uid,
                 email: auth.currentUser.email,
@@ -331,7 +334,7 @@
         } catch (e) { 
             alert("Error: " + e.message); 
         } finally {
-            isSubmitting = false; // Re-enable clicks after logic is done
+            isSubmitting = false; 
         }
     }
 
@@ -376,8 +379,9 @@
     document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
+    // LOAD RECENT ACTIVITY
     function loadHistory(uid) {
-        const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"));
+        const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"), limit(10));
         onSnapshot(q, (snap) => {
             const list = document.getElementById('history-list');
             list.innerHTML = "";
@@ -414,7 +418,6 @@
         
         try { 
             const userCred = await createUserWithEmailAndPassword(auth, email, pass); 
-            // Create the User Profile in Firestore
             await addDoc(collection(db, "users"), {
                 uid: userCred.user.uid,
                 email: email,
@@ -430,4 +433,3 @@
 </script>
 </body>
 </html>
-
