@@ -46,7 +46,6 @@
         .info-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .card-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 15px; color: var(--accent); display: flex; align-items: center; justify-content: space-between; }
         
-        /* Map App Button styling */
         #externalMapLink { 
             font-size: 0.65rem; 
             background: var(--green); 
@@ -58,7 +57,6 @@
             transition: 0.2s;
             font-weight: 800;
         }
-        #externalMapLink:hover { opacity: 0.8; }
 
         .map-container { position: relative; width: 100%; height: 400px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: #f0f0f0; }
         #main-map { width: 100%; height: 100%; border: 0; }
@@ -70,9 +68,7 @@
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background: rgba(0,0,0,0.15); color: var(--secondary-text); text-transform: uppercase; font-size: 0.75rem; font-weight: 700; padding: 18px; letter-spacing: 1px; text-align: center; border-bottom: 2px solid var(--border); }
         td { padding: 16px 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover { background: rgba(88, 166, 255, 0.04); }
-
+        
         .col-staff { width: 25%; }
         .col-type { width: 15%; }
         .col-location { width: 30%; }
@@ -89,7 +85,6 @@
 
         .filter-section { display: flex; gap: 12px; margin-bottom: 20px; }
         .date-input, .search-box { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 8px; outline: none; font-size: 0.9rem; transition: 0.2s; }
-        .date-input:focus, .search-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15); }
         .search-box { flex-grow: 1; }
 
         #loading-screen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
@@ -222,7 +217,7 @@
             signOut(auth).then(() => window.location.href = "../index.html");
         });
 
-        // RE-OPTIMIZED FOCUS MAP FUNCTION (Fixes the 404 and adds App Link)
+        // FIXED FOCUS MAP FUNCTION
         window.focusMap = function(lat, lng, details) {
             const map = document.getElementById('main-map');
             const extLink = document.getElementById('externalMapLink');
@@ -230,10 +225,10 @@
 
             const cleanDetails = details.replace(/[^a-zA-Z0-9 | :]/g, '');
             
-            // Fixed String Interpolation (Removed the extra 0)
-            const mapUrl = `http://googleusercontent.com/maps.google.com/maps?q=${lat},${lng}+(${encodeURIComponent(cleanDetails)})&t=m&z=17&output=embed`;
+            // Gumamit ng 'q=' query mode para sa stable na red marker
+            const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}&t=&z=16&ie=UTF8&iwloc=B&output=embed`;
             
-            // App URL specifically for deep-linking
+            // App URL for deep-linking
             const appUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
             
             map.src = mapUrl;
@@ -277,8 +272,7 @@
             currentLogs.forEach(log => {
                 let rawEmail = log.email || "---";
                 let email = rawEmail.toLowerCase();
-                let fallbackName = rawEmail.includes('@') ? rawEmail.split('@')[0] : rawEmail;
-                let staffName = log.name || staffRegistry[email] || staffRegistry[rawEmail] || fallbackName;
+                let staffName = log.name || staffRegistry[email] || rawEmail.split('@')[0];
 
                 if (adminExclusion.includes(staffName) || adminExclusion.includes(email)) return; 
 
@@ -289,24 +283,16 @@
                     const ts = log.timestamp ? log.timestamp.toDate() : new Date();
                     const timeStr = ts.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                     const statusClass = (statusText.toLowerCase().includes("in")) ? "in" : "out";
-
-                    const markerColor = statusClass === "in" ? "IN" : "OUT";
-                    const mapLabel = `${staffName} | ${markerColor} | ${store}`;
-                    const safeLabel = mapLabel.replace(/'/g, "\\'");
+                    const safeLabel = `${staffName} - ${store}`.replace(/'/g, "\\'");
 
                     logsBody.innerHTML += `
                         <tr>
-                            <td>
-                                <div class="staff-info">
-                                    <span class="full-name">${staffName}</span>
-                                    <span class="email-top">${rawEmail}</span>
-                                </div>
-                            </td>
+                            <td><div class="staff-info"><span class="full-name">${staffName}</span><span class="email-top">${rawEmail}</span></div></td>
                             <td><span class="status-tag ${statusClass}">${statusText}</span></td>
                             <td style="color:var(--text); font-weight:600;">${store}</td>
                             <td style="font-weight:700; color:var(--accent)">${timeStr}</td>
                             <td class="col-action">
-                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${safeLabel}')" style="background:var(--green); border:none; color:white; border-radius:6px; font-size:0.65rem; font-weight:700; cursor:pointer; padding:8px 16px; transition: 0.2s;">VIEW MAP</button>` : '--'}
+                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${safeLabel}')" style="background:var(--green); border:none; color:white; border-radius:6px; font-size:0.65rem; font-weight:700; cursor:pointer; padding:8px 16px;">VIEW MAP</button>` : '--'}
                             </td>
                         </tr>`;
                 }
@@ -316,32 +302,13 @@
                 }
             });
 
+            // Summary logic update
             const presentList = Object.keys(activeStaff);
             attendanceChart.data.labels = presentList.map(n => n.split(' ')[0]);
             attendanceChart.data.datasets[0].data = presentList.map(name => activeStaff[name]);
-            attendanceChart.data.datasets[0].backgroundColor = presentList.map(name => activeStaff[name] >= DAILY_TARGET ? '#238636' : '#58a6ff');
             attendanceChart.update();
-
             document.getElementById('presentCount').innerText = presentList.length;
             document.getElementById('absentCount').innerText = Math.max(0, masterStaffList.length - presentList.length);
-
-            userSummaryList.innerHTML = masterStaffList.sort().map(staff => {
-                const count = activeStaff[staff] || 0;
-                const isAbsent = count === 0;
-                const percent = Math.min((count / DAILY_TARGET) * 100, 100);
-                const barColor = count >= DAILY_TARGET ? 'var(--green)' : 'var(--accent)';
-
-                return `
-                    <div style="margin-bottom:15px; opacity:${isAbsent ? '0.6' : '1'}">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <span style="font-size:0.8rem; font-weight:700;">${isAbsent ? '⚪' : '🟢'} ${staff}</span>
-                            <span style="font-size:0.7rem; font-weight:800; color:${count >= DAILY_TARGET ? 'var(--green)' : 'var(--text)'}">${count} / ${DAILY_TARGET}</span>
-                        </div>
-                        <div class="progress-container">
-                            <div class="progress-fill" style="width: ${percent}%; background: ${barColor};"></div>
-                        </div>
-                    </div>`;
-            }).join('');
         }
 
         function startMonitoring() {
@@ -357,11 +324,7 @@
                 staffSnapshot.forEach(doc => {
                     const data = doc.data();
                     const name = data.name || data.staffName;
-                    const email = (data.email || "").toLowerCase();
-                    if (email) staffRegistry[email] = name;
-                    if (name && !adminExclusion.includes(name)) {
-                        if(!masterStaffList.includes(name)) masterStaffList.push(name);
-                    }
+                    if (name && !adminExclusion.includes(name)) masterStaffList.push(name);
                 });
                 renderData();
             });
@@ -370,19 +333,11 @@
             
             unsubscribeLogs = onSnapshot(q, (snapshot) => {
                 currentLogs = snapshot.docs.map(doc => doc.data());
-                if (currentLogs.length > 0 && firstLoad) {
-                    const latest = currentLogs.find(l => l.latitude && !adminExclusion.includes(l.name));
-                    if (latest) {
-                        const lbl = `Latest Activity: ${latest.name || 'Staff'}`;
-                        focusMap(latest.latitude, latest.longitude, lbl);
-                    }
-                    firstLoad = false;
-                }
                 renderData();
             });
         }
 
-        dateInput.addEventListener('change', () => { firstLoad = true; startMonitoring(); });
+        dateInput.addEventListener('change', startMonitoring);
         logSearch.addEventListener('input', renderData);
     </script>
 </body>
