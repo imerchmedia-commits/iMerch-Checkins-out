@@ -224,10 +224,24 @@
         });
     }
 
-    window.zoomToLocation = (lat, lng, name, type) => {
+    // UPDATED zoomToLocation with colored labels and specific formatting
+    window.zoomToLocation = (lat, lng, name, type, dateTime) => {
         if (!lat || !lng) return alert("No GPS coordinates.");
+        
+        const labelColor = type === 'Check In' ? '#3fb950' : '#f85149';
+        
         map.setView([lat, lng], 16);
-        L.popup().setLatLng([lat, lng]).setContent(`<b>${name}</b><br>${type}`).openOn(map);
+        
+        L.popup()
+            .setLatLng([lat, lng])
+            .setContent(`
+                <div style="text-align:center; font-family: sans-serif;">
+                    <b style="font-size:1.1em; color:var(--blue);">${name}</b><br>
+                    <span style="font-size:0.9em; color:#666;">${dateTime}</span><br>
+                    <b style="color:${labelColor}; font-size:1em;">${type}</b>
+                </div>
+            `)
+            .openOn(map);
     };
 
     window.toggleStaffStatus = async (docId, currentStatus) => {
@@ -335,25 +349,26 @@
         data.forEach(d => {
             const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString() : "Pending";
             const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
+            const fullDateTime = `${date} ${time}`;
             const displayName = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
+            
             list.innerHTML += `
                 <div class="history-item">
                     <div class="history-row">
                         <span style="font-weight:bold; color:var(--blue);">${displayName}</span>
-                        <span style="font-size:0.75em; color:#8b949e;">${date} ${time}</span>
+                        <span style="font-size:0.75em; color:#8b949e;">${fullDateTime}</span>
                     </div>
                     <div class="history-row" style="margin-top:4px; align-items: center;">
                         <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName || 'N/A'}</span>
-                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${displayName}', '${d.type}')">📍 Show</button>
+                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${displayName}', '${d.type}', '${fullDateTime}')">📍 Show</button>
                     </div>
                 </div>`;
         });
     }
 
     function updateStats(data) {
-        const uniqueEmails = new Set(data.map(d => d.email).filter(e => e));
         const todayStr = new Date().toLocaleDateString();
-        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === todayStr).map(d => d.email));
+        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === todayStr).map(d => d.uid));
         document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length;
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
@@ -488,4 +503,3 @@
 </script>
 </body>
 </html>
-
