@@ -10,25 +10,17 @@
     <style>
         :root { 
             --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #58a6ff; 
-            --green: #238636; --border: #30363d; --red: #f85149; --orange: #d29922; --header: #010409;
+            --green: #238636; --border: #30363d; --red: #f85149; --orange: #d97706; --header: #010409;
             --secondary-text: #8b949e; --glass: rgba(22, 27, 34, 0.8);
         }
         [data-theme="light"] {
             --bg: #f6f8fa; --card: #ffffff; --text: #24292f; --accent: #0969da;
-            --green: #1a7f37; --border: #d0d7de; --red: #cf222e; --orange: #9a6700; --header: #ffffff;
+            --green: #1a7f37; --border: #d0d7de; --red: #cf222e; --orange: #ea580c; --header: #ffffff;
             --secondary-text: #57606a; --glass: rgba(255, 255, 255, 0.8);
         }
         
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-        
-        .glass-panel { 
-            background: var(--glass); 
-            backdrop-filter: blur(10px); 
-            border: 1px solid var(--border); 
-            border-radius: 16px; 
-            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3); 
-            contain: content; 
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; -webkit-font-smoothing: antialiased; }
+        .glass-panel { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3); contain: content; }
 
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; margin-bottom: 25px; position: relative; }
         .logo-section { display: flex; align-items: center; gap: 15px; }
@@ -55,7 +47,7 @@
         #main-map { width: 100%; height: 100%; border: 0; display: none; }
         .map-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--secondary-text); font-size: 0.8rem; text-align: center; padding: 20px; }
 
-        .table-container { overflow-x: auto; margin-top: 20px; max-height: 550px; border-radius: 12px; scroll-behavior: smooth; }
+        .table-container { overflow-x: auto; margin-top: 20px; max-height: 600px; border-radius: 12px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { background: rgba(88, 166, 255, 0.1); color: var(--accent); font-size: 0.75rem; padding: 15px; text-align: center; border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 5; backdrop-filter: blur(5px); }
         td { padding: 15px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.9rem; }
@@ -68,19 +60,13 @@
         .date-input, .search-box { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 10px; outline: none; }
         .search-box { flex-grow: 1; }
         .search-box:focus { border-color: var(--accent); }
-        
-        .bar-orange { background: var(--orange) !important; }
-        .bar-green { background: var(--green) !important; }
-        .bar-red { background: var(--red) !important; }
-
-        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body data-theme="dark">
 
     <div id="loading-screen" style="position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000;">
         <div style="width:40px; height:40px; border:4px solid var(--border); border-top:4px solid var(--accent); border-radius:50%; animation:spin 1s linear infinite;"></div>
-        <p style="margin-top:15px; color:var(--secondary-text); font-size: 0.8rem; letter-spacing:2px;">STABILIZING MONITORING...</p>
+        <p style="margin-top:15px; color:var(--secondary-text); font-size: 0.8rem; letter-spacing:2px;">POWERING UP SYSTEM...</p>
     </div>
 
     <div id="main-content" style="display:none;">
@@ -163,8 +149,7 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // EXCLUSION LIST: Updated to include Arem Gonzales's email and name
-        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales", "arem.gonzales@imerchmedia.net"];
+        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
         const DAILY_TARGET = 6;
 
         const firebaseConfig = {
@@ -200,7 +185,7 @@
             mapFrame.style.display = 'block';
             mapFrame.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=en&z=14&output=embed`;
             
-            extLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
+            extLink.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
             extLink.style.display = 'inline-block';
             mapTitle.innerText = `📍 ${name.split(' ')[0]}`;
         };
@@ -210,21 +195,21 @@
                 responsive: true, 
                 maintainAspectRatio: false, 
                 animation: { duration: 400 },
-                plugins: { legend: { display: false } }
+                elements: { arc: { borderWidth: 0 } }
             };
 
             const ctx1 = document.getElementById('performanceChart').getContext('2d');
             perfChart = new Chart(ctx1, {
                 type: 'bar',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderRadius: 5 }] },
-                options: { ...chartOptions, scales: { y: { beginAtZero: true, grid: { color: '#30363d' } }, x: { grid: { display: false } } } }
+                data: { labels: [], datasets: [{ data: [], backgroundColor: '#58a6ff', borderRadius: 5 }] },
+                options: { ...chartOptions, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
             });
 
             const ctx2 = document.getElementById('comparisonChart').getContext('2d');
             compChart = new Chart(ctx2, {
                 type: 'doughnut',
                 data: { labels: ['Today', 'Yesterday'], datasets: [{ data: [0, 0], backgroundColor: ['#58a6ff', '#30363d'] }] },
-                options: { ...chartOptions, cutout: '70%' }
+                options: { ...chartOptions, cutout: '70%', plugins: { legend: { display: false } } }
             });
         }
 
@@ -253,6 +238,7 @@
             yesterday.setDate(yesterday.getDate() - 1);
             const start = new Date(yesterday.setHours(0,0,0,0));
             const end = new Date(yesterday.setHours(23,59,59,999));
+            
             const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)));
             const snap = await getDocs(q);
             compChart.data.datasets[0].data[1] = snap.size;
@@ -269,6 +255,7 @@
             onSnapshot(q, (snap) => {
                 currentLogs = snap.docs.map(doc => doc.data());
                 renderData();
+                
                 compChart.data.datasets[0].data[0] = currentLogs.length;
                 compChart.update('none');
                 document.getElementById('totalLogsToday').innerText = currentLogs.length;
@@ -284,53 +271,38 @@
                 const email = (log.email || log.staffEmail || "").toLowerCase();
                 const name = log.name || log.staffName || staffRegistry[email] || email.split('@')[0] || "Unknown";
                 const branch = log.locationName || log.branch || "---";
-                
-                // Keep admins and excluded staff in the TABLE, but check if we need to filter them out based on search
+                if (adminExclusion.includes(name)) return false;
                 return name.toLowerCase().includes(search) || branch.toLowerCase().includes(search);
             });
 
             body.innerHTML = "";
-            const batchSize = 15;
-            let index = 0;
+            const fragment = document.createDocumentFragment();
+            
+            // Batched Rendering to prevent UI lag
+            filtered.forEach(log => {
+                const email = (log.email || log.staffEmail || "").toLowerCase();
+                const name = log.name || log.staffName || staffRegistry[email] || email.split('@')[0] || "Unknown";
+                const branch = log.locationName || log.branch || "---";
+                const type = log.type || "Check-in";
+                const time = log.timestamp ? format12H(log.timestamp.toDate()) : '--:-- --';
 
-            function renderNextBatch() {
-                const fragment = document.createDocumentFragment();
-                const end = Math.min(index + batchSize, filtered.length);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="color:var(--accent); font-weight:bold;">${time}</td>
+                    <td><div style="font-weight:bold;">${name}</div><div style="font-size:0.7rem; color:var(--secondary-text);">${email}</div></td>
+                    <td><span class="status-tag ${type.toLowerCase().includes('in') ? 'in' : 'out'}">${type}</span></td>
+                    <td>${branch}</td>
+                    <td><button onclick="loadStaffMap(${log.latitude}, ${log.longitude}, '${name}')" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:8px; cursor:pointer;">📍</button></td>
+                `;
+                fragment.appendChild(tr);
+            });
+            body.appendChild(fragment);
 
-                for (let i = index; i < end; i++) {
-                    const log = filtered[i];
-                    const email = (log.email || log.staffEmail || "").toLowerCase();
-                    const name = log.name || log.staffName || staffRegistry[email] || email.split('@')[0] || "Unknown";
-                    const branch = log.locationName || log.branch || "---";
-                    const type = (log.type || "Check-in").trim();
-                    const time = log.timestamp ? format12H(log.timestamp.toDate()) : '--:-- --';
-
-                    const tr = document.createElement('tr');
-                    tr.style.contentVisibility = "auto";
-                    tr.innerHTML = `
-                        <td style="color:var(--accent); font-weight:bold;">${time}</td>
-                        <td><div style="font-weight:bold;">${name}</div><div style="font-size:0.7rem; color:var(--secondary-text);">${email}</div></td>
-                        <td><span class="status-tag ${type.toLowerCase().includes('in') ? 'in' : 'out'}">${type}</span></td>
-                        <td>${branch}</td>
-                        <td><button onclick="loadStaffMap(${log.latitude}, ${log.longitude}, '${name}')" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:8px; cursor:pointer;">📍</button></td>
-                    `;
-                    fragment.appendChild(tr);
-                }
-                body.appendChild(fragment);
-                index = end;
-                if (index < filtered.length) setTimeout(renderNextBatch, 0);
-            }
-            renderNextBatch();
-
-            // --- PERFORMANCE LOGIC ---
+            // Performance Analytics
             let counts = {};
             currentLogs.forEach(log => {
-                const email = (log.email || log.staffEmail || "").toLowerCase();
-                const name = log.name || log.staffName || staffRegistry[email] || "Unknown";
-                
-                // EXCLUSION CHECK: Do not count for Performance Index
-                if (adminExclusion.includes(name) || adminExclusion.includes(email)) return;
-                
+                const name = log.name || log.staffName || staffRegistry[(log.email || "").toLowerCase()] || "Unknown";
+                if (adminExclusion.includes(name)) return;
                 const type = log.type || "Check-in";
                 if(type.toLowerCase().includes('in')) counts[name] = (counts[name] || 0) + 1;
             });
@@ -338,53 +310,32 @@
             const names = Object.keys(counts);
             document.getElementById('presentCount').innerText = names.length;
 
-            const chartColors = [];
-            const chartData = [];
-            const chartLabels = [];
-
-            const summaryHTML = names.map(name => {
-                const val = counts[name];
-                const per = Math.min((val/DAILY_TARGET)*100, 100);
-                
-                let statusColor = "var(--orange)";
-                let barClass = "bar-orange";
-                
-                if (val === 6) {
-                    statusColor = "var(--green)";
-                    barClass = "bar-green";
-                } else if (val > 6) {
-                    statusColor = "var(--red)";
-                    barClass = "bar-red";
-                }
-
-                chartColors.push(statusColor);
-                chartData.push(val);
-                chartLabels.push(name.split(' ')[0]);
-
-                return `<div style="margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:4px;">
-                        <span>${name}</span>
-                        <span style="color:${statusColor}">${val}/${DAILY_TARGET}</span>
-                    </div>
-                    <div style="height:6px; background:var(--border); border-radius:10px;">
-                        <div class="${barClass}" style="width:${per}%; height:100%; border-radius:10px; transition: 0.5s;"></div>
-                    </div>
-                </div>`;
-            }).join('');
-
-            summary.innerHTML = summaryHTML;
-
+            // Performance Chart & Color Logic
             requestAnimationFrame(() => {
-                perfChart.data.labels = chartLabels;
-                perfChart.data.datasets[0].data = chartData;
-                perfChart.data.datasets[0].backgroundColor = chartColors;
+                perfChart.data.labels = names.map(n => n.split(' ')[0]);
+                perfChart.data.datasets[0].data = names.map(n => counts[n]);
                 perfChart.update('none');
+
+                summary.innerHTML = names.map(name => {
+                    const val = counts[name];
+                    const per = Math.min((val/DAILY_TARGET)*100, 100);
+                    
+                    // Logic: < 6 Orange, 6 Green, > 6 Red
+                    let statusColor = "var(--orange)";
+                    if (val === 6) statusColor = "var(--green)";
+                    else if (val > 6) statusColor = "var(--red)";
+
+                    return `<div style="margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:4px;"><span>${name}</span><span style="color:${statusColor}">${val}/${DAILY_TARGET}</span></div>
+                        <div style="height:6px; background:var(--border); border-radius:10px;"><div style="width:${per}%; height:100%; background:${statusColor}; border-radius:10px; transition: width 0.3s ease;"></div></div>
+                    </div>`;
+                }).join('');
             });
         }
 
         document.getElementById('logSearch').addEventListener('input', () => {
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(renderData, 300);
+            searchTimeout = setTimeout(renderData, 200);
         });
 
         document.getElementById('themeToggle').addEventListener('click', () => {
