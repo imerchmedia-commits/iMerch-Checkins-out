@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iMerch - Admin Monitoring</title>
     
-    <link rel="icon" type="image/png" href="../im.png">
-    <link rel="shortcut icon" type="image/png" href="../im.png">
+    <link rel="icon" type="image/png" href="im.png">
+    <link rel="shortcut icon" type="image/png" href="im.png">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -84,7 +84,7 @@
     <div id="main-content" style="display:none;">
         <div class="navbar">
             <div class="logo-section">
-                <img src="../im.png" class="logo-img">
+                <img src="im.png" class="logo-img">
                 <div>
                     <div style="font-weight: bold; font-size: 0.85rem;">Portal</div>
                     <div style="font-size: 0.65rem; color: #8b949e;">iMerch Admin</div>
@@ -129,7 +129,7 @@
             </div>
 
             <div class="info-card">
-                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 TRAFFIC ANALYTICS</div>
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 STAFF ENGAGEMENT</div>
                 <div style="height: 150px;">
                     <canvas id="attendanceChart"></canvas>
                 </div>
@@ -161,7 +161,6 @@
 
         const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta"];
         const DAILY_TARGET = 6;
-        let notifiedStaff = new Set(); 
 
         const firebaseConfig = {
             apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -177,21 +176,18 @@
         let attendanceChart;
         let unsubscribeLogs = null;
         let unsubscribeStaff = null;
+        let firstLoad = true;
 
         const dateInput = document.getElementById('dateFilter');
         dateInput.valueAsDate = new Date();
 
-        // OPTIMIZED MAP FOCUS
+        // ACCURATE & FAST FOCUS
         window.focusMap = function(lat, lng, name, store, time, type, date) {
             const map = document.getElementById('main-map');
             const pop = document.getElementById('map-pop-info');
+            const newUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
             
-            const newUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
-            
-            // Iwas Lag: Huwag mag-reload kung pareho lang ang location
-            if (map.src !== newUrl) {
-                map.src = newUrl;
-            }
+            if (map.src !== newUrl) map.src = newUrl;
             
             document.getElementById('pop-name').innerText = name;
             document.getElementById('pop-store').innerText = store;
@@ -199,38 +195,29 @@
             const popStatus = document.getElementById('pop-status');
             popStatus.innerText = type.toUpperCase();
             popStatus.style.background = type === "Check In" ? "#238636" : "#f85149";
-            
             pop.style.display = 'block';
-            if(window.innerWidth < 768) window.scrollTo({ top: 0, behavior: 'smooth' });
         };
-
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            if(confirm("Logout from Admin Panel?")) {
-                signOut(auth).then(() => { window.location.href = "../index.html"; });
-            }
-        });
-
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            const current = document.body.getAttribute('data-theme');
-            document.body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-        });
 
         function initChart() {
             const ctx = document.getElementById('attendanceChart').getContext('2d');
             attendanceChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Check-In', 'Check-Out'],
+                    labels: [],
                     datasets: [{
-                        data: [0, 0],
-                        backgroundColor: ['#238636', '#f85149'],
-                        borderRadius: 5
+                        label: 'Check-ins',
+                        data: [],
+                        backgroundColor: '#58a6ff',
+                        borderRadius: 4
                     }]
                 },
                 options: { 
                     maintainAspectRatio: false, 
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { display: false }, grid: { display: false } }, x: { grid: { display: false } } }
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { color: '#8b949e', stepSize: 1 } },
+                        x: { ticks: { color: '#8b949e', font: { size: 9 } } }
+                    }
                 }
             });
         }
@@ -254,46 +241,39 @@
             const startOfDay = new Date(selectedDate.setHours(0,0,0,0));
             const endOfDay = new Date(selectedDate.setHours(23,59,59,999));
 
-            const staffQ = query(collection(db, "staff_members"));
-            unsubscribeStaff = onSnapshot(staffQ, (staffSnapshot) => {
+            unsubscribeStaff = onSnapshot(collection(db, "staff_members"), (staffSnapshot) => {
                 let masterStaffList = [];
                 staffSnapshot.forEach(doc => {
                     const name = doc.data().name;
                     if (name && !adminExclusion.includes(name)) masterStaffList.push(name);
                 });
 
-                // ANTI-LAG: Limit logs to 50 most recent for performance
                 const q = query(
                     collection(db, "attendance"), 
                     where("timestamp", ">=", Timestamp.fromDate(startOfDay)),
                     where("timestamp", "<=", Timestamp.fromDate(endOfDay)),
-                    orderBy("timestamp", "desc"),
-                    limit(50)
+                    orderBy("timestamp", "desc")
                 );
                 
                 unsubscribeLogs = onSnapshot(q, (snapshot) => {
                     const logsBody = document.getElementById('logsBody');
                     const userSummaryList = document.getElementById('userSummaryList');
-                    let inCount = 0; let outCount = 0;
                     let activeStaff = {}; 
-                    
                     logsBody.innerHTML = "";
+
+                    let latestLog = null;
 
                     snapshot.forEach((doc) => {
                         const log = doc.data();
                         const staffName = log.name || "Unknown";
-                        
                         if(!adminExclusion.includes(staffName)) {
+                            if (!latestLog && log.latitude) latestLog = log; // Kunin ang pinaka-latest
+
                             const ts = log.timestamp ? log.timestamp.toDate() : new Date();
                             const timeStr = ts.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                             const dateStr = ts.toLocaleDateString();
 
-                            if(log.type === "Check In") {
-                                inCount++;
-                                activeStaff[staffName] = (activeStaff[staffName] || 0) + 1;
-                            } else {
-                                outCount++;
-                            }
+                            if(log.type === "Check In") activeStaff[staffName] = (activeStaff[staffName] || 0) + 1;
 
                             const statusClass = log.type === "Check In" ? "in" : "out";
                             logsBody.innerHTML += `
@@ -305,14 +285,25 @@
                                     <td>
                                         ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}', '${log.locationName}', '${timeStr}', '${log.type}', '${dateStr}')" style="background:var(--accent); border:none; color:white; border-radius:4px; font-size:0.6rem; cursor:pointer; padding:4px 6px;">TRACK</button>` : '--'}
                                     </td>
-                                </tr>
-                            `;
+                                </tr>`;
                         }
                     });
 
-                    const presentList = Object.keys(activeStaff);
-                    const absentList = masterStaffList.filter(name => !presentList.includes(name));
+                    // AUTO-UPDATE MAP ON LOAD
+                    if (latestLog && firstLoad) {
+                        const ts = latestLog.timestamp.toDate();
+                        focusMap(latestLog.latitude, latestLog.longitude, latestLog.name, latestLog.locationName, ts.toLocaleTimeString(), latestLog.type, ts.toLocaleDateString());
+                        firstLoad = false;
+                    }
 
+                    // UPDATE CHART WITH STAFF NAMES
+                    const presentList = Object.keys(activeStaff);
+                    attendanceChart.data.labels = presentList;
+                    attendanceChart.data.datasets[0].data = presentList.map(name => activeStaff[name]);
+                    attendanceChart.update();
+
+                    // UPDATE STATS & LIST
+                    const absentList = masterStaffList.filter(name => !presentList.includes(name));
                     document.getElementById('presentCount').innerText = presentList.length;
                     document.getElementById('absentCount').innerText = absentList.length;
 
@@ -322,26 +313,18 @@
                         userSummaryList.innerHTML += `
                             <div class="user-row">
                                 <span class="user-name">🟢 ${staff}</span>
-                                <span class="user-count-badge ${count >= DAILY_TARGET ? 'target-hit' : ''}">
-                                    ${count} / ${DAILY_TARGET} STORES
-                                </span>
+                                <span class="user-count-badge ${count >= DAILY_TARGET ? 'target-hit' : ''}">${count} / ${DAILY_TARGET}</span>
                             </div>`;
                     });
                     absentList.forEach(staff => {
                         userSummaryList.innerHTML += `
-                            <div class="user-row absent">
-                                <span>🔴 ${staff}</span>
-                                <span class="user-count-badge">0 / ${DAILY_TARGET}</span>
-                            </div>`;
+                            <div class="user-row absent"><span>🔴 ${staff}</span><span class="user-count-badge">0 / ${DAILY_TARGET}</span></div>`;
                     });
-
-                    attendanceChart.data.datasets[0].data = [inCount, outCount];
-                    attendanceChart.update();
                 });
             });
         }
 
-        dateInput.addEventListener('change', startMonitoring);
+        dateInput.addEventListener('change', () => { firstLoad = true; startMonitoring(); });
     </script>
 </body>
 </html>
