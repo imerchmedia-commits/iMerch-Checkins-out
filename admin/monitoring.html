@@ -43,12 +43,13 @@
         .info-card { padding: 20px; }
         .card-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 15px; color: var(--accent); display: flex; justify-content: space-between; align-items: center; }
         
-        .map-container { width: 100%; height: 350px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
-        #main-map { width: 100%; height: 100%; border: 0; }
+        .map-container { width: 100%; height: 350px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #000; position: relative; }
+        #main-map { width: 100%; height: 100%; border: 0; display: none; }
+        .map-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--secondary-text); font-size: 0.8rem; text-align: center; padding: 20px; }
 
         .table-container { overflow-x: auto; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: rgba(88, 166, 255, 0.1); color: var(--accent); font-size: 0.75rem; padding: 15px; text-align: center; border-bottom: 2px solid var(--border); }
+        th { background: rgba(88, 166, 255, 0.1); color: var(--accent); font-size: 0.75rem; padding: 15px; text-align: center; border-bottom: 2px solid var(--border); text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.9rem; }
         
         .status-tag { padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; }
@@ -89,13 +90,13 @@
                 <span class="stat-val" id="presentCount" style="color: var(--green);">0</span>
             </div>
             <div class="stat-box glass-panel">
-                <div class="card-title" style="margin-bottom:5px; justify-content:center;">📈 TOTAL CHECK-INS</div>
+                <div class="card-title" style="margin-bottom:5px; justify-content:center;">📈 TOTAL LOGS (24H)</div>
                 <div style="height: 60px;">
                     <canvas id="comparisonChart"></canvas>
                 </div>
             </div>
             <div class="stat-box glass-panel">
-                <span class="stat-label">Daily Target Status</span>
+                <span class="stat-label">Total Logs Today</span>
                 <span class="stat-val" id="totalLogsToday" style="color: var(--accent);">0</span>
             </div>
         </div>
@@ -108,10 +109,11 @@
         <div class="dashboard-grid">
             <div class="info-card glass-panel">
                 <div class="card-title">
-                    <span>📍 LIVE GEOLOCATION</span>
-                    <a id="externalMapLink" target="_blank" style="display:none; font-size:0.7rem; background:var(--green); color:white; padding:4px 10px; border-radius:5px; text-decoration:none;">OPEN MAPS</a>
+                    <span id="mapTitle">📍 LIVE GEOLOCATION</span>
+                    <a id="externalMapLink" target="_blank" style="display:none; font-size:0.7rem; background:var(--green); color:white; padding:4px 10px; border-radius:5px; text-decoration:none;">GOOGLE MAPS 📲</a>
                 </div>
-                <div class="map-container">
+                <div class="map-container" id="mapBox">
+                    <div class="map-placeholder" id="mapText">Select a staff location (📍) to view on map</div>
                     <iframe id="main-map" src=""></iframe>
                 </div>
             </div>
@@ -129,11 +131,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Time</th>
+                        <th>Time (12H)</th>
                         <th>Staff Member</th>
                         <th>Action</th>
-                        <th>Branch</th>
-                        <th>Map</th>
+                        <th>Branch / Store</th>
+                        <th>Location</th>
                     </tr>
                 </thead>
                 <tbody id="logsBody"></tbody>
@@ -167,6 +169,27 @@
         const dateInput = document.getElementById('dateFilter');
         dateInput.valueAsDate = new Date();
 
+        // Helper: Format Time to 12H
+        const format12H = (date) => {
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        };
+
+        // Global Map Function
+        window.loadStaffMap = function(lat, lng, name) {
+            const mapFrame = document.getElementById('main-map');
+            const mapPlaceholder = document.getElementById('mapText');
+            const extLink = document.getElementById('externalMapLink');
+            const mapTitle = document.getElementById('mapTitle');
+
+            mapPlaceholder.style.display = 'none';
+            mapFrame.style.display = 'block';
+            mapFrame.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed`;
+            
+            extLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
+            extLink.style.display = 'inline-block';
+            mapTitle.innerText = `📍 LOCATION: ${name.split(' ')[0]}`;
+        };
+
         function initCharts() {
             const ctx1 = document.getElementById('performanceChart').getContext('2d');
             perfChart = new Chart(ctx1, {
@@ -193,7 +216,6 @@
         });
 
         async function loadStaffAndMonitor() {
-            // Load Staff Registry once to prevent "unknown"
             const staffSnap = await getDocs(collection(db, "staff_members"));
             staffSnap.forEach(doc => {
                 const d = doc.data();
@@ -227,7 +249,6 @@
                 currentLogs = snap.docs.map(doc => doc.data());
                 renderData();
                 
-                // Update Comparison Chart Today Value
                 compChart.data.datasets[0].data[0] = currentLogs.length;
                 compChart.update();
                 document.getElementById('totalLogsToday').innerText = currentLogs.length;
@@ -250,20 +271,19 @@
                 if (adminExclusion.includes(name)) return;
 
                 if (name.toLowerCase().includes(search) || branch.toLowerCase().includes(search)) {
-                    const time = log.timestamp ? log.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                    const time = log.timestamp ? format12H(log.timestamp.toDate()) : '--:-- --';
                     body.innerHTML += `
                         <tr>
                             <td style="color:var(--accent); font-weight:bold;">${time}</td>
                             <td><div style="font-weight:bold;">${name}</div><div style="font-size:0.7rem; color:var(--secondary-text);">${email}</div></td>
                             <td><span class="status-tag ${type.toLowerCase().includes('in') ? 'in' : 'out'}">${type}</span></td>
                             <td>${branch}</td>
-                            <td><button onclick="window.open('https://www.google.com/maps?q=${log.latitude},${log.longitude}')" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:5px 10px; border-radius:5px; cursor:pointer;">📍</button></td>
+                            <td><button onclick="loadStaffMap(${log.latitude}, ${log.longitude}, '${name}')" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:1rem;">📍</button></td>
                         </tr>`;
                 }
                 if(type.toLowerCase().includes('in')) counts[name] = (counts[name] || 0) + 1;
             });
 
-            // Update Chart & Summary
             const names = Object.keys(counts);
             perfChart.data.labels = names.map(n => n.split(' ')[0]);
             perfChart.data.datasets[0].data = names.map(n => counts[n]);
@@ -274,9 +294,9 @@
             summary.innerHTML = names.map(name => {
                 const val = counts[name];
                 const per = Math.min((val/DAILY_TARGET)*100, 100);
-                return `<div style="margin-bottom:10px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:3px;"><span>${name}</span><span>${val}/${DAILY_TARGET}</span></div>
-                    <div style="height:5px; background:var(--border); border-radius:5px;"><div style="width:${per}%; height:100%; background:var(--accent); border-radius:5px;"></div></div>
+                return `<div style="margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:4px;"><span>${name}</span><span>${val}/${DAILY_TARGET}</span></div>
+                    <div style="height:6px; background:var(--border); border-radius:10px;"><div style="width:${per}%; height:100%; background:var(--accent); border-radius:10px; transition:0.5s;"></div></div>
                 </div>`;
             }).join('');
         }
