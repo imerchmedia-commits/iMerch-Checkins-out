@@ -8,7 +8,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0d1117">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="im.png">
+    <link rel="icon" sizes="192x192" href="im.png">
+    <link rel="shortcut icon" href="im.png">
+    <link rel="apple-touch-icon" href="im.png">
 
     <style>
         :root {
@@ -16,80 +18,105 @@
             --card: #161b22;
             --text: #c9d1d9;
             --accent: #238636;
+            --border: #30363d;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
         }
         .header {
             text-align: center;
-            padding: 20px 0;
-            border-bottom: 1px solid #30363d;
-            margin-bottom: 20px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 15px;
         }
-        .stats-container {
+        .stats-card {
             background: var(--card);
             padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #30363d;
+            border-radius: 12px;
+            border: 1px solid var(--border);
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .stats-count {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: bold;
             color: var(--accent);
         }
+        .search-container {
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            padding: 10px 0;
+            z-index: 100;
+        }
         .search-box {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 6px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
             color: white;
-            margin-bottom: 20px;
+            font-size: 1rem;
             box-sizing: border-box;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.9rem;
+            margin-top: 10px;
         }
         th, td {
             text-align: left;
-            padding: 12px;
-            border-bottom: 1px solid #30363d;
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
         }
-        th { background: #161b22; }
-        .restricted { display: none; text-align: center; padding: 50px; }
+        th { background: #161b22; color: #8b949e; }
+        .status-tag {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
+        .out { background: rgba(248, 81, 70, 0.2); color: #f85149; }
+        
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000;
+        }
     </style>
 </head>
 <body>
 
-    <div id="auth-check" style="display:none;">
+    <div id="loading-screen">Checking Authorization...</div>
+
+    <div id="main-content" style="display:none;">
         <div class="header">
-            <h2>Daily Monitoring</h2>
-            <p>Welcome, Joy Biazon</p>
+            <img src="im.png" alt="Logo" style="width: 50px; margin-bottom: 10px;">
+            <h2 style="margin: 0;">Daily Monitoring</h2>
+            <p style="color: #8b949e; margin: 5px 0 0;">Joy Biazon Portal</p>
         </div>
 
-        <div class="stats-container">
-            <div>Present Today</div>
+        <div class="stats-card">
+            <div style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Present Today</div>
             <div class="stats-count" id="present-count">0</div>
         </div>
 
-        <input type="text" id="logSearch" class="search-box" placeholder="Search by name, status, or date...">
+        <div class="search-container">
+            <input type="text" id="logSearch" class="search-box" placeholder="Search staff name or status...">
+        </div>
         
         <div style="overflow-x:auto;">
-            <table id="logsTable">
+            <table>
                 <thead>
                     <tr>
-                        <th>Name</th>
+                        <th>Staff Name</th>
                         <th>Status</th>
                         <th>Time</th>
-                        <th>Date</th>
                     </tr>
                 </thead>
                 <tbody id="logsBody">
@@ -98,74 +125,76 @@
         </div>
     </div>
 
-    <div id="access-denied" class="restricted">
-        <h1>🚫 Access Denied</h1>
-        <p>This portal is for authorized monitoring personnel only.</p>
-        <button onclick="window.location.href='../index.html'">Back to Login</button>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // MGA CONFIG MO DITO (I-paste ang Firebase Config mo)
+        // ILAGAY DITO ANG IYONG FIREBASE CONFIG
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSy...",
+            authDomain: "imerch-attendance.firebaseapp.com",
+            projectId: "imerch-attendance",
+            storageBucket: "imerch-attendance.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // ROLE CHECK: Joy Biazon Only
-        const allowedUser = "joy.biazon@imerchmedia.net";
+        const authorizedEmail = "joy.biazon@imerchmedia.net";
 
         onAuthStateChanged(auth, (user) => {
-            if (user && user.email === allowedUser) {
-                document.getElementById('auth-check').style.display = 'block';
-                loadLogs();
+            if (user && user.email.toLowerCase() === authorizedEmail) {
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                startMonitoring();
             } else {
-                document.getElementById('access-denied').style.display = 'block';
+                // Ibalik sa login kung hindi si Joy
+                window.location.href = "../index.html";
             }
         });
 
-        function loadLogs() {
+        function startMonitoring() {
+            const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
             const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+
             onSnapshot(q, (snapshot) => {
                 const logsBody = document.getElementById('logsBody');
                 let presentCount = 0;
-                const today = new Date().toLocaleDateString();
+                let presentUsers = new Set();
                 
                 logsBody.innerHTML = "";
                 snapshot.forEach((doc) => {
                     const log = doc.data();
-                    if(log.date === today) presentCount++;
+                    
+                    // Bilangin kung sino ang pumasok ngayong araw
+                    if(log.date === today && log.status === "CHECK IN") {
+                        presentUsers.add(log.email);
+                    }
 
+                    const statusClass = log.status === "CHECK IN" ? "in" : "out";
                     const row = `<tr>
-                        <td>${log.name}</td>
-                        <td>${log.status}</td>
-                        <td>${log.time}</td>
-                        <td>${log.date}</td>
+                        <td style="font-weight: 500;">${log.name}</td>
+                        <td><span class="status-tag ${statusClass}">${log.status}</span></td>
+                        <td style="color: #8b949e;">${log.time}</td>
                     </tr>`;
                     logsBody.innerHTML += row;
                 });
-                document.getElementById('present-count').innerText = presentCount;
+                
+                document.getElementById('present-count').innerText = presentUsers.size;
             });
         }
 
-        // Search Filter Logic
-        document.getElementById('logSearch').addEventListener('keyup', function() {
-            let filter = this.value.toUpperCase();
-            let rows = document.getElementById('logsBody').getElementsByTagName('tr');
-            for (let i = 0; i < rows.length; i++) {
-                rows[i].style.display = rows[i].innerText.toUpperCase().includes(filter) ? "" : "none";
-            }
+        // Search Filter
+        document.getElementById('logSearch').addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#logsBody tr');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
+            });
         });
     </script>
 </body>
