@@ -71,7 +71,6 @@
         .btn-checkout { background: var(--red); }
         .btn:disabled { background: #30363d; cursor: not-allowed; opacity: 0.6; }
         
-        /* RECENT ACTIVITY STYLING */
         .history-item { display: flex; flex-direction: column; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 0.9em; }
         .history-row { display: flex; justify-content: space-between; width: 100%; }
         .history-remarks { font-style: italic; color: #8b949e; margin-top: 4px; font-size: 0.85em; }
@@ -146,7 +145,6 @@
                 
                 <input type="text" id="attendance-remarks" placeholder="Add remarks (Optional)" style="margin-top: 10px;">
             </div>
-            
             <h3>My Recent Activity</h3>
             <div id="history-list"></div>
         </div>
@@ -379,9 +377,10 @@
     document.getElementById('checkoutBtn').onclick = () => logAction('Check Out');
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
-    // LOAD RECENT ACTIVITY
+    // NEW SCRIPT: LOAD RECENT ACTIVITY WITH SNAPSHOT
     function loadHistory(uid) {
-        const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"), limit(10));
+        // Limited to top 15 records for dashboard performance
+        const q = query(collection(db, "attendance"), where("uid", "==", uid), orderBy("timestamp", "desc"), limit(15));
         onSnapshot(q, (snap) => {
             const list = document.getElementById('history-list');
             list.innerHTML = "";
@@ -418,6 +417,7 @@
         
         try { 
             const userCred = await createUserWithEmailAndPassword(auth, email, pass); 
+            // Create the User Profile in Firestore
             await addDoc(collection(db, "users"), {
                 uid: userCred.user.uid,
                 email: email,
