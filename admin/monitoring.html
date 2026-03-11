@@ -159,8 +159,8 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // UPDATED: Added "Arem" to exclusions
-        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem", "Arem Tester"];
+        // UPDATED: Inalis si arem.gonzales sa exclusion para lumabas sa monitoring
+        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta"];
         const DAILY_TARGET = 6;
 
         const firebaseConfig = {
@@ -220,7 +220,7 @@
                     datasets: [{
                         label: 'Visits',
                         data: [],
-                        backgroundColor: [], // Dynamic color
+                        backgroundColor: [], 
                         borderRadius: 4
                     }]
                 },
@@ -295,17 +295,13 @@
                 }
             });
 
-            // Summary calculation and Chart Update
             const presentList = Object.keys(activeStaff).filter(n => !adminExclusion.includes(n) && n !== "Unknown Staff");
             
             attendanceChart.data.labels = presentList;
             attendanceChart.data.datasets[0].data = presentList.map(name => activeStaff[name]);
-            
-            // Color Coding Logic
             attendanceChart.data.datasets[0].backgroundColor = presentList.map(name => 
                 activeStaff[name] >= DAILY_TARGET ? '#238636' : '#58a6ff'
             );
-            
             attendanceChart.update();
 
             const absentList = masterStaffList.filter(name => !presentList.includes(name));
