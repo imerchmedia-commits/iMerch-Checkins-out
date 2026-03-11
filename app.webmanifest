@@ -1,5 +1,5 @@
 {
-  "short_name": "iMerch Checkin",
+  "short_name": "iMerch Attendance",
   "name": "iMerch Attendance System",
   "icons": [
     {
@@ -18,4 +18,5 @@
   "display": "standalone",
   "theme_color": "#0d1117",
   "background_color": "#0d1117"
+
 }
