@@ -25,7 +25,6 @@
         #map { height: 350px; width: 100%; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; z-index: 1; }
 
         .admin-grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
-        /* Grid adjustment for restricted view */
         .admin-grid.restricted { grid-template-columns: 1fr; }
 
         @media (max-width: 850px) { .admin-grid { grid-template-columns: 1fr; } }
@@ -173,23 +172,22 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    const secondaryApp = initializeApp(firebaseConfig, "Secondary");
-    const secondaryAuth = getAuth(secondaryApp);
 
     let masterLogs = [];
     let filteredLogs = [];
     let staffMap = {}; 
     let map, markerGroup;
 
+    // --- UTILITIES ---
     function updateClock() {
         const now = new Date();
-        document.getElementById('real-time-clock').innerText = now.toLocaleString('en-US', { 
+        const clock = document.getElementById('real-time-clock');
+        if (clock) clock.innerText = now.toLocaleString('en-US', { 
             weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', 
             hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
         });
     }
     setInterval(updateClock, 1000);
-    updateClock();
 
     const themeBtn = document.getElementById('theme-toggle');
     themeBtn.onclick = () => {
@@ -203,6 +201,7 @@
         }
     };
 
+    // --- MAP LOGIC ---
     function initMap() {
         if (map) return;
         map = L.map('map').setView([14.5995, 120.9842], 12);
@@ -236,7 +235,7 @@
         L.popup().setLatLng([lat, lng]).setContent(`<b>${name}</b><br>${type}`).openOn(map);
     };
 
-    // Restricted Role Check Logic
+    // --- ROLE RESTRICTION ---
     function checkUserRole() {
         const user = auth.currentUser;
         if (!user) return;
@@ -245,50 +244,54 @@
         const restricted = ["joy.biazon@imerchmedia.net", "glenn.hernandez@imerchmedia.com"];
         
         if (restricted.includes(email)) {
-            // Remove the specific requested elements
             document.getElementById('creator-section')?.classList.add('hidden');
             document.getElementById('directory-section')?.classList.add('hidden');
             document.getElementById('danger-zone')?.classList.add('hidden');
             document.getElementById('exportBtnBottom')?.classList.add('hidden');
-            
-            // Adjust grid layout because sidebar is now empty (except for logout)
             document.getElementById('main-grid')?.classList.add('restricted');
-            
-            // Ensure any per-item controls in the log (like delete) are also hidden
-            const controls = document.querySelectorAll('.staff-controls');
-            controls.forEach(c => c.classList.add('hidden'));
         }
     }
 
+    // --- DATA LOADING ---
     function loadStaffData() {
         onSnapshot(collection(db, "users"), (snap) => {
             const directory = document.getElementById('staff-directory-list');
-            directory.innerHTML = ""; 
+            if (directory) directory.innerHTML = ""; 
+            
+            staffMap = {}; // Reset map
+            let count = 0;
+
             snap.forEach(documentDoc => { 
                 const data = documentDoc.data();
                 const docId = documentDoc.id;
                 const status = data.status || "Active";
                 const isActive = status === "Active";
+                
+                // CRITICAL: Map the staff UID to the Name so counts work
                 staffMap[data.uid] = { name: data.fullName, status: status }; 
-                directory.innerHTML += `
-                    <div class="staff-item">
-                        <div style="flex: 1; overflow: hidden;">
-                            <div style="font-size: 0.85em; font-weight: bold; white-space: nowrap; text-overflow: ellipsis;">${data.fullName}</div>
-                            <div style="font-size: 0.7em; color: ${isActive ? '#3fb950' : '#f85149'};">
-                                <span class="status-dot" style="background: ${isActive ? '#3fb950' : '#f85149'};"></span>${status}
+                count++;
+
+                if (directory) {
+                    directory.innerHTML += `
+                        <div class="staff-item">
+                            <div style="flex: 1; overflow: hidden;">
+                                <div style="font-size: 0.85em; font-weight: bold; white-space: nowrap; text-overflow: ellipsis;">${data.fullName}</div>
+                                <div style="font-size: 0.7em; color: ${isActive ? '#3fb950' : '#f85149'};">
+                                    <span class="status-dot" style="background: ${isActive ? '#3fb950' : '#f85149'};"></span>${status}
+                                </div>
                             </div>
-                        </div>
-                        <div class="staff-controls" style="display: flex; gap: 4px;">
-                            <button class="geo-btn" style="background: ${isActive ? 'var(--red)' : 'var(--green)'}; padding: 4px 6px;" 
-                                onclick="toggleStaffStatus('${docId}', '${status}')">
-                                ${isActive ? 'Off' : 'On'}
-                            </button>
-                        </div>
-                    </div>`;
+                            <div class="staff-controls" style="display: flex; gap: 4px;">
+                                <button class="geo-btn" style="background: ${isActive ? 'var(--red)' : 'var(--green)'};" 
+                                    onclick="toggleStaffStatus('${docId}', '${status}')">
+                                    ${isActive ? 'Off' : 'On'}
+                                </button>
+                            </div>
+                        </div>`;
+                }
             });
-            updateMasterLogNames();
-            applyFilters();
-            checkUserRole(); 
+
+            document.getElementById('total-staff-count').innerText = count;
+            checkUserRole(); // Re-check role after data is in
         });
     }
 
@@ -298,13 +301,28 @@
             masterLogs = [];
             snap.forEach(doc => {
                 const data = doc.data();
+                // Ensure name is linked even if Firestore record only has UID
                 data.fullName = staffMap[data.uid]?.name || data.fullName || "Unknown Staff";
                 masterLogs.push(data);
             });
-            updateStats(masterLogs);
+            updateStats();
             applyFilters();
             plotAllStaff();
         });
+    }
+
+    function updateStats() {
+        const todayStr = new Date().toLocaleDateString();
+        // Use a Set to count unique UIDs present today
+        const presentTodayUids = new Set();
+        
+        masterLogs.forEach(log => {
+            if (log.timestamp && log.timestamp.toDate().toLocaleDateString() === todayStr) {
+                presentTodayUids.add(log.uid);
+            }
+        });
+        
+        document.getElementById('present-today-count').innerText = presentTodayUids.size;
     }
 
     function applyFilters() {
@@ -316,10 +334,12 @@
             const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
             const currentEmail = (log.email || "").toLowerCase();
             const matchesName = currentName.includes(nameVal) || currentEmail.includes(nameVal);
+            
             let matchesDate = true;
             if (log.timestamp && log.timestamp.toDate) {
                 const logDate = log.timestamp.toDate();
                 const logDateOnly = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
+                
                 if (dateFromInput) {
                     const from = new Date(dateFromInput);
                     if (logDateOnly < new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime()) matchesDate = false;
@@ -328,7 +348,7 @@
                     const to = new Date(dateToInput);
                     if (logDateOnly > new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime()) matchesDate = false;
                 }
-            } else if (dateFromInput || dateToInput) { matchesDate = false; }
+            }
             return matchesName && matchesDate;
         });
         renderAdminLogs(filteredLogs);
@@ -355,13 +375,7 @@
         });
     }
 
-    function updateStats(data) {
-        const todayStr = new Date().toLocaleDateString();
-        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === todayStr).map(d => d.email));
-        document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length;
-        document.getElementById('present-today-count').innerText = presentToday.size;
-    }
-
+    // --- AUTH ---
     onAuthStateChanged(auth, async (user) => {
         const admins = [
             "ron.sarmenta@gmail.com", 
@@ -372,31 +386,30 @@
         if (user && admins.includes(user.email.toLowerCase())) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
-            loadStaffData(); loadAdminLogs(); setTimeout(initMap, 500);
+            loadStaffData(); 
+            loadAdminLogs(); 
+            setTimeout(initMap, 500);
         } else {
             document.getElementById('login-view').classList.remove('hidden');
             document.getElementById('admin-view').classList.add('hidden');
         }
     });
 
-    // Event Listeners (Hidden buttons will simply not be clickable)
-    document.getElementById('applyFiltersBtn').onclick = (e) => { e.preventDefault(); applyFilters(); };
-    document.getElementById('filter-name').addEventListener('input', applyFilters);
+    // --- EVENT HANDLERS ---
     document.getElementById('logoutLink').onclick = () => signOut(auth);
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
-        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
-        catch (e) { alert("Error: " + e.message); }
+        try { 
+            await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); 
+        } catch (err) { alert("Error: " + err.message); }
     };
+    document.getElementById('applyFiltersBtn').onclick = (e) => { e.preventDefault(); applyFilters(); };
+    document.getElementById('filter-name').oninput = applyFilters;
 
-    // Admin-Only Functions
-    document.getElementById('exportBtn').onclick = () => handleExport();
-    document.getElementById('exportBtnBottom').onclick = () => handleExport();
-    
     const handleExport = () => {
         if (filteredLogs.length === 0) return alert("No results to export.");
         let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
-        [...filteredLogs].forEach(d => {
+        filteredLogs.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
             const name = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
             csv += `"${name}","${d.email || ''}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${(d.remarks || "").replace(/"/g, '""')}"\n`;
@@ -407,6 +420,9 @@
         a.download = `iMerch_Logs_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
+
+    document.getElementById('exportBtn').onclick = handleExport;
+    document.getElementById('exportBtnBottom').onclick = handleExport;
 
 </script>
 </body>
