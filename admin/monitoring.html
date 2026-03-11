@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Permissions-Policy" content="unload=()">
+    <meta http-equiv="Permissions-Policy" content="unload=(self)">
     <title>iMerch - Admin Monitoring</title>
     
     <link rel="icon" type="image/png" href="im.png">
@@ -217,19 +217,17 @@
             signOut(auth).then(() => window.location.href = "../index.html");
         });
 
-        // PINAGANDANG FOCUS MAP PARA SA iMERCH (AGAD LILITAW ANG INFO)
+        // FIX: PINAGANDANG FOCUS MAP (Gumagamit na ng coordinates para iwas 404 error)
         window.focusMap = function(lat, lng, details) {
             const map = document.getElementById('main-map');
             const extLink = document.getElementById('externalMapLink');
             if (!lat || !lng) return;
 
-            // Alisin ang special characters na pwedeng makasira sa URL
             const cleanDetails = details.replace(/[^a-zA-Z0-9 | : \- \/ \. ( ) \u23FA-\u27BF]/g, '');
             
-            // Format: iwloc=B para lumitaw agad ang Info Window
-            const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}(${encodeURIComponent(cleanDetails)})&t=&z=16&ie=UTF8&iwloc=B&output=embed`;
+            // Gumamit ng query (q) na may coordinates + label para siguradong lilitaw ang marker
+            const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}(${encodeURIComponent(cleanDetails)})&z=16&ie=UTF8&iwloc=B&output=embed`;
             
-            // Link para sa Mobile App
             const appUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
             
             map.src = mapUrl;
@@ -288,7 +286,6 @@
                     const statusClass = (statusText.toLowerCase().includes("in")) ? "in" : "out";
                     const statusIndicator = (statusClass === "in") ? "🟢 CHECK-IN" : "🔴 CHECK-OUT";
 
-                    // GUMAWA NG LABEL PARA SA MAP (Full Name | Date | Time | Status)
                     const mapLabel = `${staffName} | ${dateStr} | ${timeStr} | ${statusIndicator}`;
                     const safeLabelForJS = mapLabel.replace(/'/g, "\\'");
 
