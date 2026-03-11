@@ -4,126 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iMerch - Monitoring Portal</title>
-    
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0d1117">
     <link rel="icon" sizes="192x192" href="../im.png">
-    <link rel="apple-touch-icon" href="../im.png">
-
     <style>
-        :root {
-            --bg: #0d1117;
-            --card: #161b22;
-            --text: #c9d1d9;
-            --accent: #58a6ff;
-            --green: #238636;
-            --border: #30363d;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 15px;
-        }
-        .header {
-            text-align: center;
-            padding: 15px 0;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 15px;
-        }
-        .stats-card {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            text-align: center;
-            margin-bottom: 15px;
-        }
-        .stats-count {
-            font-size: 3.5rem;
-            font-weight: bold;
-            color: var(--green);
-        }
-        .search-container {
-            position: sticky;
-            top: 0;
-            background: var(--bg);
-            padding: 10px 0;
-            z-index: 100;
-        }
-        .search-box {
-            width: 100%;
-            padding: 14px;
-            background: #0d1117;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: white;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            text-align: left;
-            padding: 12px 8px;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.9rem;
-        }
-        th { background: #161b22; color: #8b949e; }
-        .status-tag {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
+        :root { --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #58a6ff; --green: #238636; --border: #30363d; --red: #f85149; }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        
+        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .logout-btn { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        
+        .stats-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; margin: 15px 0; }
+        .stats-count { font-size: 3.5rem; font-weight: bold; color: var(--green); }
+        
+        .search-box { width: 100%; padding: 14px; background: #0d1117; border: 1px solid var(--border); border-radius: 8px; color: white; box-sizing: border-box; margin-bottom: 15px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .status-tag { padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
         
-        #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; z-index: 1000;
-        }
-        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .map-link { color: var(--accent); text-decoration: none; font-size: 0.75rem; border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
         <div class="spinner"></div>
-        <p style="margin-top: 15px; color: #8b949e;">Verifying Access...</p>
+        <p id="loading-text" style="margin-top: 15px; color: #8b949e;">Connecting to iMerch Database...</p>
     </div>
 
     <div id="main-content" style="display:none;">
         <div class="header">
-            <h2 style="margin: 0; color: var(--accent);">Daily Monitoring</h2>
-            <p style="color: #8b949e; margin: 5px 0 0;">Joy Biazon Portal</p>
+            <div>
+                <h3 style="margin: 0; color: var(--accent);">Monitoring</h3>
+                <small style="color: #8b949e;">Joy Biazon Portal</small>
+            </div>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
         </div>
 
         <div class="stats-card">
-            <div style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Present Today</div>
+            <div style="font-size: 0.8rem; text-transform: uppercase; color: #8b949e;">Staff Present Today</div>
             <div class="stats-count" id="present-count">0</div>
         </div>
 
-        <div class="search-container">
-            <input type="text" id="logSearch" class="search-box" placeholder="Search name or location...">
-        </div>
+        <input type="text" id="logSearch" class="search-box" placeholder="Search staff or location...">
         
         <div style="overflow-x:auto;">
             <table>
                 <thead>
-                    <tr>
-                        <th>Staff Email</th>
-                        <th>Type</th>
-                        <th>Location</th>
-                        <th>Time</th>
-                    </tr>
+                    <tr><th>Staff</th><th>Type</th><th>Location</th><th>Time</th></tr>
                 </thead>
                 <tbody id="logsBody"></tbody>
             </table>
@@ -132,8 +65,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, orderBy, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -146,17 +79,23 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const authorizedEmail = "joy.biazon@imerchmedia.net";
+        // LOGOUT FUNCTION
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => { window.location.href = "../index.html"; });
+        });
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                const userEmail = user.email.toLowerCase();
-                if (userEmail === authorizedEmail || userEmail === "ron.sarmenta@gmail.com") {
+                const email = user.email.toLowerCase();
+                const allowed = ["joy.biazon@imerchmedia.net", "ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
+                
+                if (allowed.includes(email)) {
                     document.getElementById('loading-screen').style.display = 'none';
                     document.getElementById('main-content').style.display = 'block';
                     startMonitoring();
                 } else {
-                    window.location.href = "../index.html";
+                    alert("Access Denied");
+                    signOut(auth).then(() => { window.location.href = "../index.html"; });
                 }
             } else {
                 window.location.href = "../index.html";
@@ -165,39 +104,49 @@
 
         function startMonitoring() {
             const today = new Date().toLocaleDateString('en-CA'); 
-            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+            // Kinukuha ang huling 100 entries para sa live update
+            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(100));
 
             onSnapshot(q, (snapshot) => {
                 const logsBody = document.getElementById('logsBody');
                 let presentUsers = new Set();
-                
                 logsBody.innerHTML = "";
+
+                if (snapshot.empty) {
+                    logsBody.innerHTML = "<tr><td colspan='4' style='text-align:center'>No data found. Check Firebase Rules.</td></tr>";
+                }
+
                 snapshot.forEach((doc) => {
                     const log = doc.data();
+                    const logDate = log.date || "";
                     
-                    // Bilangin kung sino ang nag Check In ngayong araw
-                    if(log.date === today && log.type === "Check In") {
+                    if(logDate === today && log.type === "Check In") {
                         presentUsers.add(log.email);
                     }
 
                     const statusClass = log.type === "Check In" ? "in" : "out";
-                    const row = `<tr>
-                        <td style="font-weight: 500;">${log.email.split('@')[0]}</td>
-                        <td><span class="status-tag ${statusClass}">${log.type}</span></td>
-                        <td>${log.locationName || 'Field'}</td>
-                        <td style="color: #8b949e;">${log.time || '---'}</td>
+                    const mapUrl = log.latitude ? `https://www.google.com/maps?q=${log.latitude},${log.longitude}` : null;
+
+                    logsBody.innerHTML += `<tr>
+                        <td><b>${log.email ? log.email.split('@')[0] : '---'}</b></td>
+                        <td><span class="status-tag ${statusClass}">${log.type || 'LOG'}</span></td>
+                        <td>
+                            ${log.locationName || 'Field'}<br>
+                            ${mapUrl ? `<a href="${mapUrl}" target="_blank" class="map-link">📍 View Map</a>` : ''}
+                        </td>
+                        <td style="color:#8b949e">${log.time || '--:--'}</td>
                     </tr>`;
-                    logsBody.innerHTML += row;
                 });
-                
                 document.getElementById('present-count').innerText = presentUsers.size;
+            }, (error) => {
+                console.error("Firebase Error:", error);
+                alert("Permission Denied: Update your Firebase Rules to allow Joy to read data.");
             });
         }
 
         document.getElementById('logSearch').addEventListener('input', function() {
             const filter = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#logsBody tr');
-            rows.forEach(row => {
+            document.querySelectorAll('#logsBody tr').forEach(row => {
                 row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
             });
         });
