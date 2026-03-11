@@ -17,7 +17,6 @@
         }
         
         body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; transition: all 0.3s ease; }
-        
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 15px; position: relative; }
         .logo-section { display: flex; align-items: center; gap: 10px; }
         .logo-img { width: 35px; height: 35px; border-radius: 6px; }
@@ -27,31 +26,34 @@
         .controls { display: flex; gap: 8px; z-index: 10; }
         .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; }
 
+        /* Stats Row */
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+        .stat-val { font-size: 1.5rem; font-weight: bold; display: block; }
+        .stat-label { font-size: 0.65rem; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; }
+
         .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px; }
         @media (min-width: 768px) { .dashboard-grid { grid-template-columns: 3fr 1.5fr; } }
 
         .info-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; display: flex; flex-direction: column; }
         
-        /* Map Container */
         .map-container { position: relative; width: 100%; height: 450px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--border); }
         #main-map { width: 100%; height: 100%; border: 0; }
         
-        /* Pop-up Style Label for Map */
         #map-pop-info { 
             position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.85); 
             padding: 10px 15px; border-radius: 8px; border-left: 5px solid var(--accent);
-            display: none; z-index: 5; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
+            display: none; z-index: 5; box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(5px);
         }
 
-        .map-overlay-btn { position: absolute; bottom: 20px; right: 20px; background: var(--accent); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 5; font-size: 0.8rem; }
-
-        /* User List Summary */
-        .user-summary-list { margin-top: 10px; flex-grow: 1; overflow-y: auto; max-height: 350px; }
+        .user-summary-list { margin-top: 10px; flex-grow: 1; overflow-y: auto; max-height: 300px; }
         .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        .user-count-badge { background: var(--accent); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
+        .absent { opacity: 0.5; font-style: italic; color: var(--red); }
+        .user-count-badge { background: rgba(88, 166, 255, 0.1); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
 
-        .search-box { width: 100%; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); box-sizing: border-box; margin-bottom: 15px; outline: none; }
+        .filter-section { display: flex; gap: 10px; margin-bottom: 15px; }
+        .date-input { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; flex-grow: 1; outline: none; }
+        .search-box { flex-grow: 2; padding: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); outline: none; }
         
         .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; min-width: 500px; }
@@ -71,7 +73,7 @@
 
     <div id="loading-screen">
         <div class="spinner"></div>
-        <p style="margin-top: 15px; color: #8b949e; letter-spacing: 1px;">LOADING iMERCH MONITORING...</p>
+        <p style="margin-top: 15px; color: #8b949e;">LOADING iMERCH MONITORING...</p>
     </div>
 
     <div id="main-content" style="display:none;">
@@ -80,7 +82,7 @@
                 <img src="../im.png" class="logo-img">
                 <div>
                     <div style="font-weight: bold; font-size: 0.85rem;">Portal</div>
-                    <div style="font-size: 0.65rem; color: #8b949e;">Joy Biazon</div>
+                    <div style="font-size: 0.65rem; color: #8b949e;">Admin Panel</div>
                 </div>
             </div>
             <div class="center-brand"><img src="../logo1.png" class="center-logo"></div>
@@ -90,34 +92,45 @@
             </div>
         </div>
 
+        <div class="stats-row">
+            <div class="stat-box">
+                <span class="stat-val" id="presentCount" style="color: var(--green);">0</span>
+                <span class="stat-label">Present Today</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-val" id="absentCount" style="color: var(--red);">0</span>
+                <span class="stat-label">No Activity</span>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <input type="date" id="dateFilter" class="date-input">
+            <input type="text" id="logSearch" class="search-box" placeholder="Search staff or location...">
+        </div>
+
         <div class="dashboard-grid">
             <div class="info-card">
                 <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">📍 LIVE FIELD MONITORING</div>
                 <div class="map-container">
                     <div id="map-pop-info">
-                        <div id="pop-status" style="font-size: 0.6rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 5px;">CHECK IN</div>
+                        <div id="pop-status" style="font-size: 0.6rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 5px;">---</div>
                         <div id="pop-name" style="font-weight: bold; color: #fff; font-size: 1rem;">---</div>
                         <div id="pop-store" style="font-size: 0.75rem; color: #8b949e;">---</div>
                         <div id="pop-time" style="font-size: 0.7rem; color: var(--accent); margin-top: 3px;">---</div>
                     </div>
-
-                    <iframe id="main-map" loading="lazy" src="https://maps.google.com/maps?q=14.5995,120.9842&z=12&output=embed"></iframe>
-                    <a id="external-map-btn" href="#" target="_blank" class="map-overlay-btn" style="display:none;">📌 OPEN IN MAPS</a>
+                    <iframe id="main-map" loading="lazy" src="https://maps.google.com/maps?q=14.5995,120.9842&z=10&output=embed"></iframe>
                 </div>
             </div>
 
             <div class="info-card">
-                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 TODAY'S ACTIVITY</div>
-                <div style="height: 150px; position: relative;">
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 STORE TRAFFIC</div>
+                <div style="height: 150px;">
                     <canvas id="attendanceChart"></canvas>
                 </div>
-                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">STORES VISITED PER STAFF</div>
-                <div class="user-summary-list" id="userSummaryList">
-                    </div>
+                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">STAFF SUMMARY</div>
+                <div class="user-summary-list" id="userSummaryList"></div>
             </div>
         </div>
-
-        <input type="text" id="logSearch" class="search-box" placeholder="Search staff or location...">
 
         <div class="table-container">
             <table>
@@ -125,7 +138,7 @@
                     <tr>
                         <th>Staff</th>
                         <th>Status</th>
-                        <th>Location</th>
+                        <th>Store Location</th>
                         <th>Time</th>
                         <th>Action</th>
                     </tr>
@@ -138,7 +151,10 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // CONFIG: Palitan ito ng mga totoong pangalan ng staff niyo
+        const masterStaffList = ["Ron Sarmenta", "Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire"];
 
         const firebaseConfig = {
             apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -152,51 +168,43 @@
         const db = getFirestore(app);
 
         let attendanceChart;
+        let unsubscribe = null;
+
+        // Set default date to today
+        const dateInput = document.getElementById('dateFilter');
+        dateInput.valueAsDate = new Date();
 
         window.focusMap = function(lat, lng, name, store, time, type, date) {
             const map = document.getElementById('main-map');
             const pop = document.getElementById('map-pop-info');
-            const extBtn = document.getElementById('external-map-btn');
-            
-            // Map Source Update
             map.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=en;z=16&output=embed`;
-            
-            // Update Pop-up Info
             document.getElementById('pop-name').innerText = name;
             document.getElementById('pop-store').innerText = store;
             document.getElementById('pop-time').innerText = `${date} at ${time}`;
-            
             const popStatus = document.getElementById('pop-status');
             popStatus.innerText = type.toUpperCase();
-            
-            if(type === "Check In") {
-                popStatus.style.background = "#238636";
-                pop.style.borderLeftColor = "#238636";
-            } else {
-                popStatus.style.background = "#f85149";
-                pop.style.borderLeftColor = "#f85149";
-            }
-
+            popStatus.style.background = type === "Check In" ? "#238636" : "#f85149";
             pop.style.display = 'block';
-            extBtn.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-            extBtn.style.display = 'flex';
-
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
         function initChart() {
             const ctx = document.getElementById('attendanceChart').getContext('2d');
             attendanceChart = new Chart(ctx, {
-                type: 'doughnut',
+                type: 'bar',
                 data: {
-                    labels: ['IN', 'OUT'],
+                    labels: ['Check In', 'Check Out'],
                     datasets: [{
                         data: [0, 0],
                         backgroundColor: ['#238636', '#f85149'],
-                        borderWidth: 0
+                        borderRadius: 5
                     }]
                 },
-                options: { cutout: '80%', maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: { 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { display: false }, grid: { display: false } }, x: { grid: { display: false } } }
+                }
             });
         }
 
@@ -210,14 +218,24 @@
         });
 
         function startMonitoring() {
-            // Filter to get logs for today
-            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(50));
+            if (unsubscribe) unsubscribe();
+
+            const selectedDate = new Date(dateInput.value);
+            const startOfDay = new Date(selectedDate.setHours(0,0,0,0));
+            const endOfDay = new Date(selectedDate.setHours(23,59,59,999));
+
+            const q = query(
+                collection(db, "attendance"), 
+                where("timestamp", ">=", Timestamp.fromDate(startOfDay)),
+                where("timestamp", "<=", Timestamp.fromDate(endOfDay)),
+                orderBy("timestamp", "desc")
+            );
             
-            onSnapshot(q, (snapshot) => {
+            unsubscribe = onSnapshot(q, (snapshot) => {
                 const logsBody = document.getElementById('logsBody');
                 const userSummaryList = document.getElementById('userSummaryList');
                 let inCount = 0; let outCount = 0;
-                let staffActivity = {}; // For per-user counting
+                let activeStaff = {}; 
                 
                 logsBody.innerHTML = "";
 
@@ -227,44 +245,60 @@
                     const ts = log.timestamp ? log.timestamp.toDate() : new Date();
                     const timeStr = ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const dateStr = ts.toLocaleDateString();
-                    const store = log.locationName || 'Unmarked Store';
                     
-                    if(log.type === "Check In") inCount++; else outCount++;
-
-                    // Count per user for the summary list
-                    staffActivity[staffName] = (staffActivity[staffName] || 0) + 1;
+                    if(log.type === "Check In") {
+                        inCount++;
+                        activeStaff[staffName] = (activeStaff[staffName] || 0) + 1;
+                    } else {
+                        outCount++;
+                    }
 
                     const statusClass = log.type === "Check In" ? "in" : "out";
                     logsBody.innerHTML += `
                         <tr>
                             <td><strong>${staffName}</strong></td>
                             <td><span class="status-tag ${statusClass}">${log.type}</span></td>
-                            <td><small>${store}</small></td>
+                            <td><small>${log.locationName || '---'}</small></td>
                             <td style="color:var(--accent)">${timeStr}</td>
                             <td>
-                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}', '${store}', '${timeStr}', '${log.type}', '${dateStr}')" style="background:var(--accent); border:none; color:white; border-radius:4px; font-size:0.65rem; cursor:pointer; padding:5px 8px; font-weight:bold;">TRACK</button>` : '--'}
+                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}', '${log.locationName}', '${timeStr}', '${log.type}', '${dateStr}')" style="background:var(--accent); border:none; color:white; border-radius:4px; font-size:0.6rem; cursor:pointer; padding:4px 6px;">TRACK</button>` : '--'}
                             </td>
                         </tr>
                     `;
                 });
 
-                // Update Staff Summary List
+                // Present vs Absent Logic
+                const presentList = Object.keys(activeStaff);
+                const absentList = masterStaffList.filter(name => !presentList.includes(name));
+
+                document.getElementById('presentCount').innerText = presentList.length;
+                document.getElementById('absentCount').innerText = absentList.length;
+
+                // Update List UI
                 userSummaryList.innerHTML = "";
-                Object.keys(staffActivity).forEach(staff => {
+                // Show Present
+                presentList.forEach(staff => {
                     userSummaryList.innerHTML += `
                         <div class="user-row">
-                            <span>${staff}</span>
-                            <span class="user-count-badge">${staffActivity[staff]} STOPS</span>
-                        </div>
-                    `;
+                            <span class="user-name">🟢 ${staff}</span>
+                            <span class="user-count-badge">${activeStaff[staff]} STORES</span>
+                        </div>`;
+                });
+                // Show Absent
+                absentList.forEach(staff => {
+                    userSummaryList.innerHTML += `
+                        <div class="user-row absent">
+                            <span>🔴 ${staff}</span>
+                            <span>OFFLINE</span>
+                        </div>`;
                 });
 
-                // Update Chart
                 attendanceChart.data.datasets[0].data = [inCount, outCount];
                 attendanceChart.update();
             });
         }
 
+        dateInput.addEventListener('change', startMonitoring);
         document.getElementById('themeToggle').addEventListener('click', () => {
             const current = document.body.getAttribute('data-theme');
             document.body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
