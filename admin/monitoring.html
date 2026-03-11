@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iMerch - Monitoring Portal</title>
+    <title>iMerch - Admin Monitoring</title>
     <link rel="icon" sizes="192x192" href="../im.png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { 
             --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #58a6ff; 
@@ -22,40 +23,32 @@
         .logo-img { width: 35px; height: 35px; border-radius: 6px; }
         
         .controls { display: flex; gap: 8px; }
-        .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; }
-        .logout-btn { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; }
 
-        .dashboard-top { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .info-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .time-display { font-size: 1.2rem; font-weight: bold; color: var(--accent); }
-        .date-display { font-size: 0.75rem; color: #8b949e; }
-        .stats-count { font-size: 2.5rem; font-weight: bold; color: var(--green); margin: 5px 0; }
+        /* Dashboard Layout */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px; }
+        @media (min-width: 768px) { .dashboard-grid { grid-template-columns: 2fr 1fr; } }
 
-        /* Real-time Map Section */
-        #map-container { 
-            width: 100%; height: 250px; background: var(--card); border: 1px solid var(--border); 
-            border-radius: 12px; margin-bottom: 15px; overflow: hidden; display: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        #map-container iframe { width: 100%; height: 100%; border: 0; }
-        .map-header { padding: 8px 12px; background: rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .info-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; }
+        
+        /* Map Styling */
+        #main-map { width: 100%; height: 300px; border-radius: 8px; border: 0; background: #000; }
+        
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .stat-box { padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.03); text-align: center; border: 1px solid var(--border); }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
 
         .search-box { width: 100%; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); box-sizing: border-box; margin-bottom: 15px; }
         
+        /* Table */
         .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        th { background: rgba(0,0,0,0.05); color: #8b949e; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; }
+        th { background: rgba(0,0,0,0.2); color: #8b949e; text-transform: uppercase; font-size: 0.7rem; }
         
         .status-tag { padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; }
-        .in { background: rgba(35, 134, 54, 0.15); color: #3fb950; border: 1px solid rgba(35, 134, 54, 0.3); }
-        .out { background: rgba(218, 54, 51, 0.15); color: #f85149; border: 1px solid rgba(218, 54, 51, 0.3); }
-        
-        .map-btn { 
-            display: inline-flex; align-items: center; gap: 4px; background: none;
-            color: var(--accent); text-decoration: none; font-size: 0.75rem; 
-            border: 1px solid var(--accent); padding: 4px 10px; border-radius: 20px; font-weight: bold; cursor: pointer;
-        }
+        .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; border: 1px solid #238636; }
+        .out { background: rgba(218, 54, 51, 0.2); color: #f85149; border: 1px solid #da3633; }
 
         #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
         .spinner { width: 30px; height: 30px; border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
@@ -66,67 +59,70 @@
 
     <div id="loading-screen">
         <div class="spinner"></div>
-        <p style="margin-top: 15px; color: #8b949e; font-size: 0.9rem;">Syncing iMerch Database...</p>
+        <p style="margin-top: 15px; color: #8b949e;">Loading iMerch Analytics...</p>
     </div>
 
     <div id="main-content" style="display:none;">
         <div class="navbar">
             <div class="logo-section">
-                <img src="../im.png" class="logo-img" alt="iMerch">
+                <img src="../im.png" class="logo-img">
                 <div>
-                    <div style="font-weight: bold; font-size: 1rem;">Monitoring Portal</div>
-                    <div style="font-size: 0.7rem; color: #8b949e;">Admin: Joy Biazon</div>
+                    <div style="font-weight: bold;">Monitoring Dashboard</div>
+                    <div style="font-size: 0.7rem; color: #8b949e;">Welcome, Joy Biazon</div>
                 </div>
             </div>
             <div class="controls">
-                <button class="icon-btn" id="themeToggle" title="Toggle Theme">🌓</button>
-                <button class="logout-btn" id="logoutBtn">Logout</button>
+                <button class="icon-btn" id="themeToggle">🌓</button>
+                <button onclick="location.reload()" class="icon-btn">🔄</button>
             </div>
         </div>
 
-        <div class="dashboard-top">
+        <div class="dashboard-grid">
             <div class="info-card">
-                <div class="date-display" id="currentDate">-- --- ----</div>
-                <div class="time-display" id="currentTime">00:00:00</div>
+                <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between;">
+                    <span>📍 LIVE FIELD MONITORING</span>
+                    <span id="map-label" style="color: var(--accent);">Global View</span>
+                </div>
+                <iframe id="main-map" src="about:blank"></iframe>
             </div>
+
             <div class="info-card">
-                <div class="date-display">STAFF PRESENT TODAY</div>
-                <div class="stats-count" id="present-count">0</div>
+                <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 10px;">📊 ATTENDANCE OVERVIEW</div>
+                <canvas id="attendanceChart" height="180"></canvas>
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <div style="font-size: 0.6rem; color: #8b949e;">PRESENT</div>
+                        <div class="stat-val" id="count-in">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div style="font-size: 0.6rem; color: #8b949e;">OUT/FIELD</div>
+                        <div class="stat-val" id="count-out" style="color: var(--red);">0</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="map-container">
-            <div class="map-header">
-                <span id="map-title" style="font-size: 0.75rem; font-weight: bold; color: var(--accent);">📍 LIVE LOCATION VIEW</span>
-                <span style="font-size: 0.7rem; color: var(--red); cursor: pointer;" onclick="closeMap()">CLOSE [X]</span>
-            </div>
-            <div id="map-frame-wrapper" style="height: calc(100% - 35px);">
-                <iframe id="googleMapFrame" src="" allowfullscreen="" loading="lazy"></iframe>
-            </div>
-        </div>
+        <input type="text" id="logSearch" class="search-box" placeholder="Search staff name or location...">
 
-        <input type="text" id="logSearch" class="search-box" placeholder="Search staff name, email, or location...">
-        
         <div class="table-container">
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Staff Detail</th>
-                            <th>Status</th>
-                            <th>Location / GPS</th>
-                            <th>Log Time</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logsBody"></tbody>
-                </table>
-            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Staff</th>
+                        <th>Status</th>
+                        <th>Location</th>
+                        <th>Time</th>
+                        <th>Map</th>
+                    </tr>
+                </thead>
+                <tbody id="logsBody"></tbody>
+            </table>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -140,110 +136,81 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Global functions for map
-        window.viewOnMap = function(lat, lng, name) {
-            const mapContainer = document.getElementById('map-container');
-            const iframe = document.getElementById('googleMapFrame');
-            const title = document.getElementById('map-title');
-            
-            // Map Embed URL
-            const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed`;
-            
-            iframe.src = mapUrl;
-            title.innerText = `📍 LOCATION: ${name.toUpperCase()}`;
-            mapContainer.style.display = 'block';
+        let attendanceChart;
+
+        // Map Function
+        window.focusMap = function(lat, lng, name) {
+            const map = document.getElementById('main-map');
+            const label = document.getElementById('map-label');
+            map.src = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+            label.innerText = `Focus: ${name}`;
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // Initialize Chart
+        function initChart() {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            attendanceChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Check In', 'Check Out'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#238636', '#f85149'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { cutout: '70%', plugins: { legend: { display: false } } }
+            });
         }
-
-        window.closeMap = function() {
-            document.getElementById('map-container').style.display = 'none';
-            document.getElementById('googleMapFrame').src = "";
-        }
-
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('currentTime').innerText = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            document.getElementById('currentDate').innerText = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            const current = document.body.getAttribute('data-theme');
-            document.body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
-        });
-
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            signOut(auth).then(() => { window.location.href = "../index.html"; });
-        });
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                const email = user.email.toLowerCase();
-                const allowed = ["joy.biazon@imerchmedia.net", "ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
-                if (allowed.includes(email)) {
-                    document.getElementById('loading-screen').style.display = 'none';
-                    document.getElementById('main-content').style.display = 'block';
-                    startMonitoring();
-                } else {
-                    alert("Access Denied");
-                    signOut(auth).then(() => { window.location.href = "../index.html"; });
-                }
+                document.getElementById('loading-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                initChart();
+                startMonitoring();
             } else { window.location.href = "../index.html"; }
         });
 
         function startMonitoring() {
-            const todayStr = new Date().toLocaleDateString('en-CA'); 
-            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(100));
-
+            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(50));
+            
             onSnapshot(q, (snapshot) => {
                 const logsBody = document.getElementById('logsBody');
-                let presentUsers = new Set();
+                let inCount = 0;
+                let outCount = 0;
                 logsBody.innerHTML = "";
 
                 snapshot.forEach((doc) => {
                     const log = doc.data();
-                    const ts = log.timestamp ? log.timestamp.toDate() : new Date();
-                    const logDate = log.date || ts.toLocaleDateString('en-CA');
-                    const displayTime = log.time || ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-
-                    if(logDate === todayStr && log.type === "Check In") {
-                        presentUsers.add(log.email);
-                    }
-
                     const statusClass = log.type === "Check In" ? "in" : "out";
+                    if(log.type === "Check In") inCount++; else outCount++;
+
                     const staffName = log.name || log.email.split('@')[0];
-                    
-                    let mapButton = '<span style="color:#666; font-size:0.7rem;">NO GPS DATA</span>';
-                    if (log.latitude && log.longitude) {
-                        mapButton = `<button onclick="viewOnMap(${log.latitude}, ${log.longitude}, '${staffName}')" class="map-btn">📍 View Position</button>`;
-                    }
+                    const ts = log.timestamp ? log.timestamp.toDate() : new Date();
+                    const timeDisp = log.time || ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
                     logsBody.innerHTML += `
                         <tr>
+                            <td><strong>${staffName}</strong><br><small style="opacity:0.6">${log.email}</small></td>
+                            <td><span class="status-tag ${statusClass}">${log.type}</span></td>
+                            <td>${log.locationName || 'Field'}</td>
+                            <td style="color:var(--accent)">${timeDisp}</td>
                             <td>
-                                <div style="font-weight:bold; color:var(--text);">${staffName}</div>
-                                <div style="font-size:0.7rem; opacity:0.6;">${log.email}</div>
+                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}')" style="background:none; border:1px solid var(--accent); color:var(--accent); border-radius:4px; font-size:0.6rem; cursor:pointer; padding:2px 5px;">VIEW</button>` : '--'}
                             </td>
-                            <td><span class="status-tag ${statusClass}">${log.type.toUpperCase()}</span></td>
-                            <td>
-                                <div style="font-size:0.8rem; margin-bottom:5px;">${log.locationName || 'Unmarked Area'}</div>
-                                ${mapButton}
-                            </td>
-                            <td style="font-weight:bold; color:var(--accent);">${displayTime}</td>
                         </tr>
                     `;
                 });
-                document.getElementById('present-count').innerText = presentUsers.size;
+
+                // Update Charts & Stats
+                document.getElementById('count-in').innerText = inCount;
+                document.getElementById('count-out').innerText = outCount;
+                attendanceChart.data.datasets[0].data = [inCount, outCount];
+                attendanceChart.update();
             });
         }
-
-        document.getElementById('logSearch').addEventListener('input', function() {
-            const filter = this.value.toLowerCase();
-            document.querySelectorAll('#logsBody tr').forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(filter) ? "" : "none";
-            });
-        });
     </script>
 </body>
 </html>
