@@ -48,7 +48,6 @@
         .map-container { position: relative; width: 100%; height: 400px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
         #main-map { width: 100%; height: 100%; border: 0; }
         
-        /* PROGRESS BAR STYLES */
         .progress-container { width: 100%; background: var(--border); height: 6px; border-radius: 10px; margin-top: 6px; overflow: hidden; }
         .progress-fill { height: 100%; transition: width 0.5s ease; border-radius: 10px; }
 
@@ -131,7 +130,7 @@
             <div class="info-card">
                 <div class="card-title">📍 LIVE FIELD MONITORING</div>
                 <div class="map-container">
-                    <iframe id="main-map" src="https://maps.google.com/maps?q=14.5826,121.0526&z=15&output=embed"></iframe>
+                    <iframe id="main-map" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d15444.02!2d121.04!3d14.6!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sph!4v1700000000000"></iframe>
                 </div>
             </div>
 
@@ -205,12 +204,14 @@
             signOut(auth).then(() => window.location.href = "../index.html");
         });
 
-        // FIXED MAP FUNCTION
+        // FIXED FOCUS MAP FUNCTION PARA SA "PLACE INFO COULDN'T LOAD"
         window.focusMap = function(lat, lng, details) {
             const map = document.getElementById('main-map');
-            // Gmaps Embed format: q=lat,lng(Label)
-            const query = encodeURIComponent(details);
-            map.src = `https://maps.google.com/maps?q=${lat},${lng}(${query})&t=&z=16&ie=UTF8&iwloc=B&output=embed`;
+            // Nililinis ang details para walang special chars na makakasira sa URL
+            const cleanDetails = details.replace(/[^a-zA-Z0-9 | :]/g, '');
+            // Mas stable na format: google.com/maps?q=lat,lng+(Label)
+            const labeledUrl = `https://maps.google.com/maps?q=${lat},${lng}+(${encodeURIComponent(cleanDetails)})&t=&z=15&ie=UTF8&iwloc=B&output=embed`;
+            map.src = labeledUrl;
         };
 
         function initChart() {
@@ -263,9 +264,11 @@
                     const timeStr = ts.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                     const statusClass = (statusText.toLowerCase().includes("in")) ? "in" : "out";
 
-                    // Map Marker details with color indicators
-                    const markerColor = statusClass === "in" ? "🟢" : "🔴";
-                    const mapLabel = `${markerColor} ${staffName} | ${store} | ${dateStr} ${timeStr}`;
+                    // Map Marker details
+                    const markerColor = statusClass === "in" ? "IN" : "OUT";
+                    const mapLabel = `${staffName} | ${markerColor} | ${store}`;
+                    // Nililinis ang quotes sa label para hindi masira ang onclick event
+                    const safeLabel = mapLabel.replace(/'/g, "\\'");
 
                     logsBody.innerHTML += `
                         <tr>
@@ -279,7 +282,7 @@
                             <td style="color:var(--text); font-weight:600;">${store}</td>
                             <td style="font-weight:700; color:var(--accent)">${timeStr}</td>
                             <td class="col-action">
-                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${mapLabel.replace(/'/g, "\\'")}')" style="background:var(--green); border:none; color:white; border-radius:6px; font-size:0.65rem; font-weight:700; cursor:pointer; padding:8px 16px; transition: 0.2s;">VIEW MAP</button>` : '--'}
+                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${safeLabel}')" style="background:var(--green); border:none; color:white; border-radius:6px; font-size:0.65rem; font-weight:700; cursor:pointer; padding:8px 16px; transition: 0.2s;">VIEW MAP</button>` : '--'}
                             </td>
                         </tr>`;
                 }
@@ -298,7 +301,6 @@
             document.getElementById('presentCount').innerText = presentList.length;
             document.getElementById('absentCount').innerText = Math.max(0, masterStaffList.length - presentList.length);
 
-            // RENDER USER LIST WITH PROGRESS BAR
             userSummaryList.innerHTML = masterStaffList.sort().map(staff => {
                 const count = activeStaff[staff] || 0;
                 const isAbsent = count === 0;
@@ -347,8 +349,7 @@
                 if (currentLogs.length > 0 && firstLoad) {
                     const latest = currentLogs.find(l => l.latitude && !adminExclusion.includes(l.name));
                     if (latest) {
-                        const ts = latest.timestamp ? latest.timestamp.toDate() : new Date();
-                        const lbl = `Latest: ${latest.name || 'Staff'} | ${latest.locationName || 'Store'}`;
+                        const lbl = `Latest: ${latest.name || 'Staff'}`;
                         focusMap(latest.latitude, latest.longitude, lbl);
                     }
                     firstLoad = false;
