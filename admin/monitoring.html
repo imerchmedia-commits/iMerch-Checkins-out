@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iMerch - Monitoring Portal</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0d1117">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="im.png">
+
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --text: #c9d1d9;
+            --accent: #238636;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #30363d;
+            margin-bottom: 20px;
+        }
+        .stats-container {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .stats-count {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: white;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #30363d;
+        }
+        th { background: #161b22; }
+        .restricted { display: none; text-align: center; padding: 50px; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-check" style="display:none;">
+        <div class="header">
+            <h2>Daily Monitoring</h2>
+            <p>Welcome, Joy Biazon</p>
+        </div>
+
+        <div class="stats-container">
+            <div>Present Today</div>
+            <div class="stats-count" id="present-count">0</div>
+        </div>
+
+        <input type="text" id="logSearch" class="search-box" placeholder="Search by name, status, or date...">
+        
+        <div style="overflow-x:auto;">
+            <table id="logsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="logsBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="access-denied" class="restricted">
+        <h1>🚫 Access Denied</h1>
+        <p>This portal is for authorized monitoring personnel only.</p>
+        <button onclick="window.location.href='../index.html'">Back to Login</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // MGA CONFIG MO DITO (I-paste ang Firebase Config mo)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // ROLE CHECK: Joy Biazon Only
+        const allowedUser = "joy.biazon@imerchmedia.net";
+
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.email === allowedUser) {
+                document.getElementById('auth-check').style.display = 'block';
+                loadLogs();
+            } else {
+                document.getElementById('access-denied').style.display = 'block';
+            }
+        });
+
+        function loadLogs() {
+            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+            onSnapshot(q, (snapshot) => {
+                const logsBody = document.getElementById('logsBody');
+                let presentCount = 0;
+                const today = new Date().toLocaleDateString();
+                
+                logsBody.innerHTML = "";
+                snapshot.forEach((doc) => {
+                    const log = doc.data();
+                    if(log.date === today) presentCount++;
+
+                    const row = `<tr>
+                        <td>${log.name}</td>
+                        <td>${log.status}</td>
+                        <td>${log.time}</td>
+                        <td>${log.date}</td>
+                    </tr>`;
+                    logsBody.innerHTML += row;
+                });
+                document.getElementById('present-count').innerText = presentCount;
+            });
+        }
+
+        // Search Filter Logic
+        document.getElementById('logSearch').addEventListener('keyup', function() {
+            let filter = this.value.toUpperCase();
+            let rows = document.getElementById('logsBody').getElementsByTagName('tr');
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].style.display = rows[i].innerText.toUpperCase().includes(filter) ? "" : "none";
+            }
+        });
+    </script>
+</body>
+</html>
