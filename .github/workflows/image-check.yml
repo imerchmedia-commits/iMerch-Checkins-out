@@ -1,1 +1,22 @@
+name: Image Link Checker
+on: [push, pull_request]
 
+jobs:
+  check-links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for missing images in HTML
+        run: |
+          # This script looks for 'src=' or 'href=' pointing to .png or .ico
+          # and checks if those files actually exist in the repo.
+          grep -oE '(src|href)="([^"]+\.(png|ico|jpg))"' admin.html | cut -d'"' -f2 | while read -r img; do
+            if [ ! -f "$img" ]; then
+              echo "❌ ERROR: File '$img' not found!"
+              exit 1
+            else
+              echo "✅ FOUND: $img"
+            fi
+          done
