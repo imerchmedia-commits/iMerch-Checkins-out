@@ -11,7 +11,7 @@
         :root { 
             --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #58a6ff; 
             --green: #238636; --border: #30363d; --red: #f85149; --header: #010409;
-            --secondary-text: #8b949e; --table-hover: rgba(88, 166, 255, 0.05);
+            --secondary-text: #8b949e;
         }
 
         body.light-mode {
@@ -49,11 +49,11 @@
         th { background: rgba(0,0,0,0.3); padding: 15px; text-align: center; color: var(--secondary-text); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
         td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.85rem; text-align: center; vertical-align: middle; }
         
-        .status-badge { font-weight: 800; font-size: 0.75rem; text-transform: uppercase; }
+        .status-badge { font-weight: 900; font-size: 0.75rem; text-transform: uppercase; }
         .btn-pin { background: var(--accent); color: white; border: none; padding: 8px; border-radius: 50%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-pin:hover { transform: scale(1.1); background: #fff; color: var(--accent); }
 
-        input { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 10px; border-radius: 8px; outline: none; }
+        input { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 10px; border-radius: 8px; outline: none; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -73,7 +73,7 @@
 </nav>
 
 <div class="stats-row">
-    <div class="stat-box"><span class="stat-label">Active Staff</span><span class="stat-val" id="presentCount">0</span></div>
+    <div class="stat-box"><span class="stat-label">Active Field Staff</span><span class="stat-val" id="presentCount">0</span></div>
     <div class="stat-box"><span class="stat-label">Daily Volume</span><span class="stat-val" id="totalLogs" style="color:var(--accent)">0</span></div>
     <div class="stat-box"><span class="stat-label">System State</span><span class="stat-val" style="color:var(--green); font-size:1.2rem;">OPERATIONAL</span></div>
 </div>
@@ -92,7 +92,7 @@
             <div id="summaryList" class="user-list"></div>
         </div>
         <div style="border-top:1px solid var(--border); padding-top:15px;">
-            <div class="card-title">📈 WEEKLY TREND</div>
+            <div class="card-title">📈 WEEKLY ACTIVITY</div>
             <div style="height:160px;"><canvas id="weeklyChart"></canvas></div>
         </div>
     </div>
@@ -100,7 +100,7 @@
 
 <div style="margin-bottom:15px; display:flex; gap:10px;">
     <input type="date" id="dateFilter">
-    <input type="text" id="logSearch" placeholder="Search Full Name, Email or Branch..." style="flex-grow:1;">
+    <input type="text" id="logSearch" placeholder="Search Staff, Email, or Branch..." style="flex-grow:1;">
 </div>
 
 <div class="table-container">
@@ -110,6 +110,7 @@
                 <th>FULL NAME</th>
                 <th>ACTIVITY</th>
                 <th>LOCATION</th>
+                <th>DATE</th>
                 <th>TIME</th>
                 <th>MAP</th>
             </tr>
@@ -197,15 +198,17 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 
-                // PRIORITY: fullName, then staffName, then email
-                const rawName = data.fullName || data.staffName || data.staffEmail || data.name || "Unknown Staff";
+                // PINAKAMAHALAGA: In-update ko ito para saluhin lahat ng field names mula admin.html
+                const rawName = data.staff_fullname || data.fullName || data.staff_name || data.staffName || data.name || data.staffEmail || "Unknown Staff";
                 const email = data.staffEmail || "";
                 
                 if (adminExclusion.includes(rawName)) return;
 
                 const location = data.locationName || data.branch || "N/A";
-                const type = data.type || "Activity";
-                const time = data.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                const type = data.type || "Log";
+                const ts = data.timestamp?.toDate();
+                const time = ts ? ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "---";
+                const dateStr = ts ? ts.toLocaleDateString() : "---";
 
                 if (rawName.toLowerCase().includes(search) || email.toLowerCase().includes(search) || location.toLowerCase().includes(search)) {
                     body.innerHTML += `
@@ -213,6 +216,7 @@
                             <td><strong style="color:#fff;">${rawName.toUpperCase()}</strong></td>
                             <td><span class="status-badge" style="color:${type.toLowerCase().includes('in') ? 'var(--green)' : 'var(--red)'}">${type}</span></td>
                             <td>${location}</td>
+                            <td>${dateStr}</td>
                             <td style="color:var(--accent); font-weight:800;">${time}</td>
                             <td>
                                 <button class="btn-pin" onclick="focusMap(${data.latitude}, ${data.longitude}, '${rawName}', '${type}', '${time}')">
@@ -231,8 +235,6 @@
 
             document.getElementById('totalLogs').innerText = totalCount;
             document.getElementById('presentCount').innerText = Object.keys(tally).length;
-            
-            // Re-render icons after table update
             lucide.createIcons();
 
             Object.entries(tally).sort((a,b) => b[1] - a[1]).forEach(([name, count]) => {
