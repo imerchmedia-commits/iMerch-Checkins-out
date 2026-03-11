@@ -25,7 +25,7 @@
         #map { height: 350px; width: 100%; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; z-index: 1; }
 
         .admin-grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
-        .admin-grid.restricted { grid-template-columns: 1fr; }
+        .admin-grid.restricted { grid-template-columns: 1fr; } /* Expanded view for restricted users */
 
         @media (max-width: 850px) { .admin-grid { grid-template-columns: 1fr; } }
 
@@ -174,7 +174,6 @@
     const auth = getAuth(app);
 
     let masterLogs = [];
-    let filteredLogs = [];
     let staffMap = {}; 
     let map, markerGroup;
 
@@ -188,18 +187,6 @@
         });
     }
     setInterval(updateClock, 1000);
-
-    const themeBtn = document.getElementById('theme-toggle');
-    themeBtn.onclick = () => {
-        const body = document.body;
-        if (body.getAttribute('data-theme') === 'dark') {
-            body.setAttribute('data-theme', 'light');
-            themeBtn.innerText = "☀️";
-        } else {
-            body.setAttribute('data-theme', 'dark');
-            themeBtn.innerText = "🌙";
-        }
-    };
 
     // --- MAP LOGIC ---
     function initMap() {
@@ -249,49 +236,42 @@
             document.getElementById('danger-zone')?.classList.add('hidden');
             document.getElementById('exportBtnBottom')?.classList.add('hidden');
             document.getElementById('main-grid')?.classList.add('restricted');
+            document.getElementById('admin-sidebar')?.classList.add('hidden');
         }
     }
 
     // --- DATA LOADING ---
     function loadStaffData() {
         onSnapshot(collection(db, "users"), (snap) => {
-            const directory = document.getElementById('staff-directory-list');
-            if (directory) directory.innerHTML = ""; 
-            
-            staffMap = {}; // Reset map
+            staffMap = {};
             let count = 0;
-
-            snap.forEach(documentDoc => { 
-                const data = documentDoc.data();
-                const docId = documentDoc.id;
-                const status = data.status || "Active";
-                const isActive = status === "Active";
-                
-                // CRITICAL: Map the staff UID to the Name so counts work
-                staffMap[data.uid] = { name: data.fullName, status: status }; 
+            snap.forEach(doc => { 
+                const data = doc.data();
+                staffMap[data.uid] = { name: data.fullName, status: data.status || "Active" }; 
                 count++;
-
-                if (directory) {
-                    directory.innerHTML += `
-                        <div class="staff-item">
-                            <div style="flex: 1; overflow: hidden;">
-                                <div style="font-size: 0.85em; font-weight: bold; white-space: nowrap; text-overflow: ellipsis;">${data.fullName}</div>
-                                <div style="font-size: 0.7em; color: ${isActive ? '#3fb950' : '#f85149'};">
-                                    <span class="status-dot" style="background: ${isActive ? '#3fb950' : '#f85149'};"></span>${status}
-                                </div>
-                            </div>
-                            <div class="staff-controls" style="display: flex; gap: 4px;">
-                                <button class="geo-btn" style="background: ${isActive ? 'var(--red)' : 'var(--green)'};" 
-                                    onclick="toggleStaffStatus('${docId}', '${status}')">
-                                    ${isActive ? 'Off' : 'On'}
-                                </button>
-                            </div>
-                        </div>`;
-                }
             });
-
             document.getElementById('total-staff-count').innerText = count;
-            checkUserRole(); // Re-check role after data is in
+            renderDirectory(snap);
+            checkUserRole();
+        });
+    }
+
+    function renderDirectory(snap) {
+        const directory = document.getElementById('staff-directory-list');
+        if (!directory) return;
+        directory.innerHTML = "";
+        snap.forEach(documentDoc => {
+            const data = documentDoc.data();
+            const status = data.status || "Active";
+            directory.innerHTML += `
+                <div class="staff-item">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85em; font-weight: bold;">${data.fullName}</div>
+                        <div style="font-size: 0.7em; color: ${status === 'Active' ? '#3fb950' : '#f85149'};">
+                            <span class="status-dot" style="background: ${status === 'Active' ? '#3fb950' : '#f85149'};"></span>${status}
+                        </div>
+                    </div>
+                </div>`;
         });
     }
 
@@ -301,8 +281,6 @@
             masterLogs = [];
             snap.forEach(doc => {
                 const data = doc.data();
-                // Ensure name is linked even if Firestore record only has UID
-                data.fullName = staffMap[data.uid]?.name || data.fullName || "Unknown Staff";
                 masterLogs.push(data);
             });
             updateStats();
@@ -313,16 +291,14 @@
 
     function updateStats() {
         const todayStr = new Date().toLocaleDateString();
-        // Use a Set to count unique UIDs present today
         const presentTodayUids = new Set();
-        
         masterLogs.forEach(log => {
             if (log.timestamp && log.timestamp.toDate().toLocaleDateString() === todayStr) {
                 presentTodayUids.add(log.uid);
             }
         });
-        
-        document.getElementById('present-today-count').innerText = presentTodayUids.size;
+        const countBox = document.getElementById('present-today-count');
+        if (countBox) countBox.innerText = presentTodayUids.size;
     }
 
     function applyFilters() {
@@ -330,23 +306,21 @@
         const dateFromInput = document.getElementById('filter-date-from').value;
         const dateToInput = document.getElementById('filter-date-to').value;
 
-        filteredLogs = masterLogs.filter(log => {
+        const filteredLogs = masterLogs.filter(log => {
             const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
-            const currentEmail = (log.email || "").toLowerCase();
-            const matchesName = currentName.includes(nameVal) || currentEmail.includes(nameVal);
+            const matchesName = currentName.includes(nameVal);
             
             let matchesDate = true;
             if (log.timestamp && log.timestamp.toDate) {
                 const logDate = log.timestamp.toDate();
                 const logDateOnly = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
-                
                 if (dateFromInput) {
-                    const from = new Date(dateFromInput);
-                    if (logDateOnly < new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime()) matchesDate = false;
+                    const from = new Date(dateFromInput).getTime();
+                    if (logDateOnly < from) matchesDate = false;
                 }
                 if (dateToInput) {
-                    const to = new Date(dateToInput);
-                    if (logDateOnly > new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime()) matchesDate = false;
+                    const to = new Date(dateToInput).getTime();
+                    if (logDateOnly > to) matchesDate = false;
                 }
             }
             return matchesName && matchesDate;
@@ -377,15 +351,11 @@
 
     // --- AUTH ---
     onAuthStateChanged(auth, async (user) => {
-        const admins = [
-            "ron.sarmenta@gmail.com", 
-            "ronsarmenta.imerchmedia@gmail.com",
-            "joy.biazon@imerchmedia.net",
-            "glenn.hernandez@imerchmedia.com"
-        ];
+        const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com", "joy.biazon@imerchmedia.net", "glenn.hernandez@imerchmedia.com"];
         if (user && admins.includes(user.email.toLowerCase())) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
+            checkUserRole();
             loadStaffData(); 
             loadAdminLogs(); 
             setTimeout(initMap, 500);
@@ -395,34 +365,14 @@
         }
     });
 
-    // --- EVENT HANDLERS ---
     document.getElementById('logoutLink').onclick = () => signOut(auth);
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
-        try { 
-            await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); 
-        } catch (err) { alert("Error: " + err.message); }
+        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
+        catch (err) { alert("Error: " + err.message); }
     };
-    document.getElementById('applyFiltersBtn').onclick = (e) => { e.preventDefault(); applyFilters(); };
+    document.getElementById('applyFiltersBtn').onclick = applyFilters;
     document.getElementById('filter-name').oninput = applyFilters;
-
-    const handleExport = () => {
-        if (filteredLogs.length === 0) return alert("No results to export.");
-        let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
-        filteredLogs.forEach(d => {
-            const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            const name = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
-            csv += `"${name}","${d.email || ''}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${(d.remarks || "").replace(/"/g, '""')}"\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `iMerch_Logs_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-    };
-
-    document.getElementById('exportBtn').onclick = handleExport;
-    document.getElementById('exportBtnBottom').onclick = handleExport;
 
 </script>
 </body>
