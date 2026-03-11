@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Permissions-Policy" content="unload=()">
     <title>iMerch - Admin Monitoring</title>
     
     <link rel="icon" type="image/png" href="im.png">
-    <link rel="shortcut icon" type="image/png" href="im.png">
-    
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { 
@@ -23,91 +19,52 @@
             --secondary-text: #57606a; --glass: rgba(255, 255, 255, 0.8);
         }
         
-        body { 
-            font-family: 'Inter', -apple-system, system-ui, sans-serif; 
-            background-color: var(--bg); color: var(--text); 
-            margin: 0; padding: 20px; transition: all 0.3s ease; 
-            line-height: 1.5;
-        }
-        
-        .glass-panel {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; }
+        .glass-panel { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3); }
 
-        .navbar { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 15px 25px; margin-bottom: 25px; position: relative;
-        }
-        
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; margin-bottom: 25px; position: relative; }
         .logo-section { display: flex; align-items: center; gap: 15px; }
         .logo-img { width: 45px; height: 45px; border-radius: 10px; }
-        
         .center-brand { position: absolute; left: 50%; transform: translateX(-50%); }
-        .center-logo { height: 45px; width: auto; }
+        .center-logo { height: 45px; }
 
         .controls { display: flex; gap: 12px; }
-        .icon-btn { 
-            background: var(--card); border: 1px solid var(--border); 
-            color: var(--text); padding: 10px 15px; border-radius: 10px; 
-            cursor: pointer; font-weight: 600; transition: 0.3s;
-        }
-        .icon-btn:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .logout-btn { background: var(--red); color: white; border: none; }
+        .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+        .logout-btn { background: var(--red); color: white; border: none; font-weight: bold; }
 
-        .stats-row { 
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
-            gap: 20px; margin-bottom: 30px; 
-        }
-        .stat-box { padding: 30px; text-align: center; }
-        .stat-val { font-size: 2.8rem; font-weight: 900; display: block; margin-bottom: 5px; }
-        .stat-label { font-size: 0.75rem; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 2px; }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-box { padding: 25px; text-align: center; }
+        .stat-val { font-size: 2.5rem; font-weight: 900; display: block; }
+        .stat-label { font-size: 0.7rem; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 2px; }
 
         .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 30px; }
-        @media (min-width: 1024px) { .dashboard-grid { grid-template-columns: 2fr 1fr; } }
+        @media (min-width: 1024px) { .dashboard-grid { grid-template-columns: 1.5fr 1fr; } }
 
-        .info-card { padding: 25px; }
-        .card-title { 
-            font-size: 1rem; font-weight: 800; margin-bottom: 20px; 
-            color: var(--accent); display: flex; align-items: center; justify-content: space-between;
-            letter-spacing: 1px;
-        }
+        .info-card { padding: 20px; }
+        .card-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 15px; color: var(--accent); display: flex; justify-content: space-between; align-items: center; }
         
-        .map-container { width: 100%; height: 450px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+        .map-container { width: 100%; height: 350px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
         #main-map { width: 100%; height: 100%; border: 0; }
 
         .table-container { overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
-        th { 
-            background: rgba(88, 166, 255, 0.1); 
-            color: var(--accent); text-transform: uppercase; font-size: 0.75rem; 
-            font-weight: 800; padding: 20px; text-align: center; 
-            border-bottom: 2px solid var(--border);
-        }
-        td { padding: 18px; border-bottom: 1px solid var(--border); text-align: center; }
-
-        .status-tag { padding: 6px 14px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: rgba(88, 166, 255, 0.1); color: var(--accent); font-size: 0.75rem; padding: 15px; text-align: center; border-bottom: 2px solid var(--border); }
+        td { padding: 15px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.9rem; }
+        
+        .status-tag { padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; }
         .in { background: rgba(63, 185, 80, 0.15); color: #4ade80; border: 1px solid #238636; }
         .out { background: rgba(248, 81, 73, 0.15); color: #f87171; border: 1px solid #f85149; }
 
         .filter-section { display: flex; gap: 15px; margin-bottom: 25px; }
-        .date-input, .search-box { 
-            background: var(--card); border: 1px solid var(--border); 
-            color: var(--text); padding: 14px; border-radius: 12px; outline: none;
-        }
+        .date-input, .search-box { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 10px; }
         .search-box { flex-grow: 1; }
-
-        .chart-container { position: relative; height: 200px; width: 100%; margin-bottom: 20px; }
     </style>
 </head>
 <body data-theme="dark">
 
     <div id="loading-screen" style="position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1000;">
-        <div style="width:50px; height:50px; border:4px solid var(--border); border-top:4px solid var(--accent); border-radius:50%; animation:spin 1s linear infinite;"></div>
-        <p style="margin-top:20px; color:var(--secondary-text); font-weight:600; letter-spacing:2px;">SECURE ACCESS INITIALIZING...</p>
+        <div style="width:40px; height:40px; border:4px solid var(--border); border-top:4px solid var(--accent); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <p style="margin-top:15px; color:var(--secondary-text); font-size: 0.8rem; letter-spacing:2px;">LOADING SECURE DATA...</p>
     </div>
 
     <div id="main-content" style="display:none;">
@@ -115,60 +72,56 @@
             <div class="logo-section">
                 <img src="im.png" class="logo-img">
                 <div>
-                    <div style="font-weight: 900; font-size: 1.2rem; color: var(--accent);">iMerch</div>
-                    <div style="font-size: 0.65rem; color: var(--secondary-text); font-weight: 800;">CENTRAL MONITORING</div>
+                    <div style="font-weight: 900; color: var(--accent);">iMerch</div>
+                    <div style="font-size: 0.6rem; color: var(--secondary-text); font-weight: 800;">ADMIN PANEL</div>
                 </div>
             </div>
             <div class="center-brand"><img src="../logo1.png" class="center-logo"></div>
             <div class="controls">
                 <button class="icon-btn" id="themeToggle">🌓</button>
-                <button onclick="location.reload()" class="icon-btn">🔄</button>
                 <button id="logoutBtn" class="icon-btn logout-btn">SIGNOUT</button>
             </div>
         </div>
 
         <div class="stats-row">
             <div class="stat-box glass-panel">
-                <span class="stat-label">Active Field Staff</span>
+                <span class="stat-label">Field Staff Active</span>
                 <span class="stat-val" id="presentCount" style="color: var(--green);">0</span>
             </div>
             <div class="stat-box glass-panel">
-                <span class="stat-label">Staff Offline</span>
-                <span class="stat-val" id="absentCount" style="color: var(--red);">0</span>
+                <div class="card-title" style="margin-bottom:5px; justify-content:center;">📈 TOTAL CHECK-INS</div>
+                <div style="height: 60px;">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
             </div>
             <div class="stat-box glass-panel">
-                <span class="stat-label">Total Check-ins Today</span>
-                <span class="stat-val" id="totalCheckinsToday" style="color: var(--accent);">0</span>
+                <span class="stat-label">Daily Target Status</span>
+                <span class="stat-val" id="totalLogsToday" style="color: var(--accent);">0</span>
             </div>
         </div>
 
         <div class="filter-section">
             <input type="date" id="dateFilter" class="date-input">
-            <input type="text" id="logSearch" class="search-box" placeholder="Search by name, branch, or email...">
+            <input type="text" id="logSearch" class="search-box" placeholder="Search staff or branch...">
         </div>
 
         <div class="dashboard-grid">
             <div class="info-card glass-panel">
                 <div class="card-title">
                     <span>📍 LIVE GEOLOCATION</span>
-                    <a id="externalMapLink" target="_blank" style="display:none; font-size:0.7rem; background:var(--green); color:white; padding:5px 12px; border-radius:6px; text-decoration:none;">GOOGLE MAPS 📲</a>
+                    <a id="externalMapLink" target="_blank" style="display:none; font-size:0.7rem; background:var(--green); color:white; padding:4px 10px; border-radius:5px; text-decoration:none;">OPEN MAPS</a>
                 </div>
                 <div class="map-container">
-                    <iframe id="main-map" src="about:blank"></iframe>
-                </div>
-                
-                <div class="card-title" style="margin-top: 30px;">📈 TOTAL CHECK-INS (TODAY VS YESTERDAY)</div>
-                <div style="height: 250px;">
-                    <canvas id="liveLineChart"></canvas>
+                    <iframe id="main-map" src=""></iframe>
                 </div>
             </div>
 
             <div class="info-card glass-panel">
                 <div class="card-title">📊 PERFORMANCE INDEX</div>
-                <div class="chart-container">
-                    <canvas id="attendanceChart"></canvas>
+                <div style="height: 180px; margin-bottom: 20px;">
+                    <canvas id="performanceChart"></canvas>
                 </div>
-                <div id="userSummaryList" style="max-height: 500px; overflow-y: auto;"></div>
+                <div id="userSummaryList" style="max-height: 200px; overflow-y: auto;"></div>
             </div>
         </div>
 
@@ -176,12 +129,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Date</th>
+                        <th>Time</th>
                         <th>Staff Member</th>
                         <th>Action</th>
-                        <th>Branch / Store</th>
-                        <th>Time Log</th>
-                        <th>Action</th>
+                        <th>Branch</th>
+                        <th>Map</th>
                     </tr>
                 </thead>
                 <tbody id="logsBody"></tbody>
@@ -194,7 +146,7 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales", "arem.gonzales@gmail.com"];
+        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
         const DAILY_TARGET = 6;
 
         const firebaseConfig = {
@@ -208,71 +160,27 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let attendanceChart, liveLineChart;
-        let unsubscribeLogs = null;
-        let staffRegistry = {}; 
-        let masterStaffList = [];
+        let perfChart, compChart;
+        let staffRegistry = {};
         let currentLogs = [];
 
         const dateInput = document.getElementById('dateFilter');
-        const logSearch = document.getElementById('logSearch');
         dateInput.valueAsDate = new Date();
 
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            const body = document.body;
-            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-        });
-
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            signOut(auth).then(() => window.location.href = "../index.html");
-        });
-
-        window.focusMap = function(lat, lng) {
-            const map = document.getElementById('main-map');
-            map.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=en&z=14&output=embed`;
-        };
-
         function initCharts() {
-            const ctx1 = document.getElementById('attendanceChart').getContext('2d');
-            attendanceChart = new Chart(ctx1, {
+            const ctx1 = document.getElementById('performanceChart').getContext('2d');
+            perfChart = new Chart(ctx1, {
                 type: 'bar',
                 data: { labels: [], datasets: [{ data: [], backgroundColor: '#58a6ff', borderRadius: 5 }] },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
             });
 
-            const ctx2 = document.getElementById('liveLineChart').getContext('2d');
-            liveLineChart = new Chart(ctx2, {
-                type: 'line',
-                data: {
-                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
-                    datasets: [
-                        { label: 'Today', data: Array(24).fill(0), borderColor: '#58a6ff', backgroundColor: 'rgba(88, 166, 255, 0.1)', fill: true, tension: 0.4 },
-                        { label: 'Yesterday', data: Array(24).fill(0), borderColor: '#f85149', borderDash: [5, 5], tension: 0.4 }
-                    ]
-                },
-                options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            const ctx2 = document.getElementById('comparisonChart').getContext('2d');
+            compChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: { labels: ['Today', 'Yesterday'], datasets: [{ data: [0, 0], backgroundColor: ['#58a6ff', '#30363d'], borderWidth: 0 }] },
+                options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
             });
-        }
-
-        async function fetchYesterdayData() {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const start = new Date(yesterday.setHours(0,0,0,0));
-            const end = new Date(yesterday.setHours(23,59,59,999));
-
-            const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)));
-            const snap = await getDocs(q);
-            
-            const hourlyData = Array(24).fill(0);
-            snap.forEach(doc => {
-                const log = doc.data();
-                if(log.type?.toLowerCase().includes("in")) {
-                    const hour = log.timestamp.toDate().getHours();
-                    hourlyData[hour]++;
-                }
-            });
-            liveLineChart.data.datasets[1].data = hourlyData;
-            liveLineChart.update();
         }
 
         onAuthStateChanged(auth, (user) => {
@@ -280,103 +188,107 @@
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
                 initCharts();
-                fetchYesterdayData();
-                startMonitoring();
+                loadStaffAndMonitor();
             } else { window.location.href = "../index.html"; }
         });
 
-        function renderData() {
-            const searchTerm = logSearch.value.toLowerCase();
-            const logsBody = document.getElementById('logsBody');
-            const userSummaryList = document.getElementById('userSummaryList');
-            
-            logsBody.innerHTML = "";
-            let activeStaff = {}; 
-            let totalCheckins = 0;
-            const todayHourly = Array(24).fill(0);
-
-            currentLogs.forEach(log => {
-                let email = (log.email || log.staffEmail || "").toLowerCase();
-                let staffName = log.name || log.staffName || staffRegistry[email] || "Unknown Staff";
-                if (adminExclusion.includes(staffName) || adminExclusion.includes(email)) return; 
-
-                const store = log.locationName || log.branch || "---";
-                const type = log.type || "Activity";
-                const ts = log.timestamp ? log.timestamp.toDate() : new Date();
-
-                if (type.toLowerCase().includes("in")) {
-                    activeStaff[staffName] = (activeStaff[staffName] || 0) + 1;
-                    totalCheckins++;
-                    todayHourly[ts.getHours()]++;
-                }
-
-                if (staffName.toLowerCase().includes(searchTerm) || store.toLowerCase().includes(searchTerm)) {
-                    const statusClass = type.toLowerCase().includes("in") ? "in" : "out";
-                    logsBody.innerHTML += `
-                        <tr>
-                            <td style="color:var(--secondary-text);">${ts.toLocaleDateString()}</td>
-                            <td><strong>${staffName}</strong><br><small>${email}</small></td>
-                            <td><span class="status-tag ${statusClass}">${type}</span></td>
-                            <td>${store}</td>
-                            <td style="color:var(--accent); font-weight:800;">${ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-                            <td><button class="icon-btn" onclick="focusMap(${log.latitude}, ${log.longitude})">VIEW</button></td>
-                        </tr>`;
-                }
+        async function loadStaffAndMonitor() {
+            // Load Staff Registry once to prevent "unknown"
+            const staffSnap = await getDocs(collection(db, "staff_members"));
+            staffSnap.forEach(doc => {
+                const d = doc.data();
+                const email = (d.email || "").toLowerCase();
+                if(email) staffRegistry[email] = d.name || d.staffName;
             });
+            startMonitoring();
+            updateYesterdayStats();
+        }
 
-            // Update UI
-            document.getElementById('totalCheckinsToday').innerText = totalCheckins;
-            document.getElementById('presentCount').innerText = Object.keys(activeStaff).length;
-            document.getElementById('absentCount').innerText = Math.max(0, masterStaffList.length - Object.keys(activeStaff).length);
-
-            // Update Line Chart
-            liveLineChart.data.datasets[0].data = todayHourly;
-            liveLineChart.update();
-
-            // Update Performance Index
-            attendanceChart.data.labels = Object.keys(activeStaff).map(n => n.split(' ')[0]);
-            attendanceChart.data.datasets[0].data = Object.values(activeStaff);
-            attendanceChart.update();
-
-            userSummaryList.innerHTML = masterStaffList.sort().map(staff => {
-                const count = activeStaff[staff] || 0;
-                const percent = Math.min((count / DAILY_TARGET) * 100, 100);
-                return `
-                    <div style="margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;">
-                            <span>${count > 0 ? '🟢' : '⚪'} ${staff}</span>
-                            <span>${count}/${DAILY_TARGET}</span>
-                        </div>
-                        <div style="height:6px; background:var(--border); border-radius:10px;">
-                            <div style="width:${percent}%; height:100%; background:${count >= DAILY_TARGET ? 'var(--green)' : 'var(--accent)'};"></div>
-                        </div>
-                    </div>`;
-            }).join('');
+        async function updateYesterdayStats() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const start = new Date(yesterday.setHours(0,0,0,0));
+            const end = new Date(yesterday.setHours(23,59,59,999));
+            
+            const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)));
+            const snap = await getDocs(q);
+            compChart.data.datasets[0].data[1] = snap.size;
+            compChart.update();
         }
 
         function startMonitoring() {
-            if (unsubscribeLogs) unsubscribeLogs();
-            const start = new Date(new Date(dateInput.value).setHours(0,0,0,0));
-            const end = new Date(new Date(dateInput.value).setHours(23,59,59,999));
-
-            onSnapshot(collection(db, "staff_members"), (snap) => {
-                masterStaffList = [];
-                snap.forEach(doc => {
-                    const n = doc.data().name || doc.data().staffName;
-                    if (n && !adminExclusion.includes(n)) masterStaffList.push(n);
-                });
-                renderData();
-            });
+            const selectedDate = new Date(dateInput.value);
+            const start = new Date(selectedDate.setHours(0,0,0,0));
+            const end = new Date(selectedDate.setHours(23,59,59,999));
 
             const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)), orderBy("timestamp", "desc"));
-            unsubscribeLogs = onSnapshot(q, (snap) => {
+            
+            onSnapshot(q, (snap) => {
                 currentLogs = snap.docs.map(doc => doc.data());
                 renderData();
+                
+                // Update Comparison Chart Today Value
+                compChart.data.datasets[0].data[0] = currentLogs.length;
+                compChart.update();
+                document.getElementById('totalLogsToday').innerText = currentLogs.length;
             });
         }
 
+        function renderData() {
+            const search = document.getElementById('logSearch').value.toLowerCase();
+            const body = document.getElementById('logsBody');
+            const summary = document.getElementById('userSummaryList');
+            body.innerHTML = "";
+            
+            let counts = {};
+            currentLogs.forEach(log => {
+                const email = (log.email || log.staffEmail || "").toLowerCase();
+                const name = log.name || log.staffName || staffRegistry[email] || email.split('@')[0] || "Unknown";
+                const branch = log.locationName || log.branch || "---";
+                const type = log.type || "Check-in";
+
+                if (adminExclusion.includes(name)) return;
+
+                if (name.toLowerCase().includes(search) || branch.toLowerCase().includes(search)) {
+                    const time = log.timestamp ? log.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                    body.innerHTML += `
+                        <tr>
+                            <td style="color:var(--accent); font-weight:bold;">${time}</td>
+                            <td><div style="font-weight:bold;">${name}</div><div style="font-size:0.7rem; color:var(--secondary-text);">${email}</div></td>
+                            <td><span class="status-tag ${type.toLowerCase().includes('in') ? 'in' : 'out'}">${type}</span></td>
+                            <td>${branch}</td>
+                            <td><button onclick="window.open('https://www.google.com/maps?q=${log.latitude},${log.longitude}')" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:5px 10px; border-radius:5px; cursor:pointer;">📍</button></td>
+                        </tr>`;
+                }
+                if(type.toLowerCase().includes('in')) counts[name] = (counts[name] || 0) + 1;
+            });
+
+            // Update Chart & Summary
+            const names = Object.keys(counts);
+            perfChart.data.labels = names.map(n => n.split(' ')[0]);
+            perfChart.data.datasets[0].data = names.map(n => counts[n]);
+            perfChart.update();
+
+            document.getElementById('presentCount').innerText = names.length;
+
+            summary.innerHTML = names.map(name => {
+                const val = counts[name];
+                const per = Math.min((val/DAILY_TARGET)*100, 100);
+                return `<div style="margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:3px;"><span>${name}</span><span>${val}/${DAILY_TARGET}</span></div>
+                    <div style="height:5px; background:var(--border); border-radius:5px;"><div style="width:${per}%; height:100%; background:var(--accent); border-radius:5px;"></div></div>
+                </div>`;
+            }).join('');
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const b = document.body;
+            b.setAttribute('data-theme', b.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+        
+        document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth).then(() => window.location.href = "../index.html"));
         dateInput.addEventListener('change', startMonitoring);
-        logSearch.addEventListener('input', renderData);
+        document.getElementById('logSearch').addEventListener('input', renderData);
     </script>
 </body>
 </html>
