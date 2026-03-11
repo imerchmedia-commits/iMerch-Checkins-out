@@ -21,29 +21,35 @@
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 15px; position: relative; }
         .logo-section { display: flex; align-items: center; gap: 10px; }
         .logo-img { width: 35px; height: 35px; border-radius: 6px; }
-        
         .center-brand { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; }
         .center-logo { height: 45px; width: auto; }
 
         .controls { display: flex; gap: 8px; z-index: 10; }
         .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; }
 
-        /* Dashboard Layout - Map is now much larger */
         .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px; }
-        @media (min-width: 768px) { .dashboard-grid { grid-template-columns: 3fr 1.2fr; } }
+        @media (min-width: 768px) { .dashboard-grid { grid-template-columns: 3fr 1.5fr; } }
 
-        .info-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .info-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; display: flex; flex-direction: column; }
         
-        /* Large Clickable Map Container */
+        /* Map Container */
         .map-container { position: relative; width: 100%; height: 450px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--border); }
         #main-map { width: 100%; height: 100%; border: 0; }
         
-        /* Map Overlay Button */
+        /* Pop-up Style Label for Map */
+        #map-pop-info { 
+            position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.85); 
+            padding: 10px 15px; border-radius: 8px; border-left: 5px solid var(--accent);
+            display: none; z-index: 5; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
         .map-overlay-btn { position: absolute; bottom: 20px; right: 20px; background: var(--accent); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 5; font-size: 0.8rem; }
 
-        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .stat-box { padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.03); text-align: center; border: 1px solid var(--border); }
-        .stat-val { font-size: 1.8rem; font-weight: bold; color: var(--accent); }
+        /* User List Summary */
+        .user-summary-list { margin-top: 10px; flex-grow: 1; overflow-y: auto; max-height: 350px; }
+        .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .user-count-badge { background: var(--accent); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
 
         .search-box { width: 100%; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); box-sizing: border-box; margin-bottom: 15px; outline: none; }
         
@@ -65,7 +71,7 @@
 
     <div id="loading-screen">
         <div class="spinner"></div>
-        <p style="margin-top: 15px; color: #8b949e; letter-spacing: 1px;">INITIALIZING iMERCH ANALYTICS...</p>
+        <p style="margin-top: 15px; color: #8b949e; letter-spacing: 1px;">LOADING iMERCH MONITORING...</p>
     </div>
 
     <div id="main-content" style="display:none;">
@@ -77,11 +83,7 @@
                     <div style="font-size: 0.65rem; color: #8b949e;">Joy Biazon</div>
                 </div>
             </div>
-
-            <div class="center-brand">
-                <img src="../logo1.png" class="center-logo">
-            </div>
-
+            <div class="center-brand"><img src="../logo1.png" class="center-logo"></div>
             <div class="controls">
                 <button class="icon-btn" id="themeToggle">🌓</button>
                 <button onclick="location.reload()" class="icon-btn">🔄</button>
@@ -90,34 +92,28 @@
 
         <div class="dashboard-grid">
             <div class="info-card">
-                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                    <span>📍 LIVE FIELD MONITORING</span>
-                    <span id="map-label" style="color: var(--accent); font-size: 0.75rem;">Waiting for selection...</span>
-                </div>
-                
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 12px;">📍 LIVE FIELD MONITORING</div>
                 <div class="map-container">
+                    <div id="map-pop-info">
+                        <div id="pop-status" style="font-size: 0.6rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 5px;">CHECK IN</div>
+                        <div id="pop-name" style="font-weight: bold; color: #fff; font-size: 1rem;">---</div>
+                        <div id="pop-store" style="font-size: 0.75rem; color: #8b949e;">---</div>
+                        <div id="pop-time" style="font-size: 0.7rem; color: var(--accent); margin-top: 3px;">---</div>
+                    </div>
+
                     <iframe id="main-map" loading="lazy" src="https://maps.google.com/maps?q=14.5995,120.9842&z=12&output=embed"></iframe>
-                    <a id="external-map-btn" href="#" target="_blank" class="map-overlay-btn" style="display:none;">
-                        📌 OPEN IN GOOGLE MAPS
-                    </a>
+                    <a id="external-map-btn" href="#" target="_blank" class="map-overlay-btn" style="display:none;">📌 OPEN IN MAPS</a>
                 </div>
             </div>
 
             <div class="info-card">
-                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 15px;">📊 ATTENDANCE SUMMARY</div>
-                <div style="height: 200px; display: flex; align-items: center; justify-content: center;">
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 TODAY'S ACTIVITY</div>
+                <div style="height: 150px; position: relative;">
                     <canvas id="attendanceChart"></canvas>
                 </div>
-                <div class="stats-row">
-                    <div class="stat-box">
-                        <div style="font-size: 0.65rem; color: #8b949e; margin-bottom: 5px;">IN STORE</div>
-                        <div class="stat-val" id="count-in">0</div>
+                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">STORES VISITED PER STAFF</div>
+                <div class="user-summary-list" id="userSummaryList">
                     </div>
-                    <div class="stat-box">
-                        <div style="font-size: 0.65rem; color: #8b949e; margin-bottom: 5px;">OFF DUTY</div>
-                        <div class="stat-val" id="count-out" style="color: var(--red);">0</div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -127,10 +123,10 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Staff Name</th>
+                        <th>Staff</th>
                         <th>Status</th>
-                        <th>Store/Location</th>
-                        <th>Timestamp</th>
+                        <th>Location</th>
+                        <th>Time</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -142,7 +138,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -157,18 +153,31 @@
 
         let attendanceChart;
 
-        // Function to Update Map and Pin
-        window.focusMap = function(lat, lng, name, store, time, type) {
+        window.focusMap = function(lat, lng, name, store, time, type, date) {
             const map = document.getElementById('main-map');
-            const label = document.getElementById('map-label');
+            const pop = document.getElementById('map-pop-info');
             const extBtn = document.getElementById('external-map-btn');
             
-            // Format Info for Google Maps
-            const info = encodeURIComponent(`${name} | ${store} | ${time}`);
-            map.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=es;z=16&output=embed`;
+            // Map Source Update
+            map.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=en;z=16&output=embed`;
             
-            // Update Label & External Link
-            label.innerHTML = `<span style="color:#fff">${name}</span> @ <span style="color:var(--accent)">${store}</span>`;
+            // Update Pop-up Info
+            document.getElementById('pop-name').innerText = name;
+            document.getElementById('pop-store').innerText = store;
+            document.getElementById('pop-time').innerText = `${date} at ${time}`;
+            
+            const popStatus = document.getElementById('pop-status');
+            popStatus.innerText = type.toUpperCase();
+            
+            if(type === "Check In") {
+                popStatus.style.background = "#238636";
+                pop.style.borderLeftColor = "#238636";
+            } else {
+                popStatus.style.background = "#f85149";
+                pop.style.borderLeftColor = "#f85149";
+            }
+
+            pop.style.display = 'block';
             extBtn.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
             extBtn.style.display = 'flex';
 
@@ -184,15 +193,10 @@
                     datasets: [{
                         data: [0, 0],
                         backgroundColor: ['#238636', '#f85149'],
-                        borderWidth: 0,
-                        hoverOffset: 4
+                        borderWidth: 0
                     }]
                 },
-                options: { 
-                    cutout: '70%', 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } } 
-                }
+                options: { cutout: '80%', maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
@@ -206,40 +210,56 @@
         });
 
         function startMonitoring() {
+            // Filter to get logs for today
             const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(50));
             
             onSnapshot(q, (snapshot) => {
                 const logsBody = document.getElementById('logsBody');
-                let inCount = 0;
-                let outCount = 0;
+                const userSummaryList = document.getElementById('userSummaryList');
+                let inCount = 0; let outCount = 0;
+                let staffActivity = {}; // For per-user counting
+                
                 logsBody.innerHTML = "";
 
                 snapshot.forEach((doc) => {
                     const log = doc.data();
-                    const statusClass = log.type === "Check In" ? "in" : "out";
-                    if(log.type === "Check In") inCount++; else outCount++;
-
                     const staffName = log.name || log.email.split('@')[0];
                     const ts = log.timestamp ? log.timestamp.toDate() : new Date();
-                    const dateStr = ts.toLocaleDateString();
                     const timeStr = ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    const location = log.locationName || 'Field Location';
+                    const dateStr = ts.toLocaleDateString();
+                    const store = log.locationName || 'Unmarked Store';
+                    
+                    if(log.type === "Check In") inCount++; else outCount++;
 
+                    // Count per user for the summary list
+                    staffActivity[staffName] = (staffActivity[staffName] || 0) + 1;
+
+                    const statusClass = log.type === "Check In" ? "in" : "out";
                     logsBody.innerHTML += `
                         <tr>
                             <td><strong>${staffName}</strong></td>
-                            <td><span class="status-tag ${statusClass}">${log.type.toUpperCase()}</span></td>
-                            <td><small>${location}</small></td>
-                            <td><div style="font-size:0.8rem">${dateStr}</div><div style="font-size:0.7rem; color:var(--accent)">${timeStr}</div></td>
+                            <td><span class="status-tag ${statusClass}">${log.type}</span></td>
+                            <td><small>${store}</small></td>
+                            <td style="color:var(--accent)">${timeStr}</td>
                             <td>
-                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}', '${location}', '${timeStr}', '${log.type}')" style="background:var(--accent); border:none; color:white; border-radius:4px; font-size:0.65rem; cursor:pointer; padding:5px 10px; font-weight:bold;">TRACK</button>` : '--'}
+                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}', '${store}', '${timeStr}', '${log.type}', '${dateStr}')" style="background:var(--accent); border:none; color:white; border-radius:4px; font-size:0.65rem; cursor:pointer; padding:5px 8px; font-weight:bold;">TRACK</button>` : '--'}
                             </td>
                         </tr>
                     `;
                 });
 
-                document.getElementById('count-in').innerText = inCount;
-                document.getElementById('count-out').innerText = outCount;
+                // Update Staff Summary List
+                userSummaryList.innerHTML = "";
+                Object.keys(staffActivity).forEach(staff => {
+                    userSummaryList.innerHTML += `
+                        <div class="user-row">
+                            <span>${staff}</span>
+                            <span class="user-count-badge">${staffActivity[staff]} STOPS</span>
+                        </div>
+                    `;
+                });
+
+                // Update Chart
                 attendanceChart.data.datasets[0].data = [inCount, outCount];
                 attendanceChart.update();
             });
