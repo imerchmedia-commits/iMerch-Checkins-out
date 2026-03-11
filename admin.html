@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iMerch - Admin Control Panel</title>
+    
+    <link rel="icon" type="image/png" href="im.png">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { 
@@ -224,14 +227,10 @@
         });
     }
 
-    // UPDATED zoomToLocation with colored labels and specific formatting
     window.zoomToLocation = (lat, lng, name, type, dateTime) => {
         if (!lat || !lng) return alert("No GPS coordinates.");
-        
         const labelColor = type === 'Check In' ? '#3fb950' : '#f85149';
-        
         map.setView([lat, lng], 16);
-        
         L.popup()
             .setLatLng([lat, lng])
             .setContent(`
