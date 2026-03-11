@@ -6,78 +6,102 @@
     <title>iMerch - Monitoring Portal</title>
     <link rel="icon" sizes="192x192" href="../im.png">
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #58a6ff; --green: #238636; --border: #30363d; --red: #f85149; }
-        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        
-        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
-        .logout-btn { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
-        
-        .stats-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; margin: 15px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .stats-count { font-size: 3.5rem; font-weight: bold; color: var(--green); }
-        
-        .search-box { width: 100%; padding: 14px; background: #0d1117; border: 1px solid var(--border); border-radius: 8px; color: white; box-sizing: border-box; margin-bottom: 15px; }
-        
-        table { width: 100%; border-collapse: collapse; }
-        th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        th { color: #8b949e; text-transform: uppercase; font-size: 0.75rem; }
-        
-        .status-tag { padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
-        .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
-        .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
-        
-        .map-link { 
-            display: inline-block;
-            margin-top: 5px;
-            color: var(--accent); 
-            text-decoration: none; 
-            font-size: 0.75rem; 
-            border: 1px solid var(--accent); 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            font-weight: bold;
+        :root { 
+            --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #58a6ff; 
+            --green: #238636; --border: #30363d; --red: #f85149; --header: #010409;
         }
-        .map-link:active { background: var(--accent); color: white; }
+        [data-theme="light"] {
+            --bg: #f6f8fa; --card: #ffffff; --text: #24292f; --accent: #0969da;
+            --green: #1a7f37; --border: #d0d7de; --red: #cf222e; --header: #ffffff;
+        }
+        
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; transition: all 0.3s ease; }
+        
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+        .logo-section { display: flex; align-items: center; gap: 10px; }
+        .logo-img { width: 35px; height: 35px; border-radius: 6px; }
+        
+        .controls { display: flex; gap: 8px; }
+        .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; }
+        .logout-btn { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+
+        .dashboard-top { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .info-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .time-display { font-size: 1.2rem; font-weight: bold; color: var(--accent); }
+        .date-display { font-size: 0.75rem; color: #8b949e; }
+        .stats-count { font-size: 2.5rem; font-weight: bold; color: var(--green); margin: 5px 0; }
+
+        .search-box { width: 100%; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); box-sizing: border-box; margin-bottom: 15px; }
+        
+        .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        th { background: rgba(0,0,0,0.05); color: #8b949e; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; }
+        
+        .status-tag { padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; }
+        .in { background: rgba(35, 134, 54, 0.15); color: #3fb950; border: 1px solid rgba(35, 134, 54, 0.3); }
+        .out { background: rgba(218, 54, 51, 0.15); color: #f85149; border: 1px solid rgba(218, 54, 51, 0.3); }
+        
+        .map-btn { 
+            display: inline-flex; align-items: center; gap: 4px;
+            color: var(--accent); text-decoration: none; font-size: 0.75rem; 
+            border: 1px solid var(--accent); padding: 4px 10px; border-radius: 20px; font-weight: bold;
+        }
+
+        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        .spinner { width: 30px; height: 30px; border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
     <div id="loading-screen">
         <div class="spinner"></div>
-        <p id="loading-text" style="margin-top: 15px; color: #8b949e;">Updating Attendance Logs...</p>
+        <p style="margin-top: 15px; color: #8b949e; font-size: 0.9rem;">Syncing iMerch Database...</p>
     </div>
 
     <div id="main-content" style="display:none;">
-        <div class="header">
-            <div>
-                <h3 style="margin: 0; color: var(--accent);">iMerch Monitoring</h3>
-                <small style="color: #8b949e;">Admin: Joy Biazon</small>
+        <div class="navbar">
+            <div class="logo-section">
+                <img src="../im.png" class="logo-img" alt="iMerch">
+                <div>
+                    <div style="font-weight: bold; font-size: 1rem;">Monitoring Portal</div>
+                    <div style="font-size: 0.7rem; color: #8b949e;">Admin: Joy Biazon</div>
+                </div>
             </div>
-            <button class="logout-btn" id="logoutBtn">Logout</button>
+            <div class="controls">
+                <button class="icon-btn" id="themeToggle" title="Toggle Theme">🌓</button>
+                <button class="logout-btn" id="logoutBtn">Logout</button>
+            </div>
         </div>
 
-        <div class="stats-card">
-            <div style="font-size: 0.85rem; text-transform: uppercase; color: #8b949e; letter-spacing: 1px;">Staff Present Today</div>
-            <div class="stats-count" id="present-count">0</div>
+        <div class="dashboard-top">
+            <div class="info-card">
+                <div class="date-display" id="currentDate">-- --- ----</div>
+                <div class="time-display" id="currentTime">00:00:00</div>
+            </div>
+            <div class="info-card">
+                <div class="date-display">STAFF PRESENT TODAY</div>
+                <div class="stats-count" id="present-count">0</div>
+            </div>
         </div>
 
-        <input type="text" id="logSearch" class="search-box" placeholder="Search staff name or location...">
+        <input type="text" id="logSearch" class="search-box" placeholder="Search staff name, email, or location...">
         
-        <div style="overflow-x:auto;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Staff Name</th>
-                        <th>Status</th>
-                        <th>Location Detail</th>
-                        <th>Time</th>
-                    </tr>
-                </thead>
-                <tbody id="logsBody"></tbody>
-            </table>
+        <div class="table-container">
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Staff Detail</th>
+                            <th>Status</th>
+                            <th>Location / GPS</th>
+                            <th>Log Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -97,7 +121,22 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // LOGOUT
+        // Real-time Clock for Dashboard
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('currentTime').innerText = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('currentDate').innerText = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Theme Switcher
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const current = document.body.getAttribute('data-theme');
+            document.body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+        });
+
+        // Logout
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth).then(() => { window.location.href = "../index.html"; });
         });
@@ -106,79 +145,67 @@
             if (user) {
                 const email = user.email.toLowerCase();
                 const allowed = ["joy.biazon@imerchmedia.net", "ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
-                
                 if (allowed.includes(email)) {
                     document.getElementById('loading-screen').style.display = 'none';
                     document.getElementById('main-content').style.display = 'block';
                     startMonitoring();
                 } else {
-                    alert("Unauthorized Access");
+                    alert("Access Denied");
                     signOut(auth).then(() => { window.location.href = "../index.html"; });
                 }
-            } else {
-                window.location.href = "../index.html";
-            }
+            } else { window.location.href = "../index.html"; }
         });
 
         function startMonitoring() {
-            // Kunin ang current date sa format na YYYY-MM-DD para sa filtering
-            const today = new Date().toLocaleDateString('en-CA'); 
-            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(150));
+            const todayStr = new Date().toLocaleDateString('en-CA'); 
+            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(100));
 
             onSnapshot(q, (snapshot) => {
                 const logsBody = document.getElementById('logsBody');
                 let presentUsers = new Set();
                 logsBody.innerHTML = "";
 
-                if (snapshot.empty) {
-                    logsBody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px;'>No logs recorded yet.</td></tr>";
-                    return;
-                }
-
                 snapshot.forEach((doc) => {
                     const log = doc.data();
+                    const ts = log.timestamp ? log.timestamp.toDate() : new Date();
+                    const logDate = log.date || ts.toLocaleDateString('en-CA');
                     
-                    // Fallback date check (kung walang .date field, check ang timestamp)
-                    const logDate = log.date || (log.timestamp ? log.timestamp.toDate().toLocaleDateString('en-CA') : "");
+                    // Format Time: Kung walang 'time' field, gamitin ang format mula sa timestamp
+                    const displayTime = log.time || ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-                    // Count present staff today (Unique emails only)
-                    if(logDate === today && log.type === "Check In") {
+                    if(logDate === todayStr && log.type === "Check In") {
                         presentUsers.add(log.email);
                     }
 
                     const statusClass = log.type === "Check In" ? "in" : "out";
                     
-                    // Correct Google Maps URL structure
-                    const mapUrl = (log.latitude && log.longitude) 
-                        ? `https://www.google.com/maps?q=${log.latitude},${log.longitude}` 
-                        : null;
+                    // Live Map Link Fix
+                    let mapLink = '<span style="color:#666; font-size:0.7rem;">NO GPS DATA</span>';
+                    if (log.latitude && log.longitude) {
+                        const url = `https://www.google.com/maps?q=${log.latitude},${log.longitude}`;
+                        mapLink = `<a href="${url}" target="_blank" class="map-btn">📍 View Position</a>`;
+                    }
 
                     logsBody.innerHTML += `
                         <tr>
                             <td>
-                                <div style="font-weight:bold; color:white;">${log.name || (log.email ? log.email.split('@')[0] : 'Unknown')}</div>
-                                <div style="font-size:0.7rem; color:#8b949e;">${log.email || ''}</div>
+                                <div style="font-weight:bold; color:var(--text);">${log.name || log.email.split('@')[0]}</div>
+                                <div style="font-size:0.7rem; opacity:0.6;">${log.email}</div>
                             </td>
-                            <td><span class="status-tag ${statusClass}">${log.type || 'LOG'}</span></td>
+                            <td><span class="status-tag ${statusClass}">${log.type.toUpperCase()}</span></td>
                             <td>
-                                <span style="font-size:0.8rem;">${log.locationName || 'Field Location'}</span><br>
-                                ${mapUrl ? `<a href="${mapUrl}" target="_blank" class="map-link">📍 Open Staff Map</a>` : '<span style="color:#444; font-size:0.7rem;">No GPS Data</span>'}
+                                <div style="font-size:0.8rem; margin-bottom:5px;">${log.locationName || 'Unmarked Area'}</div>
+                                ${mapLink}
                             </td>
-                            <td style="color:#8b949e; font-size:0.8rem;">${log.time || '--:--'}</td>
+                            <td style="font-weight:bold; color:var(--accent);">${displayTime}</td>
                         </tr>
                     `;
                 });
-                
                 document.getElementById('present-count').innerText = presentUsers.size;
-            }, (error) => {
-                console.error("Firestore Error:", error);
-                if (error.code === 'permission-denied') {
-                    alert("Database Locked: Please update Firebase Rules to allow Joy's email.");
-                }
             });
         }
 
-        // Search Filter Logic
+        // Search Filter
         document.getElementById('logSearch').addEventListener('input', function() {
             const filter = this.value.toLowerCase();
             document.querySelectorAll('#logsBody tr').forEach(row => {
