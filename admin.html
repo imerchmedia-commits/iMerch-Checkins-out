@@ -131,6 +131,7 @@
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <button id="exportBtn" class="btn export-trigger" style="background: #238636; flex: 1; min-width: 120px;">📊 Export Excel</button>
                         <button id="archiveBtn" class="btn" style="background: #fb8c00; flex: 1; min-width: 120px;">📦 Backup JSON</button>
                         <button id="importBtn" class="btn" style="background: #8250df; flex: 1; min-width: 120px;">📥 Restore Backup</button>
                         <input type="file" id="importFile" accept=".json" style="display: none;">
@@ -141,6 +142,8 @@
                     <div id="admin-master-list" style="max-height: 400px; overflow-y: auto;">
                         <p style="text-align: center; color: #8b949e;">Loading activity...</p>
                     </div>
+                    
+                    <button id="exportBtnBottom" class="btn export-trigger" style="background: #238636; margin-top: 15px;">📊 Download Results Below</button>
                 </div>
             </div>
         </div>
@@ -348,11 +351,30 @@
     }
 
     function updateStats(data) {
+        const uniqueEmails = new Set(data.map(d => d.email).filter(e => e));
         const todayStr = new Date().toLocaleDateString();
         const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === todayStr).map(d => d.email));
         document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length;
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
+
+    const handleExport = () => {
+        if (filteredLogs.length === 0) return alert("No results to export.");
+        let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
+        [...filteredLogs].forEach(d => {
+            const dt = d.timestamp ? d.timestamp.toDate() : new Date();
+            const name = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
+            csv += `"${name}","${d.email || ''}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${(d.remarks || "").replace(/"/g, '""')}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `iMerch_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+    };
+
+    document.getElementById('exportBtn').onclick = handleExport;
+    document.getElementById('exportBtnBottom').onclick = handleExport;
 
     document.getElementById('createAccBtn').onclick = async () => {
         const btn = document.getElementById('createAccBtn');
@@ -372,8 +394,7 @@
     };
 
     onAuthStateChanged(auth, async (user) => {
-        // Added Joy Biazon to admin list
-        const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com", "joy.biazon@imerchmedia.net"];
+        const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
         if (user && admins.includes(user.email)) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
@@ -409,7 +430,7 @@
             const uSnap = await getDocs(collection(db, "users"));
             const backup = {
                 backupDate: new Date().toISOString(),
-                system: "iMerch Attendance",
+                system: "iMerch Secured Attendance",
                 staffDirectory: uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
                 attendanceLogs: aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
             };
@@ -433,8 +454,7 @@
         reader.onload = async (event) => {
             try {
                 const data = JSON.parse(event.target.result);
-                // Matched this check to the system name in backup function
-                if (data.system !== "iMerch Attendance") return alert("Invalid format.");
+                if (data.system !== "iMerch Secured Attendance") return alert("Invalid format.");
                 if (!confirm(`Restore ${data.staffDirectory.length} staff?`)) return;
                 importBtn.disabled = true;
                 const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
@@ -468,3 +488,4 @@
 </script>
 </body>
 </html>
+
