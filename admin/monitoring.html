@@ -14,49 +14,67 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
-        .logout-btn { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        .logout-btn { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
         
-        .stats-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; margin: 15px 0; }
+        .stats-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; margin: 15px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .stats-count { font-size: 3.5rem; font-weight: bold; color: var(--green); }
         
         .search-box { width: 100%; padding: 14px; background: #0d1117; border: 1px solid var(--border); border-radius: 8px; color: white; box-sizing: border-box; margin-bottom: 15px; }
         
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 12px 8px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        th { color: #8b949e; text-transform: uppercase; font-size: 0.75rem; }
+        
         .status-tag { padding: 4px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
         
-        .map-link { color: var(--accent); text-decoration: none; font-size: 0.75rem; border: 1px solid var(--accent); padding: 2px 6px; border-radius: 4px; }
+        .map-link { 
+            display: inline-block;
+            margin-top: 5px;
+            color: var(--accent); 
+            text-decoration: none; 
+            font-size: 0.75rem; 
+            border: 1px solid var(--accent); 
+            padding: 4px 8px; 
+            border-radius: 4px; 
+            font-weight: bold;
+        }
+        .map-link:active { background: var(--accent); color: white; }
     </style>
 </head>
 <body>
 
     <div id="loading-screen">
         <div class="spinner"></div>
-        <p id="loading-text" style="margin-top: 15px; color: #8b949e;">Connecting to iMerch Database...</p>
+        <p id="loading-text" style="margin-top: 15px; color: #8b949e;">Updating Attendance Logs...</p>
     </div>
 
     <div id="main-content" style="display:none;">
         <div class="header">
             <div>
-                <h3 style="margin: 0; color: var(--accent);">Monitoring</h3>
-                <small style="color: #8b949e;">Joy Biazon Portal</small>
+                <h3 style="margin: 0; color: var(--accent);">iMerch Monitoring</h3>
+                <small style="color: #8b949e;">Admin: Joy Biazon</small>
             </div>
             <button class="logout-btn" id="logoutBtn">Logout</button>
         </div>
 
         <div class="stats-card">
-            <div style="font-size: 0.8rem; text-transform: uppercase; color: #8b949e;">Staff Present Today</div>
+            <div style="font-size: 0.85rem; text-transform: uppercase; color: #8b949e; letter-spacing: 1px;">Staff Present Today</div>
             <div class="stats-count" id="present-count">0</div>
         </div>
 
-        <input type="text" id="logSearch" class="search-box" placeholder="Search staff or location...">
+        <input type="text" id="logSearch" class="search-box" placeholder="Search staff name or location...">
         
         <div style="overflow-x:auto;">
             <table>
                 <thead>
-                    <tr><th>Staff</th><th>Type</th><th>Location</th><th>Time</th></tr>
+                    <tr>
+                        <th>Staff Name</th>
+                        <th>Status</th>
+                        <th>Location Detail</th>
+                        <th>Time</th>
+                    </tr>
                 </thead>
                 <tbody id="logsBody"></tbody>
             </table>
@@ -79,7 +97,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // LOGOUT FUNCTION
+        // LOGOUT
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth).then(() => { window.location.href = "../index.html"; });
         });
@@ -94,7 +112,7 @@
                     document.getElementById('main-content').style.display = 'block';
                     startMonitoring();
                 } else {
-                    alert("Access Denied");
+                    alert("Unauthorized Access");
                     signOut(auth).then(() => { window.location.href = "../index.html"; });
                 }
             } else {
@@ -103,9 +121,9 @@
         });
 
         function startMonitoring() {
+            // Kunin ang current date sa format na YYYY-MM-DD para sa filtering
             const today = new Date().toLocaleDateString('en-CA'); 
-            // Kinukuha ang huling 100 entries para sa live update
-            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(100));
+            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(150));
 
             onSnapshot(q, (snapshot) => {
                 const logsBody = document.getElementById('logsBody');
@@ -113,37 +131,54 @@
                 logsBody.innerHTML = "";
 
                 if (snapshot.empty) {
-                    logsBody.innerHTML = "<tr><td colspan='4' style='text-align:center'>No data found. Check Firebase Rules.</td></tr>";
+                    logsBody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px;'>No logs recorded yet.</td></tr>";
+                    return;
                 }
 
                 snapshot.forEach((doc) => {
                     const log = doc.data();
-                    const logDate = log.date || "";
                     
+                    // Fallback date check (kung walang .date field, check ang timestamp)
+                    const logDate = log.date || (log.timestamp ? log.timestamp.toDate().toLocaleDateString('en-CA') : "");
+
+                    // Count present staff today (Unique emails only)
                     if(logDate === today && log.type === "Check In") {
                         presentUsers.add(log.email);
                     }
 
                     const statusClass = log.type === "Check In" ? "in" : "out";
-                    const mapUrl = log.latitude ? `https://www.google.com/maps?q=${log.latitude},${log.longitude}` : null;
+                    
+                    // Correct Google Maps URL structure
+                    const mapUrl = (log.latitude && log.longitude) 
+                        ? `https://www.google.com/maps?q=${log.latitude},${log.longitude}` 
+                        : null;
 
-                    logsBody.innerHTML += `<tr>
-                        <td><b>${log.email ? log.email.split('@')[0] : '---'}</b></td>
-                        <td><span class="status-tag ${statusClass}">${log.type || 'LOG'}</span></td>
-                        <td>
-                            ${log.locationName || 'Field'}<br>
-                            ${mapUrl ? `<a href="${mapUrl}" target="_blank" class="map-link">📍 View Map</a>` : ''}
-                        </td>
-                        <td style="color:#8b949e">${log.time || '--:--'}</td>
-                    </tr>`;
+                    logsBody.innerHTML += `
+                        <tr>
+                            <td>
+                                <div style="font-weight:bold; color:white;">${log.name || (log.email ? log.email.split('@')[0] : 'Unknown')}</div>
+                                <div style="font-size:0.7rem; color:#8b949e;">${log.email || ''}</div>
+                            </td>
+                            <td><span class="status-tag ${statusClass}">${log.type || 'LOG'}</span></td>
+                            <td>
+                                <span style="font-size:0.8rem;">${log.locationName || 'Field Location'}</span><br>
+                                ${mapUrl ? `<a href="${mapUrl}" target="_blank" class="map-link">📍 Open Staff Map</a>` : '<span style="color:#444; font-size:0.7rem;">No GPS Data</span>'}
+                            </td>
+                            <td style="color:#8b949e; font-size:0.8rem;">${log.time || '--:--'}</td>
+                        </tr>
+                    `;
                 });
+                
                 document.getElementById('present-count').innerText = presentUsers.size;
             }, (error) => {
-                console.error("Firebase Error:", error);
-                alert("Permission Denied: Update your Firebase Rules to allow Joy to read data.");
+                console.error("Firestore Error:", error);
+                if (error.code === 'permission-denied') {
+                    alert("Database Locked: Please update Firebase Rules to allow Joy's email.");
+                }
             });
         }
 
+        // Search Filter Logic
         document.getElementById('logSearch').addEventListener('input', function() {
             const filter = this.value.toLowerCase();
             document.querySelectorAll('#logsBody tr').forEach(row => {
