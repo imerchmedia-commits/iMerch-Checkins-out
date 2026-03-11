@@ -18,21 +18,24 @@
         
         body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; transition: all 0.3s ease; }
         
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 15px; position: relative; }
         .logo-section { display: flex; align-items: center; gap: 10px; }
         .logo-img { width: 35px; height: 35px; border-radius: 6px; }
         
-        .controls { display: flex; gap: 8px; }
+        /* Center Logo Update */
+        .center-brand { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; }
+        .center-logo { height: 40px; width: auto; }
+
+        .controls { display: flex; gap: 8px; z-index: 10; }
         .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; }
 
-        /* Dashboard Layout */
         .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px; }
         @media (min-width: 768px) { .dashboard-grid { grid-template-columns: 2fr 1fr; } }
 
-        .info-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; }
+        .info-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
         
-        /* Map Styling */
-        #main-map { width: 100%; height: 300px; border-radius: 8px; border: 0; background: #000; }
+        /* Map Optimization */
+        #main-map { width: 100%; height: 300px; border-radius: 8px; border: 0; background: #161b22; }
         
         .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .stat-box { padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.03); text-align: center; border: 1px solid var(--border); }
@@ -40,7 +43,6 @@
 
         .search-box { width: 100%; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); box-sizing: border-box; margin-bottom: 15px; }
         
-        /* Table */
         .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
@@ -66,11 +68,16 @@
         <div class="navbar">
             <div class="logo-section">
                 <img src="../im.png" class="logo-img">
-                <div>
-                    <div style="font-weight: bold;">Monitoring Dashboard</div>
-                    <div style="font-size: 0.7rem; color: #8b949e;">Welcome, Joy Biazon</div>
+                <div class="hide-mobile" style="display: block;">
+                    <div style="font-weight: bold; font-size: 0.85rem;">Portal</div>
+                    <div style="font-size: 0.65rem; color: #8b949e;">Joy Biazon</div>
                 </div>
             </div>
+
+            <div class="center-brand">
+                <img src="../logo1.png" class="center-logo" alt="iMerch Logo">
+            </div>
+
             <div class="controls">
                 <button class="icon-btn" id="themeToggle">🌓</button>
                 <button onclick="location.reload()" class="icon-btn">🔄</button>
@@ -81,13 +88,13 @@
             <div class="info-card">
                 <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between;">
                     <span>📍 LIVE FIELD MONITORING</span>
-                    <span id="map-label" style="color: var(--accent);">Global View</span>
+                    <span id="map-label" style="color: var(--accent); font-size: 0.7rem;">Select staff to locate</span>
                 </div>
-                <iframe id="main-map" src="about:blank"></iframe>
+                <iframe id="main-map" loading="lazy" src="https://maps.google.com/maps?q=14.5995,120.9842&z=10&output=embed"></iframe>
             </div>
 
             <div class="info-card">
-                <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 10px;">📊 ATTENDANCE OVERVIEW</div>
+                <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 10px;">📊 STATUS OVERVIEW</div>
                 <canvas id="attendanceChart" height="180"></canvas>
                 <div class="stats-row">
                     <div class="stat-box">
@@ -138,29 +145,28 @@
 
         let attendanceChart;
 
-        // Map Function
         window.focusMap = function(lat, lng, name) {
             const map = document.getElementById('main-map');
             const label = document.getElementById('map-label');
+            // Simplified faster URL
             map.src = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
             label.innerText = `Focus: ${name}`;
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        // Initialize Chart
         function initChart() {
             const ctx = document.getElementById('attendanceChart').getContext('2d');
             attendanceChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Check In', 'Check Out'],
+                    labels: ['In', 'Out'],
                     datasets: [{
                         data: [0, 0],
                         backgroundColor: ['#238636', '#f85149'],
                         borderWidth: 0
                     }]
                 },
-                options: { cutout: '70%', plugins: { legend: { display: false } } }
+                options: { cutout: '75%', plugins: { legend: { display: false } } }
             });
         }
 
@@ -189,13 +195,13 @@
 
                     const staffName = log.name || log.email.split('@')[0];
                     const ts = log.timestamp ? log.timestamp.toDate() : new Date();
-                    const timeDisp = log.time || ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const timeDisp = ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
                     logsBody.innerHTML += `
                         <tr>
-                            <td><strong>${staffName}</strong><br><small style="opacity:0.6">${log.email}</small></td>
+                            <td><strong>${staffName}</strong></td>
                             <td><span class="status-tag ${statusClass}">${log.type}</span></td>
-                            <td>${log.locationName || 'Field'}</td>
+                            <td><small>${log.locationName || 'Unmarked'}</small></td>
                             <td style="color:var(--accent)">${timeDisp}</td>
                             <td>
                                 ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}')" style="background:none; border:1px solid var(--accent); color:var(--accent); border-radius:4px; font-size:0.6rem; cursor:pointer; padding:2px 5px;">VIEW</button>` : '--'}
@@ -204,13 +210,17 @@
                     `;
                 });
 
-                // Update Charts & Stats
                 document.getElementById('count-in').innerText = inCount;
                 document.getElementById('count-out').innerText = outCount;
                 attendanceChart.data.datasets[0].data = [inCount, outCount];
                 attendanceChart.update();
             });
         }
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            const current = document.body.getAttribute('data-theme');
+            document.body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+        });
     </script>
 </body>
 </html>
