@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iMerch - Secure Attendance</title>
     <link rel="manifest" href="app.webmanifest">
+    <link rel="icon" sizes="192x192" href="im.png?v=1">
+    <link rel="shortcut icon" href="im.png?v=1">
+    <link rel="apple-touch-icon" href="im.png?v=1">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         /* Theme Variables */
@@ -227,11 +230,10 @@
     let isMocked = false;
     let userStatus = "Active"; 
     let map, marker;
-    let isSubmitting = false; // Flag to prevent multi-clicks
+    let isSubmitting = false; 
 
     setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
-    // Secure Status Verification
     async function checkUserStatus(uid) {
         const q = query(collection(db, "users"), where("uid", "==", uid));
         onSnapshot(q, (snap) => {
@@ -294,10 +296,9 @@
         const loc = document.getElementById('location-name').value.trim() || "Mobile Location";
         const remarks = document.getElementById('attendance-remarks').value || "";
 
-        isSubmitting = true; // Block further clicks immediately
+        isSubmitting = true;
 
         try {
-            // Check if this action (Check In or Out) already exists for this location
             const q = query(
                 collection(db, "attendance"),
                 where("uid", "==", auth.currentUser.uid),
@@ -314,7 +315,6 @@
                 return;
             }
 
-            // If no duplicate found, proceed with adding the document
             await addDoc(collection(db, "attendance"), {
                 uid: auth.currentUser.uid,
                 email: auth.currentUser.email,
@@ -324,6 +324,8 @@
                 type: type,
                 remarks: remarks,
                 timestamp: serverTimestamp(),
+                date: new Date().toLocaleDateString('en-CA'),
+                time: new Date().toLocaleTimeString(),
                 isMocked: isMocked
             });
             document.getElementById('attendance-remarks').value = ""; 
@@ -331,19 +333,29 @@
         } catch (e) { 
             alert("Error: " + e.message); 
         } finally {
-            isSubmitting = false; // Re-enable clicks after logic is done
+            isSubmitting = false;
         }
     }
 
+    // --- REDIRECT & AUTH OBSERVER ---
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            const email = user.email.toLowerCase();
+            
+            // AUTOMATIC REDIRECT PARA KAY JOY
+            if (email === "joy.biazon@imerchmedia.net") {
+                window.location.href = "admin/monitoring.html";
+                return;
+            }
+
+            // REGULAR VIEW PARA SA IBANG STAFF
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('user-dashboard').classList.remove('hidden');
             checkUserStatus(user.uid);
             
             const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
             const adminArea = document.getElementById('admin-toggle-area');
-            if (admins.includes(user.email)) {
+            if (admins.includes(email)) {
                 adminArea.classList.remove('hidden');
             }
             startSecureGPS();
@@ -414,7 +426,6 @@
         
         try { 
             const userCred = await createUserWithEmailAndPassword(auth, email, pass); 
-            // Create the User Profile in Firestore
             await addDoc(collection(db, "users"), {
                 uid: userCred.user.uid,
                 email: email,
@@ -430,5 +441,3 @@
 </script>
 </body>
 </html>
-
-
