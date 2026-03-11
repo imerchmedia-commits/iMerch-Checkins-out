@@ -31,6 +31,15 @@
         .date-display { font-size: 0.75rem; color: #8b949e; }
         .stats-count { font-size: 2.5rem; font-weight: bold; color: var(--green); margin: 5px 0; }
 
+        /* Real-time Map Section */
+        #map-container { 
+            width: 100%; height: 250px; background: var(--card); border: 1px solid var(--border); 
+            border-radius: 12px; margin-bottom: 15px; overflow: hidden; display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        #map-container iframe { width: 100%; height: 100%; border: 0; }
+        .map-header { padding: 8px 12px; background: rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+
         .search-box { width: 100%; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); box-sizing: border-box; margin-bottom: 15px; }
         
         .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
@@ -43,9 +52,9 @@
         .out { background: rgba(218, 54, 51, 0.15); color: #f85149; border: 1px solid rgba(218, 54, 51, 0.3); }
         
         .map-btn { 
-            display: inline-flex; align-items: center; gap: 4px;
+            display: inline-flex; align-items: center; gap: 4px; background: none;
             color: var(--accent); text-decoration: none; font-size: 0.75rem; 
-            border: 1px solid var(--accent); padding: 4px 10px; border-radius: 20px; font-weight: bold;
+            border: 1px solid var(--accent); padding: 4px 10px; border-radius: 20px; font-weight: bold; cursor: pointer;
         }
 
         #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
@@ -86,6 +95,16 @@
             </div>
         </div>
 
+        <div id="map-container">
+            <div class="map-header">
+                <span id="map-title" style="font-size: 0.75rem; font-weight: bold; color: var(--accent);">📍 LIVE LOCATION VIEW</span>
+                <span style="font-size: 0.7rem; color: var(--red); cursor: pointer;" onclick="closeMap()">CLOSE [X]</span>
+            </div>
+            <div id="map-frame-wrapper" style="height: calc(100% - 35px);">
+                <iframe id="googleMapFrame" src="" allowfullscreen="" loading="lazy"></iframe>
+            </div>
+        </div>
+
         <input type="text" id="logSearch" class="search-box" placeholder="Search staff name, email, or location...">
         
         <div class="table-container">
@@ -121,7 +140,26 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Real-time Clock for Dashboard
+        // Global functions for map
+        window.viewOnMap = function(lat, lng, name) {
+            const mapContainer = document.getElementById('map-container');
+            const iframe = document.getElementById('googleMapFrame');
+            const title = document.getElementById('map-title');
+            
+            // Map Embed URL
+            const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed`;
+            
+            iframe.src = mapUrl;
+            title.innerText = `📍 LOCATION: ${name.toUpperCase()}`;
+            mapContainer.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.closeMap = function() {
+            document.getElementById('map-container').style.display = 'none';
+            document.getElementById('googleMapFrame').src = "";
+        }
+
         function updateClock() {
             const now = new Date();
             document.getElementById('currentTime').innerText = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -130,13 +168,11 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Theme Switcher
         document.getElementById('themeToggle').addEventListener('click', () => {
             const current = document.body.getAttribute('data-theme');
             document.body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
         });
 
-        // Logout
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth).then(() => { window.location.href = "../index.html"; });
         });
@@ -169,8 +205,6 @@
                     const log = doc.data();
                     const ts = log.timestamp ? log.timestamp.toDate() : new Date();
                     const logDate = log.date || ts.toLocaleDateString('en-CA');
-                    
-                    // Format Time: Kung walang 'time' field, gamitin ang format mula sa timestamp
                     const displayTime = log.time || ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
                     if(logDate === todayStr && log.type === "Check In") {
@@ -178,24 +212,23 @@
                     }
 
                     const statusClass = log.type === "Check In" ? "in" : "out";
+                    const staffName = log.name || log.email.split('@')[0];
                     
-                    // Live Map Link Fix
-                    let mapLink = '<span style="color:#666; font-size:0.7rem;">NO GPS DATA</span>';
+                    let mapButton = '<span style="color:#666; font-size:0.7rem;">NO GPS DATA</span>';
                     if (log.latitude && log.longitude) {
-                        const url = `https://www.google.com/maps?q=${log.latitude},${log.longitude}`;
-                        mapLink = `<a href="${url}" target="_blank" class="map-btn">📍 View Position</a>`;
+                        mapButton = `<button onclick="viewOnMap(${log.latitude}, ${log.longitude}, '${staffName}')" class="map-btn">📍 View Position</button>`;
                     }
 
                     logsBody.innerHTML += `
                         <tr>
                             <td>
-                                <div style="font-weight:bold; color:var(--text);">${log.name || log.email.split('@')[0]}</div>
+                                <div style="font-weight:bold; color:var(--text);">${staffName}</div>
                                 <div style="font-size:0.7rem; opacity:0.6;">${log.email}</div>
                             </td>
                             <td><span class="status-tag ${statusClass}">${log.type.toUpperCase()}</span></td>
                             <td>
                                 <div style="font-size:0.8rem; margin-bottom:5px;">${log.locationName || 'Unmarked Area'}</div>
-                                ${mapLink}
+                                ${mapButton}
                             </td>
                             <td style="font-weight:bold; color:var(--accent);">${displayTime}</td>
                         </tr>
@@ -205,7 +238,6 @@
             });
         }
 
-        // Search Filter
         document.getElementById('logSearch').addEventListener('input', function() {
             const filter = this.value.toLowerCase();
             document.querySelectorAll('#logsBody tr').forEach(row => {
