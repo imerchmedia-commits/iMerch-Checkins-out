@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iMerch - Admin Control Panel</title>
+    
+    <link rel="icon" type="image/png" href="im.png">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root { 
+            --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #ffffff;
+            --green: #238636; --red: #da3633; --blue: #58a6ff; 
+        }
+        [data-theme="light"] {
+            --bg: #f6f8fa; --card: #ffffff; --border: #d0d7de; --text: #1f2328;
+        }
+        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; margin: 0; transition: background 0.3s; }
+        .container { max-width: 1000px; margin: auto; }
+        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .stats-container { display: flex; gap: 15px; margin-bottom: 20px; }
+        .stat-box { flex: 1; background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; }
+        .stat-val { display: block; font-size: 1.8em; font-weight: bold; color: var(--blue); }
+        .stat-label { font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px; color: #8b949e; }
+
+        #map { height: 350px; width: 100%; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; z-index: 1; }
+
+        .admin-grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+        @media (max-width: 850px) { .admin-grid { grid-template-columns: 1fr; } }
+
+        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 14px; transition: 0.3s; }
+        
+        .history-item { padding: 12px 0; border-bottom: 1px solid var(--border); transition: 0.2s; }
+        .history-item:hover { background: rgba(255,255,255,0.03); }
+        .history-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
+        .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
+        .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
+        .hidden { display: none !important; }
+        
+        .geo-btn { background: var(--blue); border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+
+        #theme-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; z-index: 10000; font-size: 1.5em; }
+        .logo-container { text-align: center; margin-bottom: 20px; }
+        .logo-container img { max-width: 150px; }
+        #real-time-clock { font-size: 0.9em; font-weight: bold; color: var(--blue); margin-bottom: 5px; }
+        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-align: center; display: block; padding: 20px; font-weight: bold; }
+        h3 { border-left: 4px solid var(--blue); padding-left: 10px; margin-top: 0; margin-bottom: 15px; }
+
+        .filter-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
+        @media (max-width: 600px) { .filter-row { grid-template-columns: 1fr; } }
+
+        .staff-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    </style>
+</head>
+<body data-theme="dark">
+
+<button id="theme-toggle">🌙</button>
+
+<div class="container">
+    <div id="login-view" style="max-width: 400px; margin: auto;">
+        <div class="logo-container"><img src="logo1.png"></div>
+        <h2 style="text-align: center;">Admin Portal</h2>
+        <div class="card">
+            <form id="login-form">
+                <input type="email" id="login-email" placeholder="Admin Email" required>
+                <input type="password" id="login-pass" placeholder="Password" required>
+                <button type="submit" class="btn" style="background: var(--blue);">Access Admin Panel</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-view" class="hidden">
+        <div class="logo-container">
+            <div id="real-time-clock">Loading Time...</div>
+            <img src="logo1.png">
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-box">
+                <span class="stat-val" id="total-staff-count">0</span>
+                <span class="stat-label">Total Staff</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-val" id="present-today-count" style="color: var(--green);">0</span>
+                <span class="stat-label">Present Today</span>
+            </div>
+        </div>
+
+        <div class="admin-grid">
+            <div class="admin-sidebar">
+                <h3>Create Staff</h3>
+                <div class="card">
+                    <input type="text" id="new-fullname" placeholder="Staff Full Name">
+                    <input type="email" id="new-email" placeholder="Staff Email">
+                    <input type="password" id="new-pass" placeholder="Temp Password">
+                    <button class="btn" style="background: var(--blue);" id="createAccBtn">Create Account</button>
+                </div>
+
+                <h3>Staff Directory</h3>
+                <div class="card" id="staff-directory-list" style="max-height: 350px; overflow-y: auto; padding: 10px;">
+                    <p style="text-align: center; color: #8b949e;">Loading directory...</p>
+                </div>
+
+                <span class="logout-link" id="logoutLink">🔒 Secure Logout</span>
+            </div>
+
+            <div class="admin-main">
+                <h3>Live Staff Map</h3>
+                <div class="card" style="padding: 10px;">
+                    <div id="map"></div>
+                    
+                    <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.9em; color: var(--blue);">Search & Filter Logs</h4>
+                        <div class="filter-row">
+                            <div>
+                                <label style="font-size: 0.7em; color: #8b949e;">Name/Email</label>
+                                <input type="text" id="filter-name" placeholder="Search staff...">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.7em; color: #8b949e;">Date From</label>
+                                <input type="date" id="filter-date-from">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.7em; color: #8b949e;">Date To</label>
+                                <input type="date" id="filter-date-to">
+                            </div>
+                            <button id="applyFiltersBtn" class="btn" style="background: var(--blue); margin-bottom: 10px; height: 45px;">🔍 Filter</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <button id="exportBtn" class="btn export-trigger" style="background: #238636; flex: 1; min-width: 120px;">📊 Export Excel</button>
+                        <button id="archiveBtn" class="btn" style="background: #fb8c00; flex: 1; min-width: 120px;">📦 Backup JSON</button>
+                        <button id="importBtn" class="btn" style="background: #8250df; flex: 1; min-width: 120px;">📥 Restore Backup</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                        
+                        <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1; min-width: 120px;">🗑️ Wipe Logs</button>
+                    </div>
+
+                    <div id="admin-master-list" style="max-height: 400px; overflow-y: auto;">
+                        <p style="text-align: center; color: #8b949e;">Loading activity...</p>
+                    </div>
+                    
+                    <button id="exportBtnBottom" class="btn export-trigger" style="background: #238636; margin-top: 15px;">📊 Download Results Below</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch, addDoc, serverTimestamp, updateDoc, doc, setDoc, Timestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
+        authDomain: "imerch-checkins-out.firebaseapp.com",
+        projectId: "imerch-checkins-out",
+        storageBucket: "imerch-checkins-out.firebasestorage.app"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const secondaryApp = initializeApp(firebaseConfig, "Secondary");
+    const secondaryAuth = getAuth(secondaryApp);
+
+    let masterLogs = [];
+    let filteredLogs = [];
+    let staffMap = {}; 
+    let map, markerGroup;
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('real-time-clock').innerText = now.toLocaleString('en-US', { 
+            weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', 
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
+        });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.onclick = () => {
+        const body = document.body;
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.setAttribute('data-theme', 'light');
+            themeBtn.innerText = "☀️";
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            themeBtn.innerText = "🌙";
+        }
+    };
+
+    function initMap() {
+        if (map) return;
+        map = L.map('map').setView([14.5995, 120.9842], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        markerGroup = L.layerGroup().addTo(map);
+    }
+
+    function plotAllStaff() {
+        if (!markerGroup) return;
+        markerGroup.clearLayers();
+        const latestPositions = {};
+        masterLogs.forEach(log => {
+            if (!latestPositions[log.uid] && log.latitude && log.longitude) {
+                latestPositions[log.uid] = log;
+            }
+        });
+
+        Object.values(latestPositions).forEach(pos => {
+            const name = staffMap[pos.uid]?.name || pos.fullName || "Unknown";
+            const color = pos.type === 'Check In' ? '#3fb950' : '#f85149';
+            const marker = L.circleMarker([pos.latitude, pos.longitude], {
+                radius: 8, fillColor: color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8
+            }).addTo(markerGroup);
+            marker.bindPopup(`<b>${name}</b><br>${pos.type}<br><small>${pos.timestamp?.toDate().toLocaleString()}</small>`);
+        });
+    }
+
+    window.zoomToLocation = (lat, lng, name, type, dateTime) => {
+        if (!lat || !lng) return alert("No GPS coordinates.");
+        const labelColor = type === 'Check In' ? '#3fb950' : '#f85149';
+        map.setView([lat, lng], 16);
+        L.popup()
+            .setLatLng([lat, lng])
+            .setContent(`
+                <div style="text-align:center; font-family: sans-serif;">
+                    <b style="font-size:1.1em; color:var(--blue);">${name}</b><br>
+                    <span style="font-size:0.9em; color:#666;">${dateTime}</span><br>
+                    <b style="color:${labelColor}; font-size:1em;">${type}</b>
+                </div>
+            `)
+            .openOn(map);
+    };
+
+    window.toggleStaffStatus = async (docId, currentStatus) => {
+        const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
+        if (!confirm(`Set this staff member to ${newStatus}?`)) return;
+        try { await updateDoc(doc(db, "users", docId), { status: newStatus }); } 
+        catch (e) { alert("Error updating status: " + e.message); }
+    };
+
+    window.deleteStaff = async (docId, name) => {
+        if (!confirm(`PERMANENT DELETE: Are you sure you want to remove ${name} from the database? This cannot be undone.`)) return;
+        try { 
+            await deleteDoc(doc(db, "users", docId)); 
+            alert(`${name} deleted.`);
+        } catch (e) { alert("Delete failed: " + e.message); }
+    };
+
+    function loadStaffData() {
+        onSnapshot(collection(db, "users"), (snap) => {
+            const directory = document.getElementById('staff-directory-list');
+            directory.innerHTML = ""; 
+            snap.forEach(documentDoc => { 
+                const data = documentDoc.data();
+                const docId = documentDoc.id;
+                const status = data.status || "Active";
+                const isActive = status === "Active";
+                staffMap[data.uid] = { name: data.fullName, status: status }; 
+                directory.innerHTML += `
+                    <div class="staff-item">
+                        <div style="flex: 1; overflow: hidden;">
+                            <div style="font-size: 0.85em; font-weight: bold; white-space: nowrap; text-overflow: ellipsis;">${data.fullName}</div>
+                            <div style="font-size: 0.7em; color: ${isActive ? '#3fb950' : '#f85149'};">
+                                <span class="status-dot" style="background: ${isActive ? '#3fb950' : '#f85149'};"></span>${status}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="geo-btn" style="background: ${isActive ? 'var(--red)' : 'var(--green)'}; padding: 4px 6px;" 
+                                onclick="toggleStaffStatus('${docId}', '${status}')">
+                                ${isActive ? 'Off' : 'On'}
+                            </button>
+                            <button class="geo-btn" style="background: #444; padding: 4px 6px;" 
+                                onclick="deleteStaff('${docId}', '${data.fullName}')">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>`;
+            });
+            updateMasterLogNames();
+            applyFilters();
+        });
+    }
+
+    function updateMasterLogNames() {
+        masterLogs.forEach(log => { log.fullName = staffMap[log.uid]?.name || log.fullName || "Unknown Staff"; });
+    }
+
+    function loadAdminLogs() {
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+        onSnapshot(q, (snap) => {
+            masterLogs = [];
+            snap.forEach(doc => {
+                const data = doc.data();
+                data.fullName = staffMap[data.uid]?.name || data.fullName || "Unknown Staff";
+                masterLogs.push(data);
+            });
+            updateStats(masterLogs);
+            applyFilters();
+            plotAllStaff();
+        });
+    }
+
+    function applyFilters() {
+        const nameVal = document.getElementById('filter-name').value.toLowerCase().trim();
+        const dateFromInput = document.getElementById('filter-date-from').value;
+        const dateToInput = document.getElementById('filter-date-to').value;
+
+        filteredLogs = masterLogs.filter(log => {
+            const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
+            const currentEmail = (log.email || "").toLowerCase();
+            const matchesName = currentName.includes(nameVal) || currentEmail.includes(nameVal);
+            let matchesDate = true;
+            if (log.timestamp && log.timestamp.toDate) {
+                const logDate = log.timestamp.toDate();
+                const logDateOnly = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
+                if (dateFromInput) {
+                    const from = new Date(dateFromInput);
+                    if (logDateOnly < new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime()) matchesDate = false;
+                }
+                if (dateToInput) {
+                    const to = new Date(dateToInput);
+                    if (logDateOnly > new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime()) matchesDate = false;
+                }
+            } else if (dateFromInput || dateToInput) { matchesDate = false; }
+            return matchesName && matchesDate;
+        });
+        renderAdminLogs(filteredLogs);
+    }
+
+    document.getElementById('applyFiltersBtn').onclick = (e) => { e.preventDefault(); applyFilters(); };
+    document.getElementById('filter-name').addEventListener('input', applyFilters);
+
+    function renderAdminLogs(data) {
+        const list = document.getElementById('admin-master-list');
+        list.innerHTML = data.length ? "" : '<p style="text-align:center;color:#8b949e;">No matching logs found.</p>';
+        data.forEach(d => {
+            const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString() : "Pending";
+            const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
+            const fullDateTime = `${date} ${time}`;
+            const displayName = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
+            
+            list.innerHTML += `
+                <div class="history-item">
+                    <div class="history-row">
+                        <span style="font-weight:bold; color:var(--blue);">${displayName}</span>
+                        <span style="font-size:0.75em; color:#8b949e;">${fullDateTime}</span>
+                    </div>
+                    <div class="history-row" style="margin-top:4px; align-items: center;">
+                        <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName || 'N/A'}</span>
+                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${displayName}', '${d.type}', '${fullDateTime}')">📍 Show</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function updateStats(data) {
+        const todayStr = new Date().toLocaleDateString();
+        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === todayStr).map(d => d.uid));
+        document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length;
+        document.getElementById('present-today-count').innerText = presentToday.size;
+    }
+
+    const handleExport = () => {
+        if (filteredLogs.length === 0) return alert("No results to export.");
+        let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
+        [...filteredLogs].forEach(d => {
+            const dt = d.timestamp ? d.timestamp.toDate() : new Date();
+            const name = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
+            csv += `"${name}","${d.email || ''}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${(d.remarks || "").replace(/"/g, '""')}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `iMerch_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+    };
+
+    document.getElementById('exportBtn').onclick = handleExport;
+    document.getElementById('exportBtnBottom').onclick = handleExport;
+
+    document.getElementById('createAccBtn').onclick = async () => {
+        const btn = document.getElementById('createAccBtn');
+        const fullName = document.getElementById('new-fullname').value;
+        const email = document.getElementById('new-email').value;
+        const pass = document.getElementById('new-pass').value;
+        if (!fullName || !email || !pass) return alert("Missing info.");
+        btn.disabled = true; btn.innerText = "Creating...";
+        try {
+            const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+            await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName, email, status: "Active", createdAt: serverTimestamp() });
+            await signOut(secondaryAuth);
+            alert("Account Created!");
+            document.getElementById('new-fullname').value = ""; document.getElementById('new-email').value = ""; document.getElementById('new-pass').value = "";
+        } catch (e) { alert("Error: " + e.message); } 
+        finally { btn.disabled = false; btn.innerText = "Create Account"; }
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+        const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
+        if (user && admins.includes(user.email)) {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('admin-view').classList.remove('hidden');
+            loadStaffData(); loadAdminLogs(); setTimeout(initMap, 500);
+        } else {
+            document.getElementById('login-view').classList.remove('hidden');
+            document.getElementById('admin-view').classList.add('hidden');
+        }
+    });
+
+    document.getElementById('login-form').onsubmit = async (e) => {
+        e.preventDefault();
+        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
+        catch (e) { alert("Error: " + e.message); }
+    };
+
+    document.getElementById('logoutLink').onclick = () => signOut(auth);
+    document.getElementById('wipeLogsBtn').onclick = async () => {
+        if (!confirm("Wipe all logs?")) return;
+        const batch = writeBatch(db);
+        const snap = await getDocs(collection(db, "attendance"));
+        snap.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        alert("Logs cleared.");
+    };
+
+    document.getElementById('archiveBtn').onclick = async () => {
+        const btn = document.getElementById('archiveBtn');
+        if (!confirm("Download a complete backup?")) return;
+        btn.disabled = true; btn.innerText = "Processing...";
+        try {
+            const aSnap = await getDocs(collection(db, "attendance"));
+            const uSnap = await getDocs(collection(db, "users"));
+            const backup = {
+                backupDate: new Date().toISOString(),
+                system: "iMerch Secured Attendance",
+                staffDirectory: uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                attendanceLogs: aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `iMerch_FULL_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        } catch (e) { alert("Backup failed: " + e.message); } 
+        finally { btn.disabled = false; btn.innerText = "📦 Backup JSON"; }
+    };
+
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+    importBtn.onclick = () => importFile.click();
+
+    importFile.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = JSON.parse(event.target.result);
+                if (data.system !== "iMerch Secured Attendance") return alert("Invalid format.");
+                if (!confirm(`Restore ${data.staffDirectory.length} staff?`)) return;
+                importBtn.disabled = true;
+                const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
+                const userChunks = chunk(data.staffDirectory, 400);
+                for (const batchData of userChunks) {
+                    const batch = writeBatch(db);
+                    batchData.forEach(item => {
+                        const { id, ...cleanData } = item;
+                        if (cleanData.createdAt?.seconds) cleanData.createdAt = new Timestamp(cleanData.createdAt.seconds, cleanData.createdAt.nanoseconds);
+                        batch.set(doc(db, "users", id), cleanData, { merge: true });
+                    });
+                    await batch.commit();
+                }
+                const logChunks = chunk(data.attendanceLogs, 400);
+                for (const batchData of logChunks) {
+                    const batch = writeBatch(db);
+                    batchData.forEach(item => {
+                        const { id, ...cleanData } = item;
+                        if (cleanData.timestamp?.seconds) cleanData.timestamp = new Timestamp(cleanData.timestamp.seconds, cleanData.timestamp.nanoseconds);
+                        batch.set(doc(db, "attendance", id), cleanData, { merge: true });
+                    });
+                    await batch.commit();
+                }
+                alert("Restore complete!");
+                window.location.reload();
+            } catch (err) { alert("Import failed."); } 
+            finally { importBtn.disabled = false; importFile.value = ""; }
+        };
+        reader.readAsText(file);
+    };
+</script>
+</body>
+</html>
