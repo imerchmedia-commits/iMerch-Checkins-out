@@ -129,11 +129,11 @@
             </div>
 
             <div class="info-card">
-                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 STAFF ENGAGEMENT</div>
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 STAFF MANAGEMENT SUMMARY</div>
                 <div style="height: 150px;">
                     <canvas id="attendanceChart"></canvas>
                 </div>
-                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">PROGRESS TRACKER (Target: 6)</div>
+                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">STAFF PROGRESS (Goal: 6)</div>
                 <div class="user-summary-list" id="userSummaryList"></div>
             </div>
         </div>
@@ -142,9 +142,9 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Staff</th>
-                        <th>Status</th>
-                        <th>Store Location</th>
+                        <th>Staff Name</th>
+                        <th>Type</th>
+                        <th>Branch / Location</th>
                         <th>Time</th>
                         <th>Action</th>
                     </tr>
@@ -159,7 +159,6 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Admin Exclusion List
         const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta"];
         const DAILY_TARGET = 6;
 
@@ -185,14 +184,12 @@
         const logSearch = document.getElementById('logSearch');
         dateInput.valueAsDate = new Date();
 
-        // Theme Toggle
         document.getElementById('themeToggle').addEventListener('click', () => {
             const body = document.body;
             const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             body.setAttribute('data-theme', newTheme);
         });
 
-        // Logout
         document.getElementById('logoutBtn').addEventListener('click', () => {
             signOut(auth).then(() => window.location.href = "../index.html");
         });
@@ -200,8 +197,7 @@
         window.focusMap = function(lat, lng, name, store, time, type, date) {
             const map = document.getElementById('main-map');
             const pop = document.getElementById('map-pop-info');
-            // Fixed URL format for Google Maps Embed
-            const newUrl = `https://maps.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed`;
+            const newUrl = `https://maps.google.com/maps?q=${lat},${lng}&hl=en&z=14&output=embed`;
             
             if (map.src !== newUrl) map.src = newUrl;
             
@@ -221,6 +217,7 @@
                 data: {
                     labels: [],
                     datasets: [{
+                        label: 'Check-ins',
                         data: [],
                         backgroundColor: '#58a6ff',
                         borderRadius: 4
@@ -256,50 +253,46 @@
             logsBody.innerHTML = "";
             let activeStaff = {}; 
 
-            // Filter Logs for Table
             currentLogs.forEach(log => {
-                const staffName = log.name || "Unknown Staff";
-                const store = log.locationName || "---";
+                // Unknown Staff Fix: Check multiple possible field names
+                const staffName = log.name || log.staffName || "Unknown Staff";
+                const store = log.locationName || log.storeName || "---";
                 
                 if (staffName.toLowerCase().includes(searchTerm) || store.toLowerCase().includes(searchTerm)) {
                     const ts = log.timestamp ? log.timestamp.toDate() : new Date();
                     const timeStr = ts.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                     const dateStr = ts.toLocaleDateString();
-                    const statusClass = log.type === "Check In" ? "in" : "out";
+                    const statusClass = (log.type === "Check In" || log.status === "In") ? "in" : "out";
 
                     logsBody.innerHTML += `
                         <tr>
                             <td><strong>${staffName}</strong></td>
-                            <td><span class="status-tag ${statusClass}">${log.type}</span></td>
+                            <td><span class="status-tag ${statusClass}">${log.type || log.status}</span></td>
                             <td><small>${store}</small></td>
                             <td style="color:var(--accent)">${timeStr}</td>
                             <td>
-                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}', '${store}', '${timeStr}', '${log.type}', '${dateStr}')" style="background:var(--accent); border:none; color:white; border-radius:4px; font-size:0.6rem; cursor:pointer; padding:4px 6px;">TRACK</button>` : '--'}
+                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}', '${store}', '${timeStr}', '${log.type}', '${dateStr}')" style="background:var(--accent); border:none; color:white; border-radius:4px; font-size:0.6rem; cursor:pointer; padding:4px 6px;">VIEW MAP</button>` : '--'}
                             </td>
                         </tr>`;
                 }
 
-                // Logic for Chart & Summary (based on all logs for the day)
-                const staffNameForStats = log.name || "Unknown Staff";
-                if(log.type === "Check In") {
+                const staffNameForStats = log.name || log.staffName || "Unknown Staff";
+                if(log.type === "Check In" || log.status === "In") {
                     activeStaff[staffNameForStats] = (activeStaff[staffNameForStats] || 0) + 1;
                 } else if (!activeStaff[staffNameForStats]) {
                     activeStaff[staffNameForStats] = 0;
                 }
             });
 
-            // Update Chart
             const presentList = Object.keys(activeStaff).filter(n => !adminExclusion.includes(n));
             attendanceChart.data.labels = presentList;
             attendanceChart.data.datasets[0].data = presentList.map(name => activeStaff[name]);
             attendanceChart.update();
 
-            // Update Stats
             const absentList = masterStaffList.filter(name => !presentList.includes(name));
             document.getElementById('presentCount').innerText = presentList.length;
             document.getElementById('absentCount').innerText = absentList.length;
 
-            // Update Side Summary List
             userSummaryList.innerHTML = "";
             presentList.forEach(staff => {
                 const count = activeStaff[staff];
@@ -323,17 +316,15 @@
             const startOfDay = new Date(selectedDate.setHours(0,0,0,0));
             const endOfDay = new Date(selectedDate.setHours(23,59,59,999));
 
-            // 1. Monitor Staff Members
             unsubscribeStaff = onSnapshot(collection(db, "staff_members"), (staffSnapshot) => {
                 masterStaffList = [];
                 staffSnapshot.forEach(doc => {
-                    const name = doc.data().name;
+                    const name = doc.data().name || doc.data().staffName;
                     if (name && !adminExclusion.includes(name)) masterStaffList.push(name);
                 });
                 renderData();
             });
 
-            // 2. Monitor Attendance Logs
             const q = query(
                 collection(db, "attendance"), 
                 where("timestamp", ">=", Timestamp.fromDate(startOfDay)),
@@ -345,12 +336,11 @@
                 currentLogs = [];
                 snapshot.forEach(doc => currentLogs.push(doc.data()));
 
-                // Auto-focus map on first load with the latest log
                 if (currentLogs.length > 0 && firstLoad) {
                     const latest = currentLogs.find(l => l.latitude);
                     if (latest) {
                         const ts = latest.timestamp.toDate();
-                        focusMap(latest.latitude, latest.longitude, latest.name, latest.locationName, ts.toLocaleTimeString(), latest.type, ts.toLocaleDateString());
+                        focusMap(latest.latitude, latest.longitude, latest.name || latest.staffName, latest.locationName, ts.toLocaleTimeString(), latest.type, ts.toLocaleDateString());
                     }
                     firstLoad = false;
                 }
