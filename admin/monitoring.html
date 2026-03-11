@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iMerch - Admin Monitoring</title>
-    <link rel="icon" sizes="192x192" href="../im.png">
+    
+    <link rel="icon" type="image/png" href="../im.png">
+    <link rel="shortcut icon" type="image/png" href="../im.png">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { 
@@ -75,7 +78,7 @@
 
     <div id="loading-screen">
         <div class="spinner"></div>
-        <p style="margin-top: 15px; color: #8b949e;">LOADING iMERCH MONITORING...</p>
+        <p style="margin-top: 15px; color: #8b949e;">SECURE ACCESS BOOTING...</p>
     </div>
 
     <div id="main-content" style="display:none;">
@@ -84,31 +87,31 @@
                 <img src="../im.png" class="logo-img">
                 <div>
                     <div style="font-weight: bold; font-size: 0.85rem;">Portal</div>
-                    <div style="font-size: 0.65rem; color: #8b949e;">Admin Panel</div>
+                    <div style="font-size: 0.65rem; color: #8b949e;">iMerch Admin</div>
                 </div>
             </div>
             <div class="center-brand"><img src="../logo1.png" class="center-logo"></div>
             <div class="controls">
-                <button class="icon-btn" id="themeToggle" title="Toggle Theme">🌓</button>
-                <button onclick="location.reload()" class="icon-btn" title="Refresh">🔄</button>
-                <button id="logoutBtn" class="icon-btn logout-btn" title="Logout">🚪</button>
+                <button class="icon-btn" id="themeToggle">🌓</button>
+                <button onclick="location.reload()" class="icon-btn">🔄</button>
+                <button id="logoutBtn" class="icon-btn logout-btn">🚪</button>
             </div>
         </div>
 
         <div class="stats-row">
             <div class="stat-box">
                 <span class="stat-val" id="presentCount" style="color: var(--green);">0</span>
-                <span class="stat-label">Staff Present</span>
+                <span class="stat-label">Active Field Staff</span>
             </div>
             <div class="stat-box">
                 <span class="stat-val" id="absentCount" style="color: var(--red);">0</span>
-                <span class="stat-label">Staff No Activity</span>
+                <span class="stat-label">No Reported Activity</span>
             </div>
         </div>
 
         <div class="filter-section">
             <input type="date" id="dateFilter" class="date-input">
-            <input type="text" id="logSearch" class="search-box" placeholder="Search logs...">
+            <input type="text" id="logSearch" class="search-box" placeholder="Filter by name or store...">
         </div>
 
         <div class="dashboard-grid">
@@ -126,11 +129,11 @@
             </div>
 
             <div class="info-card">
-                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 STORE TRAFFIC (Target: 6)</div>
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 TRAFFIC ANALYTICS</div>
                 <div style="height: 150px;">
                     <canvas id="attendanceChart"></canvas>
                 </div>
-                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">STAFF PROGRESS</div>
+                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">PROGRESS TRACKER (Target: 6)</div>
                 <div class="user-summary-list" id="userSummaryList"></div>
             </div>
         </div>
@@ -154,9 +157,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Tinanggal na si "Arem" dito
         const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta"];
         const DAILY_TARGET = 6;
         let notifiedStaff = new Set(); 
@@ -179,12 +181,17 @@
         const dateInput = document.getElementById('dateFilter');
         dateInput.valueAsDate = new Date();
 
+        // OPTIMIZED MAP FOCUS
         window.focusMap = function(lat, lng, name, store, time, type, date) {
             const map = document.getElementById('main-map');
             const pop = document.getElementById('map-pop-info');
             
-            // Mas stable na embed URL format
-            map.src = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+            const newUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+            
+            // Iwas Lag: Huwag mag-reload kung pareho lang ang location
+            if (map.src !== newUrl) {
+                map.src = newUrl;
+            }
             
             document.getElementById('pop-name').innerText = name;
             document.getElementById('pop-store').innerText = store;
@@ -194,14 +201,12 @@
             popStatus.style.background = type === "Check In" ? "#238636" : "#f85149";
             
             pop.style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if(window.innerWidth < 768) window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
-            if(confirm("Sigurado ka bang gusto mong mag-logout?")) {
-                signOut(auth).then(() => {
-                    window.location.href = "../index.html";
-                });
+            if(confirm("Logout from Admin Panel?")) {
+                signOut(auth).then(() => { window.location.href = "../index.html"; });
             }
         });
 
@@ -210,22 +215,12 @@
             document.body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
         });
 
-        function showNotification(staffName) {
-            if (Notification.permission === "granted" && !notifiedStaff.has(staffName)) {
-                new Notification("🎯 Target Hit!", {
-                    body: `${staffName} has reached the target of 6 stores today!`,
-                    icon: "../im.png"
-                });
-                notifiedStaff.add(staffName);
-            }
-        }
-
         function initChart() {
             const ctx = document.getElementById('attendanceChart').getContext('2d');
             attendanceChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['In', 'Out'],
+                    labels: ['Check-In', 'Check-Out'],
                     datasets: [{
                         data: [0, 0],
                         backgroundColor: ['#238636', '#f85149'],
@@ -246,9 +241,6 @@
                 document.getElementById('main-content').style.display = 'block';
                 if (!attendanceChart) initChart();
                 startMonitoring();
-                if (Notification.permission === "default") {
-                    Notification.requestPermission();
-                }
             } else { 
                 window.location.href = "../index.html"; 
             }
@@ -257,7 +249,6 @@
         function startMonitoring() {
             if (unsubscribeLogs) unsubscribeLogs();
             if (unsubscribeStaff) unsubscribeStaff();
-            notifiedStaff.clear();
 
             const selectedDate = new Date(dateInput.value);
             const startOfDay = new Date(selectedDate.setHours(0,0,0,0));
@@ -271,11 +262,13 @@
                     if (name && !adminExclusion.includes(name)) masterStaffList.push(name);
                 });
 
+                // ANTI-LAG: Limit logs to 50 most recent for performance
                 const q = query(
                     collection(db, "attendance"), 
                     where("timestamp", ">=", Timestamp.fromDate(startOfDay)),
                     where("timestamp", "<=", Timestamp.fromDate(endOfDay)),
-                    orderBy("timestamp", "desc")
+                    orderBy("timestamp", "desc"),
+                    limit(50)
                 );
                 
                 unsubscribeLogs = onSnapshot(q, (snapshot) => {
@@ -288,7 +281,7 @@
 
                     snapshot.forEach((doc) => {
                         const log = doc.data();
-                        const staffName = log.name || (log.email ? log.email.split('@')[0] : "Unknown");
+                        const staffName = log.name || "Unknown";
                         
                         if(!adminExclusion.includes(staffName)) {
                             const ts = log.timestamp ? log.timestamp.toDate() : new Date();
@@ -298,7 +291,6 @@
                             if(log.type === "Check In") {
                                 inCount++;
                                 activeStaff[staffName] = (activeStaff[staffName] || 0) + 1;
-                                if(activeStaff[staffName] >= DAILY_TARGET) showNotification(staffName);
                             } else {
                                 outCount++;
                             }
@@ -327,11 +319,10 @@
                     userSummaryList.innerHTML = "";
                     presentList.forEach(staff => {
                         const count = activeStaff[staff];
-                        const isTargetHit = count >= DAILY_TARGET;
                         userSummaryList.innerHTML += `
                             <div class="user-row">
                                 <span class="user-name">🟢 ${staff}</span>
-                                <span class="user-count-badge ${isTargetHit ? 'target-hit' : ''}">
+                                <span class="user-count-badge ${count >= DAILY_TARGET ? 'target-hit' : ''}">
                                     ${count} / ${DAILY_TARGET} STORES
                                 </span>
                             </div>`;
