@@ -34,7 +34,6 @@
         .icon-btn:hover { border-color: var(--accent); background: rgba(88, 166, 255, 0.1); }
         .logout-btn { background: var(--red); color: white; border: none; font-weight: 600; padding: 10px 15px; }
 
-        /* CENTERED STATS BOXES */
         .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-box { background: var(--card); padding: 25px 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .stat-val { font-size: 2.5rem; font-weight: 800; display: block; line-height: 1; margin-bottom: 8px; }
@@ -49,7 +48,10 @@
         .map-container { position: relative; width: 100%; height: 400px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
         #main-map { width: 100%; height: 100%; border: 0; }
         
-        /* PROFESSIONAL CENTERED TABLE */
+        /* PROGRESS BAR STYLES */
+        .progress-container { width: 100%; background: var(--border); height: 6px; border-radius: 10px; margin-top: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 0.5s ease; border-radius: 10px; }
+
         .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background: rgba(0,0,0,0.15); color: var(--secondary-text); text-transform: uppercase; font-size: 0.75rem; font-weight: 700; padding: 18px; letter-spacing: 1px; text-align: center; border-bottom: 2px solid var(--border); }
@@ -129,7 +131,7 @@
             <div class="info-card">
                 <div class="card-title">📍 LIVE FIELD MONITORING</div>
                 <div class="map-container">
-                    <iframe id="main-map" src="about:blank"></iframe>
+                    <iframe id="main-map" src="https://maps.google.com/maps?q=14.5826,121.0526&z=15&output=embed"></iframe>
                 </div>
             </div>
 
@@ -138,7 +140,10 @@
                 <div style="height: 180px; margin-bottom: 20px;">
                     <canvas id="attendanceChart"></canvas>
                 </div>
-                <div style="font-size: 0.75rem; font-weight: 700; color: var(--secondary-text); margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">STAFF TRACKER</div>
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--secondary-text); margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; justify-content: space-between;">
+                    <span>STAFF TRACKER</span>
+                    <span>TARGET: 6/DAY</span>
+                </div>
                 <div class="user-summary-list" id="userSummaryList" style="max-height: 250px; overflow-y: auto;"></div>
             </div>
         </div>
@@ -200,10 +205,12 @@
             signOut(auth).then(() => window.location.href = "../index.html");
         });
 
+        // FIXED MAP FUNCTION
         window.focusMap = function(lat, lng, details) {
             const map = document.getElementById('main-map');
+            // Gmaps Embed format: q=lat,lng(Label)
             const query = encodeURIComponent(details);
-            map.src = `https://maps.google.com/maps?q=${lat},${lng}(${query})&z=15&output=embed`;
+            map.src = `https://maps.google.com/maps?q=${lat},${lng}(${query})&t=&z=16&ie=UTF8&iwloc=B&output=embed`;
         };
 
         function initChart() {
@@ -256,8 +263,9 @@
                     const timeStr = ts.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                     const statusClass = (statusText.toLowerCase().includes("in")) ? "in" : "out";
 
-                    // DETAILED MAP LABEL: NAME | DATE | TIME | BRANCH
-                    const mapLabel = `${staffName} | ${dateStr} | ${timeStr} | ${store}`;
+                    // Map Marker details with color indicators
+                    const markerColor = statusClass === "in" ? "🟢" : "🔴";
+                    const mapLabel = `${markerColor} ${staffName} | ${store} | ${dateStr} ${timeStr}`;
 
                     logsBody.innerHTML += `
                         <tr>
@@ -290,13 +298,22 @@
             document.getElementById('presentCount').innerText = presentList.length;
             document.getElementById('absentCount').innerText = Math.max(0, masterStaffList.length - presentList.length);
 
-            userSummaryList.innerHTML = masterStaffList.map(staff => {
+            // RENDER USER LIST WITH PROGRESS BAR
+            userSummaryList.innerHTML = masterStaffList.sort().map(staff => {
                 const count = activeStaff[staff] || 0;
                 const isAbsent = count === 0;
+                const percent = Math.min((count / DAILY_TARGET) * 100, 100);
+                const barColor = count >= DAILY_TARGET ? 'var(--green)' : 'var(--accent)';
+
                 return `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); opacity:${isAbsent ? '0.5' : '1'}">
-                        <span style="font-size:0.8rem; font-weight:600;">${isAbsent ? '🔴' : '🟢'} ${staff}</span>
-                        <span style="font-size:0.75rem; font-weight:700; background:var(--bg); padding:2px 8px; border-radius:4px; border:1px solid var(--border); color:${count >= DAILY_TARGET ? 'var(--green)' : 'var(--text)'}">${count} / ${DAILY_TARGET}</span>
+                    <div style="margin-bottom:15px; opacity:${isAbsent ? '0.6' : '1'}">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <span style="font-size:0.8rem; font-weight:700;">${isAbsent ? '⚪' : '🟢'} ${staff}</span>
+                            <span style="font-size:0.7rem; font-weight:800; color:${count >= DAILY_TARGET ? 'var(--green)' : 'var(--text)'}">${count} / ${DAILY_TARGET}</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-fill" style="width: ${percent}%; background: ${barColor};"></div>
+                        </div>
                     </div>`;
             }).join('');
         }
@@ -331,7 +348,7 @@
                     const latest = currentLogs.find(l => l.latitude && !adminExclusion.includes(l.name));
                     if (latest) {
                         const ts = latest.timestamp ? latest.timestamp.toDate() : new Date();
-                        const lbl = `${latest.name || 'Staff'} | ${ts.toLocaleDateString()} | ${ts.toLocaleTimeString()} | ${latest.locationName || 'Store'}`;
+                        const lbl = `Latest: ${latest.name || 'Staff'} | ${latest.locationName || 'Store'}`;
                         focusMap(latest.latitude, latest.longitude, lbl);
                     }
                     firstLoad = false;
