@@ -26,7 +26,6 @@
         .controls { display: flex; gap: 8px; z-index: 10; }
         .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; }
 
-        /* Stats Row */
         .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .stat-box { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
         .stat-val { font-size: 1.5rem; font-weight: bold; display: block; }
@@ -46,13 +45,15 @@
             display: none; z-index: 5; box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(5px);
         }
 
-        .user-summary-list { margin-top: 10px; flex-grow: 1; overflow-y: auto; max-height: 300px; }
-        .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        .absent { opacity: 0.5; font-style: italic; color: var(--red); }
-        .user-count-badge { background: rgba(88, 166, 255, 0.1); color: var(--accent); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+        .user-summary-list { margin-top: 10px; flex-grow: 1; overflow-y: auto; max-height: 350px; }
+        .user-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .user-name { font-weight: 500; }
+        .absent { opacity: 0.5; color: #8b949e; }
+        .user-count-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; border: 1px solid rgba(255,255,255,0.1); }
+        .target-hit { background: rgba(35, 134, 54, 0.2); color: #3fb950; border-color: #238636; }
 
         .filter-section { display: flex; gap: 10px; margin-bottom: 15px; }
-        .date-input { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; flex-grow: 1; outline: none; }
+        .date-input { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; flex-grow: 1; outline: none; font-size: 0.85rem; }
         .search-box { flex-grow: 2; padding: 10px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); outline: none; }
         
         .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
@@ -95,17 +96,17 @@
         <div class="stats-row">
             <div class="stat-box">
                 <span class="stat-val" id="presentCount" style="color: var(--green);">0</span>
-                <span class="stat-label">Present Today</span>
+                <span class="stat-label">Staff Present</span>
             </div>
             <div class="stat-box">
                 <span class="stat-val" id="absentCount" style="color: var(--red);">0</span>
-                <span class="stat-label">No Activity</span>
+                <span class="stat-label">Staff No Activity</span>
             </div>
         </div>
 
         <div class="filter-section">
             <input type="date" id="dateFilter" class="date-input">
-            <input type="text" id="logSearch" class="search-box" placeholder="Search staff or location...">
+            <input type="text" id="logSearch" class="search-box" placeholder="Search logs...">
         </div>
 
         <div class="dashboard-grid">
@@ -123,11 +124,11 @@
             </div>
 
             <div class="info-card">
-                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 STORE TRAFFIC</div>
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 10px;">📊 STORE TRAFFIC (Target: 6)</div>
                 <div style="height: 150px;">
                     <canvas id="attendanceChart"></canvas>
                 </div>
-                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">STAFF SUMMARY</div>
+                <div style="font-size: 0.7rem; color: #8b949e; margin-top: 15px; border-bottom: 1px solid var(--border); padding-bottom: 5px;">STAFF PROGRESS</div>
                 <div class="user-summary-list" id="userSummaryList"></div>
             </div>
         </div>
@@ -153,8 +154,10 @@
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // CONFIG: Palitan ito ng mga totoong pangalan ng staff niyo
-        const masterStaffList = ["Ron Sarmenta", "Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire"];
+        // CONFIG: Listahan ng mga Field Staff (Dagdagan na lang dito kung may bago)
+        const masterStaffList = ["Ron Sarmenta"]; 
+        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire"];
+        const DAILY_TARGET = 6;
 
         const firebaseConfig = {
             apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -170,7 +173,6 @@
         let attendanceChart;
         let unsubscribe = null;
 
-        // Set default date to today
         const dateInput = document.getElementById('dateFilter');
         dateInput.valueAsDate = new Date();
 
@@ -246,11 +248,14 @@
                     const timeStr = ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     const dateStr = ts.toLocaleDateString();
                     
-                    if(log.type === "Check In") {
-                        inCount++;
-                        activeStaff[staffName] = (activeStaff[staffName] || 0) + 1;
-                    } else {
-                        outCount++;
+                    // Count logs only if NOT in admin exclusion
+                    if(!adminExclusion.includes(staffName)) {
+                        if(log.type === "Check In") {
+                            inCount++;
+                            activeStaff[staffName] = (activeStaff[staffName] || 0) + 1;
+                        } else {
+                            outCount++;
+                        }
                     }
 
                     const statusClass = log.type === "Check In" ? "in" : "out";
@@ -267,29 +272,32 @@
                     `;
                 });
 
-                // Present vs Absent Logic
+                // Filter Master list for monitoring
                 const presentList = Object.keys(activeStaff);
                 const absentList = masterStaffList.filter(name => !presentList.includes(name));
 
                 document.getElementById('presentCount').innerText = presentList.length;
                 document.getElementById('absentCount').innerText = absentList.length;
 
-                // Update List UI
                 userSummaryList.innerHTML = "";
-                // Show Present
+                // Render Present with Target Logic
                 presentList.forEach(staff => {
+                    const count = activeStaff[staff];
+                    const isTargetHit = count >= DAILY_TARGET;
                     userSummaryList.innerHTML += `
                         <div class="user-row">
                             <span class="user-name">🟢 ${staff}</span>
-                            <span class="user-count-badge">${activeStaff[staff]} STORES</span>
+                            <span class="user-count-badge ${isTargetHit ? 'target-hit' : ''}">
+                                ${count} / ${DAILY_TARGET} STORES
+                            </span>
                         </div>`;
                 });
-                // Show Absent
+                // Render Absent
                 absentList.forEach(staff => {
                     userSummaryList.innerHTML += `
                         <div class="user-row absent">
                             <span>🔴 ${staff}</span>
-                            <span>OFFLINE</span>
+                            <span class="user-count-badge">0 / ${DAILY_TARGET}</span>
                         </div>`;
                 });
 
