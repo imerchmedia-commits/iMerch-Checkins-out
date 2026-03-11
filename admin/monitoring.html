@@ -10,17 +10,20 @@
     <style>
         :root { 
             --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #58a6ff; 
-            --green: #238636; --border: #30363d; --red: #f85149; --header: #010409;
+            --green: #238636; --border: #30363d; --red: #f85149; --orange: #d29922; --header: #010409;
             --secondary-text: #8b949e; --glass: rgba(22, 27, 34, 0.8);
         }
         [data-theme="light"] {
             --bg: #f6f8fa; --card: #ffffff; --text: #24292f; --accent: #0969da;
-            --green: #1a7f37; --border: #d0d7de; --red: #cf222e; --header: #ffffff;
+            --green: #1a7f37; --border: #d0d7de; --red: #cf222e; --orange: #9a6700; --header: #ffffff;
             --secondary-text: #57606a; --glass: rgba(255, 255, 255, 0.8);
         }
         
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; overflow-x: hidden; }
         .glass-panel { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3); }
+
+        /* Performance Fix: Hardware acceleration for smoother scrolling */
+        #userSummaryList { max-height: 200px; overflow-y: auto; will-change: transform; scrollbar-width: thin; }
 
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; margin-bottom: 25px; position: relative; }
         .logo-section { display: flex; align-items: center; gap: 15px; }
@@ -57,8 +60,9 @@
         .out { background: rgba(248, 81, 73, 0.15); color: #f87171; border: 1px solid #f85149; }
 
         .filter-section { display: flex; gap: 15px; margin-bottom: 25px; }
-        .date-input, .search-box { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 10px; }
+        .date-input, .search-box { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 10px; outline: none; }
         .search-box { flex-grow: 1; }
+        .search-box:focus { border-color: var(--accent); }
     </style>
 </head>
 <body data-theme="dark">
@@ -123,7 +127,7 @@
                 <div style="height: 180px; margin-bottom: 20px;">
                     <canvas id="performanceChart"></canvas>
                 </div>
-                <div id="userSummaryList" style="max-height: 200px; overflow-y: auto;"></div>
+                <div id="userSummaryList"></div>
             </div>
         </div>
 
@@ -169,12 +173,10 @@
         const dateInput = document.getElementById('dateFilter');
         dateInput.valueAsDate = new Date();
 
-        // Helper: Format Time to 12H
         const format12H = (date) => {
             return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
         };
 
-        // Global Map Function
         window.loadStaffMap = function(lat, lng, name) {
             const mapFrame = document.getElementById('main-map');
             const mapPlaceholder = document.getElementById('mapText');
@@ -183,11 +185,11 @@
 
             mapPlaceholder.style.display = 'none';
             mapFrame.style.display = 'block';
-            mapFrame.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=es;z=14&output=embed`;
+            mapFrame.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=en&z=14&output=embed`;
             
             extLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
             extLink.style.display = 'inline-block';
-            mapTitle.innerText = `📍 LOCATION: ${name.split(' ')[0]}`;
+            mapTitle.innerText = `📍 LOCATION: ${name.split(' ')[0].toUpperCase()}`;
         };
 
         function initCharts() {
@@ -231,7 +233,6 @@
             yesterday.setDate(yesterday.getDate() - 1);
             const start = new Date(yesterday.setHours(0,0,0,0));
             const end = new Date(yesterday.setHours(23,59,59,999));
-            
             const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)));
             const snap = await getDocs(q);
             compChart.data.datasets[0].data[1] = snap.size;
@@ -243,11 +244,15 @@
             const start = new Date(selectedDate.setHours(0,0,0,0));
             const end = new Date(selectedDate.setHours(23,59,59,999));
 
-            const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)), orderBy("timestamp", "desc"));
+            const q = query(collection(db, "attendance"), 
+                where("timestamp", ">=", Timestamp.fromDate(start)), 
+                where("timestamp", "<=", Timestamp.fromDate(end)), 
+                orderBy("timestamp", "desc")
+            );
             
             onSnapshot(q, (snap) => {
                 currentLogs = snap.docs.map(doc => doc.data());
-                renderData();
+                requestAnimationFrame(renderData); // Smoother UI updates
                 
                 compChart.data.datasets[0].data[0] = currentLogs.length;
                 compChart.update();
@@ -259,9 +264,11 @@
             const search = document.getElementById('logSearch').value.toLowerCase();
             const body = document.getElementById('logsBody');
             const summary = document.getElementById('userSummaryList');
-            body.innerHTML = "";
             
+            let tableHTML = "";
             let counts = {};
+            let chartColors = [];
+
             currentLogs.forEach(log => {
                 const email = (log.email || log.staffEmail || "").toLowerCase();
                 const name = log.name || log.staffName || staffRegistry[email] || email.split('@')[0] || "Unknown";
@@ -272,7 +279,7 @@
 
                 if (name.toLowerCase().includes(search) || branch.toLowerCase().includes(search)) {
                     const time = log.timestamp ? format12H(log.timestamp.toDate()) : '--:-- --';
-                    body.innerHTML += `
+                    tableHTML += `
                         <tr>
                             <td style="color:var(--accent); font-weight:bold;">${time}</td>
                             <td><div style="font-weight:bold;">${name}</div><div style="font-size:0.7rem; color:var(--secondary-text);">${email}</div></td>
@@ -284,21 +291,42 @@
                 if(type.toLowerCase().includes('in')) counts[name] = (counts[name] || 0) + 1;
             });
 
+            body.innerHTML = tableHTML;
+
             const names = Object.keys(counts);
+            
+            // Logic for Colors and Summary
+            let summaryHTML = "";
+            names.forEach(name => {
+                const val = counts[name];
+                const per = Math.min((val/DAILY_TARGET)*100, 100);
+                
+                // Color Index Logic
+                let statusColor = "var(--orange)"; // Default: Mababa sa 6
+                if (val === 6) statusColor = "var(--green)"; // Sakto sa 6
+                if (val > 6) statusColor = "var(--red)"; // Higit sa 6
+                
+                chartColors.push(statusColor);
+
+                summaryHTML += `
+                    <div style="margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:4px;">
+                            <span>${name}</span>
+                            <span style="color:${statusColor}">${val}/${DAILY_TARGET}</span>
+                        </div>
+                        <div style="height:6px; background:var(--border); border-radius:10px;">
+                            <div style="width:${per}%; height:100%; background:${statusColor}; border-radius:10px; transition:0.5s;"></div>
+                        </div>
+                    </div>`;
+            });
+
             perfChart.data.labels = names.map(n => n.split(' ')[0]);
             perfChart.data.datasets[0].data = names.map(n => counts[n]);
+            perfChart.data.datasets[0].backgroundColor = chartColors;
             perfChart.update();
 
             document.getElementById('presentCount').innerText = names.length;
-
-            summary.innerHTML = names.map(name => {
-                const val = counts[name];
-                const per = Math.min((val/DAILY_TARGET)*100, 100);
-                return `<div style="margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:4px;"><span>${name}</span><span>${val}/${DAILY_TARGET}</span></div>
-                    <div style="height:6px; background:var(--border); border-radius:10px;"><div style="width:${per}%; height:100%; background:var(--accent); border-radius:10px; transition:0.5s;"></div></div>
-                </div>`;
-            }).join('');
+            summary.innerHTML = summaryHTML;
         }
 
         document.getElementById('themeToggle').addEventListener('click', () => {
