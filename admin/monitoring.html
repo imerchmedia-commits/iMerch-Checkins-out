@@ -49,11 +49,11 @@
         th { background: rgba(0,0,0,0.3); padding: 15px; text-align: center; color: var(--secondary-text); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
         td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.85rem; text-align: center; vertical-align: middle; }
         
-        .status-badge { font-weight: 900; font-size: 0.75rem; text-transform: uppercase; }
+        .status-badge { font-weight: 800; font-size: 0.75rem; text-transform: uppercase; }
         .btn-pin { background: var(--accent); color: white; border: none; padding: 8px; border-radius: 50%; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-pin:hover { transform: scale(1.1); background: #fff; color: var(--accent); }
 
-        input { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 10px; border-radius: 8px; outline: none; margin-bottom: 5px; }
+        input { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 10px; border-radius: 8px; outline: none; }
     </style>
 </head>
 <body>
@@ -63,7 +63,7 @@
         <img src="im.png" style="width:32px;">
         <div>
             <div style="font-weight:900; font-size:0.9rem;">IMERCH CENTRAL</div>
-            <div style="font-size:0.6rem; color:var(--green); font-weight:bold;">● LIVE EXECUTIVE MONITORING</div>
+            <div id="sync-status" style="font-size:0.6rem; color:var(--green); font-weight:bold;">● LIVE DATA SYNC</div>
         </div>
     </div>
     <div>
@@ -74,13 +74,13 @@
 
 <div class="stats-row">
     <div class="stat-box"><span class="stat-label">Active Field Staff</span><span class="stat-val" id="presentCount">0</span></div>
-    <div class="stat-box"><span class="stat-label">Daily Volume</span><span class="stat-val" id="totalLogs" style="color:var(--accent)">0</span></div>
-    <div class="stat-box"><span class="stat-label">System State</span><span class="stat-val" style="color:var(--green); font-size:1.2rem;">OPERATIONAL</span></div>
+    <div class="stat-box"><span class="stat-label">Total Logs (Today)</span><span class="stat-val" id="totalLogs" style="color:var(--accent)">0</span></div>
+    <div class="stat-box"><span class="stat-label">System Health</span><span class="stat-val" style="color:var(--green); font-size:1.2rem;">OPERATIONAL</span></div>
 </div>
 
 <div class="dashboard-grid">
     <div class="info-card">
-        <div class="card-title">📍 LIVE FIELD MAP <span id="activeUser" style="text-transform:none; font-weight:normal; opacity:0.6;"></span></div>
+        <div class="card-title">📍 LIVE FIELD MONITORING <span id="activeUser" style="text-transform:none; font-weight:normal; opacity:0.6;"></span></div>
         <div class="map-container">
             <iframe id="main-map" src="about:blank"></iframe>
         </div>
@@ -88,11 +88,11 @@
     
     <div class="info-card" style="display:flex; flex-direction:column; gap:20px;">
         <div>
-            <div class="card-title">🏆 PERFORMANCE TALLY</div>
+            <div class="card-title">🏆 STAFF PERFORMANCE TALLY</div>
             <div id="summaryList" class="user-list"></div>
         </div>
         <div style="border-top:1px solid var(--border); padding-top:15px;">
-            <div class="card-title">📈 WEEKLY ACTIVITY</div>
+            <div class="card-title">📈 ACTIVITY TREND</div>
             <div style="height:160px;"><canvas id="weeklyChart"></canvas></div>
         </div>
     </div>
@@ -100,19 +100,19 @@
 
 <div style="margin-bottom:15px; display:flex; gap:10px;">
     <input type="date" id="dateFilter">
-    <input type="text" id="logSearch" placeholder="Search Staff, Email, or Branch..." style="flex-grow:1;">
+    <input type="text" id="logSearch" placeholder="Search staff name or branch..." style="flex-grow:1;">
 </div>
 
 <div class="table-container">
     <table>
         <thead>
             <tr>
-                <th>FULL NAME</th>
-                <th>ACTIVITY</th>
-                <th>LOCATION</th>
-                <th>DATE</th>
-                <th>TIME</th>
-                <th>MAP</th>
+                <th style="width: 20%;">PERSONNEL</th>
+                <th style="width: 15%;">ACTIVITY</th>
+                <th style="width: 25%;">LOCATION</th>
+                <th style="width: 15%;">DATE</th>
+                <th style="width: 15%;">TIME</th>
+                <th style="width: 10%;">MAP</th>
             </tr>
         </thead>
         <tbody id="logsBody"></tbody>
@@ -160,18 +160,16 @@
         });
     }
 
-    window.focusMap = (lat, lng, name, type, time) => {
+    window.focusMap = (lat, lng, name) => {
         const url = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
         document.getElementById('main-map').src = url;
-        const color = type.toLowerCase().includes('in') ? '#238636' : '#f85149';
-        document.getElementById('activeUser').innerHTML = `| <span style="color:${color}">${name} (${type})</span> @ ${time}`;
+        document.getElementById('activeUser').innerText = `| Personnel: ${name}`;
     };
 
     onAuthStateChanged(auth, user => {
         if (!user) window.location.href = "../index.html";
         initChart();
         startSync();
-        lucide.createIcons();
     });
 
     function startSync() {
@@ -198,19 +196,18 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 
-                // PINAKAMAHALAGA: In-update ko ito para saluhin lahat ng field names mula admin.html
-                const rawName = data.staff_fullname || data.fullName || data.staff_name || data.staffName || data.name || data.staffEmail || "Unknown Staff";
-                const email = data.staffEmail || "";
+                // Ibinaba ko ulit sa original mo na field names para lumabas ang pangalan
+                const rawName = data.name || data.staffName || data.userName || data.fullName || "Unknown Staff";
                 
                 if (adminExclusion.includes(rawName)) return;
 
                 const location = data.locationName || data.branch || "N/A";
-                const type = data.type || "Log";
+                const type = data.type || "Activity";
                 const ts = data.timestamp?.toDate();
                 const time = ts ? ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "---";
                 const dateStr = ts ? ts.toLocaleDateString() : "---";
 
-                if (rawName.toLowerCase().includes(search) || email.toLowerCase().includes(search) || location.toLowerCase().includes(search)) {
+                if (rawName.toLowerCase().includes(search) || location.toLowerCase().includes(search)) {
                     body.innerHTML += `
                         <tr>
                             <td><strong style="color:#fff;">${rawName.toUpperCase()}</strong></td>
@@ -219,7 +216,7 @@
                             <td>${dateStr}</td>
                             <td style="color:var(--accent); font-weight:800;">${time}</td>
                             <td>
-                                <button class="btn-pin" onclick="focusMap(${data.latitude}, ${data.longitude}, '${rawName}', '${type}', '${time}')">
+                                <button class="btn-pin" onclick="focusMap(${data.latitude}, ${data.longitude}, '${rawName}')">
                                     <i data-lucide="map-pin" style="width:16px; height:16px;"></i>
                                 </button>
                             </td>
