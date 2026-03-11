@@ -7,17 +7,16 @@
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0d1117">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" sizes="192x192" href="im.png">
-    <link rel="shortcut icon" href="im.png">
-    <link rel="apple-touch-icon" href="im.png">
+    <link rel="icon" sizes="192x192" href="../im.png">
+    <link rel="apple-touch-icon" href="../im.png">
 
     <style>
         :root {
             --bg: #0d1117;
             --card: #161b22;
             --text: #c9d1d9;
-            --accent: #238636;
+            --accent: #58a6ff;
+            --green: #238636;
             --border: #30363d;
         }
         body {
@@ -44,7 +43,7 @@
         .stats-count {
             font-size: 3.5rem;
             font-weight: bold;
-            color: var(--accent);
+            color: var(--green);
         }
         .search-container {
             position: sticky;
@@ -80,24 +79,30 @@
             border-radius: 12px;
             font-size: 0.75rem;
             font-weight: bold;
+            text-transform: uppercase;
         }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
-        .out { background: rgba(248, 81, 70, 0.2); color: #f85149; }
+        .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
         
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000;
+            background: var(--bg); display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; z-index: 1000;
         }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="loading-screen">Checking Authorization...</div>
+    <div id="loading-screen">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px; color: #8b949e;">Verifying Access...</p>
+    </div>
 
     <div id="main-content" style="display:none;">
         <div class="header">
-            <img src="im.png" alt="Logo" style="width: 50px; margin-bottom: 10px;">
-            <h2 style="margin: 0;">Daily Monitoring</h2>
+            <h2 style="margin: 0; color: var(--accent);">Daily Monitoring</h2>
             <p style="color: #8b949e; margin: 5px 0 0;">Joy Biazon Portal</p>
         </div>
 
@@ -107,37 +112,34 @@
         </div>
 
         <div class="search-container">
-            <input type="text" id="logSearch" class="search-box" placeholder="Search staff name or status...">
+            <input type="text" id="logSearch" class="search-box" placeholder="Search name or location...">
         </div>
         
         <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
-                        <th>Staff Name</th>
-                        <th>Status</th>
+                        <th>Staff Email</th>
+                        <th>Type</th>
+                        <th>Location</th>
                         <th>Time</th>
                     </tr>
                 </thead>
-                <tbody id="logsBody">
-                    </tbody>
+                <tbody id="logsBody"></tbody>
             </table>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, orderBy, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, orderBy, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ILAGAY DITO ANG IYONG FIREBASE CONFIG
         const firebaseConfig = {
-            apiKey: "AIzaSy...",
-            authDomain: "imerch-attendance.firebaseapp.com",
-            projectId: "imerch-attendance",
-            storageBucket: "imerch-attendance.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef"
+            apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
+            authDomain: "imerch-checkins-out.firebaseapp.com",
+            projectId: "imerch-checkins-out",
+            storageBucket: "imerch-checkins-out.firebasestorage.app"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -147,39 +149,43 @@
         const authorizedEmail = "joy.biazon@imerchmedia.net";
 
         onAuthStateChanged(auth, (user) => {
-            if (user && user.email.toLowerCase() === authorizedEmail) {
-                document.getElementById('loading-screen').style.display = 'none';
-                document.getElementById('main-content').style.display = 'block';
-                startMonitoring();
+            if (user) {
+                const userEmail = user.email.toLowerCase();
+                if (userEmail === authorizedEmail || userEmail === "ron.sarmenta@gmail.com") {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('main-content').style.display = 'block';
+                    startMonitoring();
+                } else {
+                    window.location.href = "../index.html";
+                }
             } else {
-                // Ibalik sa login kung hindi si Joy
                 window.location.href = "../index.html";
             }
         });
 
         function startMonitoring() {
-            const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+            const today = new Date().toLocaleDateString('en-CA'); 
             const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
 
             onSnapshot(q, (snapshot) => {
                 const logsBody = document.getElementById('logsBody');
-                let presentCount = 0;
                 let presentUsers = new Set();
                 
                 logsBody.innerHTML = "";
                 snapshot.forEach((doc) => {
                     const log = doc.data();
                     
-                    // Bilangin kung sino ang pumasok ngayong araw
-                    if(log.date === today && log.status === "CHECK IN") {
+                    // Bilangin kung sino ang nag Check In ngayong araw
+                    if(log.date === today && log.type === "Check In") {
                         presentUsers.add(log.email);
                     }
 
-                    const statusClass = log.status === "CHECK IN" ? "in" : "out";
+                    const statusClass = log.type === "Check In" ? "in" : "out";
                     const row = `<tr>
-                        <td style="font-weight: 500;">${log.name}</td>
-                        <td><span class="status-tag ${statusClass}">${log.status}</span></td>
-                        <td style="color: #8b949e;">${log.time}</td>
+                        <td style="font-weight: 500;">${log.email.split('@')[0]}</td>
+                        <td><span class="status-tag ${statusClass}">${log.type}</span></td>
+                        <td>${log.locationName || 'Field'}</td>
+                        <td style="color: #8b949e;">${log.time || '---'}</td>
                     </tr>`;
                     logsBody.innerHTML += row;
                 });
@@ -188,7 +194,6 @@
             });
         }
 
-        // Search Filter
         document.getElementById('logSearch').addEventListener('input', function() {
             const filter = this.value.toLowerCase();
             const rows = document.querySelectorAll('#logsBody tr');
