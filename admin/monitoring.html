@@ -22,29 +22,33 @@
         .logo-section { display: flex; align-items: center; gap: 10px; }
         .logo-img { width: 35px; height: 35px; border-radius: 6px; }
         
-        /* Center Logo Update */
         .center-brand { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; }
-        .center-logo { height: 40px; width: auto; }
+        .center-logo { height: 45px; width: auto; }
 
         .controls { display: flex; gap: 8px; z-index: 10; }
         .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; }
 
+        /* Dashboard Layout - Map is now much larger */
         .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px; }
-        @media (min-width: 768px) { .dashboard-grid { grid-template-columns: 2fr 1fr; } }
+        @media (min-width: 768px) { .dashboard-grid { grid-template-columns: 3fr 1.2fr; } }
 
         .info-card { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
         
-        /* Map Optimization */
-        #main-map { width: 100%; height: 300px; border-radius: 8px; border: 0; background: #161b22; }
+        /* Large Clickable Map Container */
+        .map-container { position: relative; width: 100%; height: 450px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--border); }
+        #main-map { width: 100%; height: 100%; border: 0; }
         
-        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .stat-box { padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.03); text-align: center; border: 1px solid var(--border); }
-        .stat-val { font-size: 1.5rem; font-weight: bold; color: var(--accent); }
+        /* Map Overlay Button */
+        .map-overlay-btn { position: absolute; bottom: 20px; right: 20px; background: var(--accent); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; text-decoration: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 5; font-size: 0.8rem; }
 
-        .search-box { width: 100%; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); box-sizing: border-box; margin-bottom: 15px; }
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .stat-box { padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.03); text-align: center; border: 1px solid var(--border); }
+        .stat-val { font-size: 1.8rem; font-weight: bold; color: var(--accent); }
+
+        .search-box { width: 100%; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); box-sizing: border-box; margin-bottom: 15px; outline: none; }
         
-        .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
+        .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
         th { background: rgba(0,0,0,0.2); color: #8b949e; text-transform: uppercase; font-size: 0.7rem; }
         
@@ -53,7 +57,7 @@
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; border: 1px solid #da3633; }
 
         #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        .spinner { width: 30px; height: 30px; border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -61,21 +65,21 @@
 
     <div id="loading-screen">
         <div class="spinner"></div>
-        <p style="margin-top: 15px; color: #8b949e;">Loading iMerch Analytics...</p>
+        <p style="margin-top: 15px; color: #8b949e; letter-spacing: 1px;">INITIALIZING iMERCH ANALYTICS...</p>
     </div>
 
     <div id="main-content" style="display:none;">
         <div class="navbar">
             <div class="logo-section">
                 <img src="../im.png" class="logo-img">
-                <div class="hide-mobile" style="display: block;">
+                <div>
                     <div style="font-weight: bold; font-size: 0.85rem;">Portal</div>
                     <div style="font-size: 0.65rem; color: #8b949e;">Joy Biazon</div>
                 </div>
             </div>
 
             <div class="center-brand">
-                <img src="../logo1.png" class="center-logo" alt="iMerch Logo">
+                <img src="../logo1.png" class="center-logo">
             </div>
 
             <div class="controls">
@@ -86,40 +90,48 @@
 
         <div class="dashboard-grid">
             <div class="info-card">
-                <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between;">
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
                     <span>📍 LIVE FIELD MONITORING</span>
-                    <span id="map-label" style="color: var(--accent); font-size: 0.7rem;">Select staff to locate</span>
+                    <span id="map-label" style="color: var(--accent); font-size: 0.75rem;">Waiting for selection...</span>
                 </div>
-                <iframe id="main-map" loading="lazy" src="https://maps.google.com/maps?q=14.5995,120.9842&z=10&output=embed"></iframe>
+                
+                <div class="map-container">
+                    <iframe id="main-map" loading="lazy" src="https://maps.google.com/maps?q=14.5995,120.9842&z=12&output=embed"></iframe>
+                    <a id="external-map-btn" href="#" target="_blank" class="map-overlay-btn" style="display:none;">
+                        📌 OPEN IN GOOGLE MAPS
+                    </a>
+                </div>
             </div>
 
             <div class="info-card">
-                <div style="font-size: 0.8rem; font-weight: bold; margin-bottom: 10px;">📊 STATUS OVERVIEW</div>
-                <canvas id="attendanceChart" height="180"></canvas>
+                <div style="font-size: 0.85rem; font-weight: bold; margin-bottom: 15px;">📊 ATTENDANCE SUMMARY</div>
+                <div style="height: 200px; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
                 <div class="stats-row">
                     <div class="stat-box">
-                        <div style="font-size: 0.6rem; color: #8b949e;">PRESENT</div>
+                        <div style="font-size: 0.65rem; color: #8b949e; margin-bottom: 5px;">IN STORE</div>
                         <div class="stat-val" id="count-in">0</div>
                     </div>
                     <div class="stat-box">
-                        <div style="font-size: 0.6rem; color: #8b949e;">OUT/FIELD</div>
+                        <div style="font-size: 0.65rem; color: #8b949e; margin-bottom: 5px;">OFF DUTY</div>
                         <div class="stat-val" id="count-out" style="color: var(--red);">0</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <input type="text" id="logSearch" class="search-box" placeholder="Search staff name or location...">
+        <input type="text" id="logSearch" class="search-box" placeholder="Search staff or location...">
 
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Staff</th>
+                        <th>Staff Name</th>
                         <th>Status</th>
-                        <th>Location</th>
-                        <th>Time</th>
-                        <th>Map</th>
+                        <th>Store/Location</th>
+                        <th>Timestamp</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="logsBody"></tbody>
@@ -145,12 +157,21 @@
 
         let attendanceChart;
 
-        window.focusMap = function(lat, lng, name) {
+        // Function to Update Map and Pin
+        window.focusMap = function(lat, lng, name, store, time, type) {
             const map = document.getElementById('main-map');
             const label = document.getElementById('map-label');
-            // Simplified faster URL
-            map.src = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
-            label.innerText = `Focus: ${name}`;
+            const extBtn = document.getElementById('external-map-btn');
+            
+            // Format Info for Google Maps
+            const info = encodeURIComponent(`${name} | ${store} | ${time}`);
+            map.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=es;z=16&output=embed`;
+            
+            // Update Label & External Link
+            label.innerHTML = `<span style="color:#fff">${name}</span> @ <span style="color:var(--accent)">${store}</span>`;
+            extBtn.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+            extBtn.style.display = 'flex';
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
@@ -159,14 +180,19 @@
             attendanceChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['In', 'Out'],
+                    labels: ['IN', 'OUT'],
                     datasets: [{
                         data: [0, 0],
                         backgroundColor: ['#238636', '#f85149'],
-                        borderWidth: 0
+                        borderWidth: 0,
+                        hoverOffset: 4
                     }]
                 },
-                options: { cutout: '75%', plugins: { legend: { display: false } } }
+                options: { 
+                    cutout: '70%', 
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } } 
+                }
             });
         }
 
@@ -195,16 +221,18 @@
 
                     const staffName = log.name || log.email.split('@')[0];
                     const ts = log.timestamp ? log.timestamp.toDate() : new Date();
-                    const timeDisp = ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const dateStr = ts.toLocaleDateString();
+                    const timeStr = ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const location = log.locationName || 'Field Location';
 
                     logsBody.innerHTML += `
                         <tr>
                             <td><strong>${staffName}</strong></td>
-                            <td><span class="status-tag ${statusClass}">${log.type}</span></td>
-                            <td><small>${log.locationName || 'Unmarked'}</small></td>
-                            <td style="color:var(--accent)">${timeDisp}</td>
+                            <td><span class="status-tag ${statusClass}">${log.type.toUpperCase()}</span></td>
+                            <td><small>${location}</small></td>
+                            <td><div style="font-size:0.8rem">${dateStr}</div><div style="font-size:0.7rem; color:var(--accent)">${timeStr}</div></td>
                             <td>
-                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}')" style="background:none; border:1px solid var(--accent); color:var(--accent); border-radius:4px; font-size:0.6rem; cursor:pointer; padding:2px 5px;">VIEW</button>` : '--'}
+                                ${log.latitude ? `<button onclick="focusMap(${log.latitude}, ${log.longitude}, '${staffName}', '${location}', '${timeStr}', '${log.type}')" style="background:var(--accent); border:none; color:white; border-radius:4px; font-size:0.65rem; cursor:pointer; padding:5px 10px; font-weight:bold;">TRACK</button>` : '--'}
                             </td>
                         </tr>
                     `;
