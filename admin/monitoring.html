@@ -159,8 +159,11 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Inalis na si Arem sa listahan
-        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta"];
+        // CONFIG: Siniguradong kasama ang email at name ni Arem sa bawal i-count
+        const adminExclusion = [
+            "Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta",
+            "Arem Gonzales", "arem.gonzales@gmail.com"
+        ];
         const DAILY_TARGET = 6;
 
         const firebaseConfig = {
@@ -179,7 +182,6 @@
         let unsubscribeStaff = null;
         let firstLoad = true;
         
-        // Dito natin ise-save ang email -> name mapping
         let staffRegistry = {}; 
         let masterStaffList = [];
         let currentLogs = [];
@@ -266,9 +268,14 @@
             let activeStaff = {}; 
 
             currentLogs.forEach(log => {
-                // ETO ANG UPDATE: Kung email ang nasa field, i-convert sa Full Name
                 let rawName = log.name || log.staffName || log.userName || log.email || "Unknown Staff";
-                let staffName = staffRegistry[rawName] || rawName; // Gamitin ang registry kung available
+                let staffEmail = log.email || "";
+                let staffName = staffRegistry[rawName] || rawName;
+
+                // FIX: I-skip agad si Arem sa listahan at sa count
+                if (adminExclusion.includes(staffName) || adminExclusion.includes(staffEmail)) {
+                    return; 
+                }
 
                 const store = log.locationName || log.storeName || log.branch || "---";
                 const statusText = log.type || log.status || "Activity";
@@ -294,13 +301,14 @@
                         </tr>`;
                 }
 
-                // Bilangin ang visits
                 if(statusText === "Check In" || statusText === "In" || statusText === "IN") {
-                    activeStaff[staffName] = (activeStaff[staffName] || 0) + 1;
+                    if (staffName !== "Unknown Staff") {
+                        activeStaff[staffName] = (activeStaff[staffName] || 0) + 1;
+                    }
                 }
             });
 
-            const presentList = Object.keys(activeStaff).filter(n => !adminExclusion.includes(n) && n !== "Unknown Staff");
+            const presentList = Object.keys(activeStaff);
             
             attendanceChart.data.labels = presentList;
             attendanceChart.data.datasets[0].data = presentList.map(name => activeStaff[name]);
@@ -336,20 +344,19 @@
             const startOfDay = new Date(selectedDate.setHours(0,0,0,0));
             const endOfDay = new Date(selectedDate.setHours(23,59,59,999));
 
-            // Sync with staff_members collection
             unsubscribeStaff = onSnapshot(collection(db, "staff_members"), (staffSnapshot) => {
                 masterStaffList = [];
-                staffRegistry = {}; // Reset registry
+                staffRegistry = {}; 
                 
                 staffSnapshot.forEach(doc => {
                     const data = doc.data();
                     const name = data.name || data.staffName || data.userName;
                     const email = data.email;
 
-                    // I-link ang email sa pangalan para sa mapping
                     if (email && name) staffRegistry[email] = name;
                     
-                    if (name && !adminExclusion.includes(name) && name !== "Arem") {
+                    // FIX: Filter out Arem even from the master list (No Reported Activity list)
+                    if (name && !adminExclusion.includes(name) && !adminExclusion.includes(email)) {
                          masterStaffList.push(name);
                     }
                 });
@@ -370,7 +377,7 @@
                 });
 
                 if (currentLogs.length > 0 && firstLoad) {
-                    const latest = currentLogs.find(l => l.latitude);
+                    const latest = currentLogs.find(l => l.latitude && !adminExclusion.includes(l.name) && !adminExclusion.includes(l.email));
                     if (latest) {
                         const ts = latest.timestamp.toDate();
                         const raw = latest.name || latest.staffName || latest.email || "Staff";
