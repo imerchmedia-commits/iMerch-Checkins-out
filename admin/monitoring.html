@@ -201,10 +201,9 @@
             signOut(auth).then(() => window.location.href = "../index.html");
         });
 
-        // Updated window.focusMap function to handle labels
         window.focusMap = function(lat, lng, details) {
             const map = document.getElementById('main-map');
-            const query = encodeURIComponent(details || "Check-in Location");
+            const query = encodeURIComponent(details || "Location");
             map.src = `https://maps.google.com/maps?q=${lat},${lng}(${query})&z=15&output=embed`;
         };
 
@@ -252,10 +251,14 @@
             let activeStaff = {}; 
 
             currentLogs.forEach(log => {
-                let email = log.email || "---";
-                let staffName = log.name || staffRegistry[email] || "Unknown Staff";
+                let rawEmail = log.email || "---";
+                let email = rawEmail.toLowerCase();
+                
+                // Smart Name Selection with Fallback to avoid "Unknown Staff"
+                let fallbackName = rawEmail.includes('@') ? rawEmail.split('@')[0] : rawEmail;
+                let staffName = log.name || staffRegistry[email] || staffRegistry[rawEmail] || fallbackName;
 
-                if (adminExclusion.includes(staffName) || adminExclusion.includes(email)) return; 
+                if (adminExclusion.includes(staffName) || adminExclusion.includes(email) || adminExclusion.includes(rawEmail)) return; 
 
                 const store = log.locationName || log.storeName || log.branch || "---";
                 const statusText = log.type || log.status || "Activity";
@@ -266,14 +269,13 @@
                     const timeStr = ts.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
                     const statusClass = (statusText.toLowerCase().includes("in")) ? "in" : "out";
 
-                    // Custom marker label for the map
                     const mapLabel = `${staffName} | ${dateStr} ${timeStr} | ${store}`;
 
                     logsBody.innerHTML += `
                         <tr>
                             <td>
                                 <div class="staff-info">
-                                    <span class="email-top">${email}</span>
+                                    <span class="email-top">${rawEmail}</span>
                                     <span class="full-name">${staffName}</span>
                                 </div>
                             </td>
@@ -324,7 +326,7 @@
                 staffSnapshot.forEach(doc => {
                     const data = doc.data();
                     const name = data.name || data.staffName;
-                    const email = data.email;
+                    const email = (data.email || "").toLowerCase();
                     if (email) staffRegistry[email] = name;
                     if (name && !adminExclusion.includes(name) && !adminExclusion.includes(email)) {
                         if(!masterStaffList.includes(name)) masterStaffList.push(name);
@@ -346,7 +348,7 @@
                     const latest = currentLogs.find(l => l.latitude && !adminExclusion.includes(l.name));
                     if (latest) {
                         const ts = latest.timestamp ? latest.timestamp.toDate() : new Date();
-                        const lbl = `${latest.name} | ${ts.toLocaleTimeString()} | ${latest.locationName || latest.branch || 'Store'}`;
+                        const lbl = `${latest.name || 'Staff'} | ${ts.toLocaleTimeString()} | ${latest.locationName || latest.branch || 'Store'}`;
                         focusMap(latest.latitude, latest.longitude, lbl);
                     }
                     firstLoad = false;
