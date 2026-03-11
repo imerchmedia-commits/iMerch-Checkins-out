@@ -10,125 +10,117 @@
         :root { 
             --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #58a6ff; 
             --green: #238636; --border: #30363d; --red: #f85149; --header: #010409;
-            --secondary-text: #8b949e; --gold: #f2cc60;
+            --secondary-text: #8b949e; --gold: #f2cc60; --table-hover: rgba(88, 166, 255, 0.05);
+        }
+
+        body.light-mode {
+            --bg: #f6f8fa; --card: #ffffff; --text: #24292f; --accent: #0969da;
+            --green: #1a7f37; --border: #d0d7de; --red: #cf222e; --header: #ffffff;
+            --secondary-text: #57606a; --table-hover: rgba(9, 105, 218, 0.05);
         }
         
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; transition: all 0.3s ease; }
         
-        /* Glassmorphism Navbar */
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: rgba(1, 4, 9, 0.8); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; sticky: top; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--header); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .logo-section { display: flex; align-items: center; gap: 10px; }
-        .logo-img { width: 32px; height: 32px; filter: drop-shadow(0 0 5px var(--accent)); }
+        .logo-img { width: 32px; height: 32px; }
 
-        /* KPI Stats */
         .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 15px; }
-        .stat-box { background: var(--card); padding: 15px; border-radius: 10px; border: 1px solid var(--border); position: relative; overflow: hidden; }
-        .stat-box::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--accent); }
-        .stat-val { font-size: 1.8rem; font-weight: 800; display: block; color: #fff; }
+        .stat-box { background: var(--card); padding: 15px; border-radius: 10px; border: 1px solid var(--border); border-left: 4px solid var(--accent); }
+        .stat-val { font-size: 1.8rem; font-weight: 800; display: block; }
         .stat-label { font-size: 0.6rem; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Main Grid */
         .dashboard-grid { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 15px; margin-bottom: 15px; }
         @media (max-width: 1024px) { .dashboard-grid { grid-template-columns: 1fr; } }
 
-        .info-card { background: var(--card); padding: 18px; border-radius: 12px; border: 1px solid var(--border); }
-        .card-title { font-size: 0.75rem; font-weight: 700; color: var(--accent); margin-bottom: 15px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+        .info-card { background: var(--card); padding: 18px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 15px; }
+        .card-title { font-size: 0.75rem; font-weight: 700; color: var(--accent); text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; }
         
-        /* Map Fix */
-        .map-container { width: 100%; height: 380px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); background: #000; position: relative; }
-        iframe { width: 100%; height: 100%; border: 0; filter: contrast(1.1) brightness(0.9); }
+        .map-container { width: 100%; height: 380px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); background: #000; }
+        iframe { width: 100%; height: 100%; border: 0; }
 
-        /* Tally and Chart */
-        .summary-container { display: flex; flex-direction: column; gap: 15px; }
-        .chart-box { height: 180px; width: 100%; }
-        .user-list { max-height: 200px; overflow-y: auto; padding-right: 5px; }
-        .user-list::-webkit-scrollbar { width: 4px; }
-        .user-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .chart-box { height: 160px; width: 100%; margin-top: 5px; }
+        .user-list { max-height: 180px; overflow-y: auto; }
+        .user-summary-item { margin-bottom: 8px; padding: 8px; border-radius: 6px; background: rgba(0,0,0,0.05); }
+        .progress-bar { width: 100%; background: var(--border); height: 6px; border-radius: 10px; margin-top: 4px; }
+        .progress-fill { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
 
-        .user-summary-item { margin-bottom: 10px; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 6px; }
-        .progress-bar { width: 100%; background: #000; height: 6px; border-radius: 10px; margin-top: 5px; }
-        .progress-fill { height: 100%; border-radius: 10px; transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-
-        /* Modern Table */
-        .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        th { background: rgba(0,0,0,0.4); padding: 12px; text-align: left; color: var(--secondary-text); font-size: 0.65rem; letter-spacing: 1px; }
-        td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
-        .row-hover:hover { background: rgba(88, 166, 255, 0.05); }
-
-        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: 800; font-size: 0.65rem; text-transform: uppercase; }
-        .btn-view { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 5px 10px; border-radius: 5px; cursor: pointer; transition: 0.3s; font-size: 0.65rem; font-weight: 700; }
-        .btn-view:hover { background: var(--accent); color: #fff; }
-
-        .search-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        input { background: var(--header); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; font-size: 0.8rem; outline: none; }
-        input:focus { border-color: var(--accent); }
+        .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(0,0,0,0.05); padding: 12px; text-align: left; color: var(--secondary-text); font-size: 0.65rem; }
+        td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.8rem; text-align: left; }
         
-        #loading-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
-        .loader { width: 48px; height: 48px; border: 5px solid var(--border); border-bottom-color: var(--accent); border-radius: 50%; animation: rotation 1s linear infinite; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* Fixed Column Widths */
+        .col-personnel { width: 25%; }
+        .col-activity { width: 15%; }
+        .col-location { width: 35%; }
+        .col-time { width: 15%; }
+        .col-action { width: 10%; text-align: center; }
+
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: 800; font-size: 0.65rem; }
+        .btn-view { background: var(--accent); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.65rem; font-weight: bold; }
+        
+        .btn-theme { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
+
+        #sync-indicator { font-size: 0.6rem; color: var(--green); margin-left: 10px; display: none; }
     </style>
 </head>
 <body>
-
-<div id="loading-overlay">
-    <div class="loader"></div>
-    <p style="margin-top: 15px; font-size: 0.8rem; letter-spacing: 2px; color: var(--secondary-text);">IMERCH SECURE SYNC</p>
-</div>
 
 <nav class="navbar">
     <div class="logo-section">
         <img src="im.png" class="logo-img">
         <div>
-            <div style="font-weight:900; font-size:0.9rem; letter-spacing:1px;">IMERCH CENTRAL</div>
-            <div style="font-size:0.6rem; color:var(--green); font-weight:bold;">● LIVE MONITORING</div>
+            <div style="font-weight:900; font-size:0.9rem;">IMERCH CENTRAL <span id="sync-indicator">● SYNCING</span></div>
+            <div style="font-size:0.6rem; color:var(--secondary-text);">ADMIN EXECUTIVE SUITE</div>
         </div>
     </div>
     <div>
-        <button id="logoutBtn" style="background:var(--red); color:white; border:none; padding:8px 15px; border-radius:6px; font-weight:800; cursor:pointer; font-size:0.7rem;">SIGNOUT</button>
+        <button class="btn-theme" onclick="document.body.classList.toggle('light-mode')">🌓 THEME</button>
+        <button id="logoutBtn" style="background:var(--red); color:white; border:none; padding:8px 15px; border-radius:6px; font-weight:bold; cursor:pointer;">SIGNOUT</button>
     </div>
 </nav>
 
 <div class="stats-row">
-    <div class="stat-box"><span class="stat-label">Field Force</span><span class="stat-val" id="presentCount">0</span></div>
-    <div class="stat-box"><span class="stat-label">Total Logs Today</span><span class="stat-val" id="totalLogs" style="color:var(--accent)">0</span></div>
-    <div class="stat-box"><span class="stat-label">Anniversary Countdown</span><span class="stat-val" style="color:var(--gold); font-size:1.2rem;">17 YEARS</span></div>
-</div>
-
-<div class="search-row">
-    <input type="date" id="dateFilter">
-    <input type="text" id="logSearch" placeholder="Filter staff or branch name..." style="flex-grow:1;">
+    <div class="stat-box"><span class="stat-label">Active Staff</span><span class="stat-val" id="presentCount">0</span></div>
+    <div class="stat-box"><span class="stat-label">Daily Volume</span><span class="stat-val" id="totalLogs" style="color:var(--accent)">0</span></div>
+    <div class="stat-box"><span class="stat-label">System State</span><span class="stat-val" style="color:var(--green); font-size:1.2rem;">OPERATIONAL</span></div>
 </div>
 
 <div class="dashboard-grid">
     <div class="info-card">
-        <div class="card-title">🌐 REAL-TIME FIELD GEOLOCATION <span id="activeUser" style="color:var(--secondary-text); margin-left:auto; font-weight:normal;"></span></div>
+        <div class="card-title">📍 GEOLOCATION MONITORING <span id="activeUser" style="text-transform:none; font-weight:normal; opacity:0.7;"></span></div>
         <div class="map-container">
-            <iframe id="main-map" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d15448.4!2d120.98!3d14.58!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sph!4v1700000000000"></iframe>
+            <iframe id="main-map" src="about:blank"></iframe>
         </div>
     </div>
     
-    <div class="info-card summary-container">
+    <div class="info-card">
         <div>
-            <div class="card-title">📈 ACTIVITY VOLUME</div>
-            <div class="chart-box"><canvas id="activityChart"></canvas></div>
-        </div>
-        <div style="border-top: 1px solid var(--border); pt-15px;">
-            <div class="card-title">🏆 STAFF PERFORMANCE</div>
+            <div class="card-title">🏆 PERFORMANCE TALLY</div>
             <div id="summaryList" class="user-list"></div>
         </div>
+        <div style="border-top:1px solid var(--border); padding-top:10px;">
+            <div class="card-title">📈 WEEKLY TREND (TICKETS)</div>
+            <div class="chart-box"><canvas id="weeklyChart"></canvas></div>
+        </div>
     </div>
+</div>
+
+<div style="margin-bottom:15px; display:flex; gap:10px;">
+    <input type="date" id="dateFilter" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:8px;">
+    <input type="text" id="logSearch" placeholder="Search personnel or location..." style="flex-grow:1; background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:8px;">
 </div>
 
 <div class="table-container">
     <table>
         <thead>
             <tr>
-                <th>PERSONNEL</th>
-                <th>ACTIVITY</th>
-                <th>BRANCH / LOCATION</th>
-                <th>TIMESTAMP</th>
-                <th>TRACKING</th>
+                <th class="col-personnel">PERSONNEL</th>
+                <th class="col-activity">ACTIVITY</th>
+                <th class="col-location">LOCATION</th>
+                <th class="col-time">TIME</th>
+                <th class="col-action">ACTION</th>
             </tr>
         </thead>
         <tbody id="logsBody"></tbody>
@@ -150,25 +142,26 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+    const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta"];
 
-    let activityChart;
+    let weeklyChart;
     const dateFilter = document.getElementById('dateFilter');
     dateFilter.valueAsDate = new Date();
 
-    // Initialize Bar Chart
-    function initChart() {
-        const ctx = document.getElementById('activityChart').getContext('2d');
-        activityChart = new Chart(ctx, {
-            type: 'bar',
+    function initWeeklyChart() {
+        const ctx = document.getElementById('weeklyChart').getContext('2d');
+        weeklyChart = new Chart(ctx, {
+            type: 'line',
             data: {
-                labels: ['Logs'],
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                 datasets: [{
-                    label: 'Check-ins',
-                    data: [0],
-                    backgroundColor: '#58a6ff',
-                    borderRadius: 5,
-                    barThickness: 40
+                    label: 'Ticket Volume',
+                    data: [280, 110, 80, 420, 310, 260, 290], // Demo data based on your screenshot
+                    borderColor: '#58a6ff',
+                    backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
                 }]
             },
             options: {
@@ -176,25 +169,22 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: '#30363d' }, ticks: { color: '#8b949e', font: { size: 10 } } },
-                    x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 10 } } }
+                    x: { display: true, grid: { display: false }, ticks: { color: '#8b949e', font: { size: 9 } } },
+                    y: { display: false }
                 }
             }
         });
     }
 
-    // FIX: Optimized Map URL to avoid "Couldn't load"
     window.focusMap = (lat, lng, name) => {
-        const mapUrl = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed&t=m`;
-        document.getElementById('main-map').src = mapUrl;
-        document.getElementById('activeUser').innerText = `| Personnel: ${name.toUpperCase()}`;
-        window.scrollTo({ top: 150, behavior: 'smooth' });
+        const url = `https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
+        document.getElementById('main-map').src = url;
+        document.getElementById('activeUser').innerText = `| Tracking: ${name}`;
     };
 
     onAuthStateChanged(auth, user => {
         if (!user) window.location.href = "../index.html";
-        document.getElementById('loading-overlay').style.display = 'none';
-        initChart();
+        initWeeklyChart();
         startSync();
     });
 
@@ -212,12 +202,16 @@
         onSnapshot(q, snapshot => {
             const body = document.getElementById('logsBody');
             const summary = document.getElementById('summaryList');
-            const searchTerm = document.getElementById('logSearch').value.toLowerCase();
+            const indicator = document.getElementById('sync-indicator');
+            const search = document.getElementById('logSearch').value.toLowerCase();
             
+            indicator.style.display = 'inline';
+            setTimeout(() => indicator.style.display = 'none', 1000);
+
             body.innerHTML = "";
             summary.innerHTML = "";
             let tally = {};
-            let totalIn = 0;
+            let count = 0;
 
             snapshot.forEach(doc => {
                 const data = doc.data();
@@ -225,46 +219,35 @@
                 if (adminExclusion.includes(name)) return;
 
                 const store = data.locationName || data.branch || "N/A";
-                const type = data.type || "Check In";
-                const time = data.timestamp?.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', hour12: true});
+                const type = data.type || "Log";
+                // FIX: 12-Hour Format
+                const time = data.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-                if (name.toLowerCase().includes(searchTerm) || store.toLowerCase().includes(searchTerm)) {
+                if (name.toLowerCase().includes(search) || store.toLowerCase().includes(search)) {
                     body.innerHTML += `
-                        <tr class="row-hover">
-                            <td><div style="font-weight:800;">${name.toUpperCase()}</div><div style="font-size:0.6rem; color:var(--secondary-text)">Field Personnel</div></td>
-                            <td><span class="status-badge" style="background:${type.includes('In') ? 'rgba(35, 134, 54, 0.2)' : 'rgba(248, 81, 73, 0.2)'}; color:${type.includes('In') ? 'var(--green)' : 'var(--red)'}">${type}</span></td>
-                            <td><div style="color:#fff;">${store}</div></td>
-                            <td style="color:var(--accent); font-weight:700;">${time}</td>
-                            <td><button class="btn-view" onclick="focusMap(${data.latitude}, ${data.longitude}, '${name}')">LOCATE</button></td>
+                        <tr>
+                            <td class="col-personnel"><strong>${name.toUpperCase()}</strong></td>
+                            <td class="col-activity"><span class="status-badge" style="color:${type.includes('In') ? 'var(--green)' : 'var(--red)'}">${type}</span></td>
+                            <td class="col-location">${store}</td>
+                            <td class="col-time" style="color:var(--accent); font-weight:bold;">${time}</td>
+                            <td class="col-action"><button class="btn-view" onclick="focusMap(${data.latitude}, ${data.longitude}, '${name}')">VIEW</button></td>
                         </tr>
                     `;
                 }
-
-                if (type.includes('In')) {
-                    tally[name] = (tally[name] || 0) + 1;
-                    totalIn++;
-                }
+                if (type.includes('In')) { tally[name] = (tally[name] || 0) + 1; count++; }
             });
 
-            document.getElementById('totalLogs').innerText = totalIn;
+            document.getElementById('totalLogs').innerText = count;
             document.getElementById('presentCount').innerText = Object.keys(tally).length;
 
-            // Bar Chart Update
-            activityChart.data.datasets[0].data = [totalIn];
-            activityChart.update();
-
-            // Render Tally with Wow Factor
-            Object.entries(tally).sort((a,b) => b[1] - a[1]).forEach(([name, count]) => {
-                const perc = Math.min((count / 6) * 100, 100);
-                const barColor = perc >= 100 ? 'var(--green)' : (perc >= 50 ? var(--accent) : var(--red));
+            Object.entries(tally).sort((a,b) => b[1] - a[1]).forEach(([name, c]) => {
+                const perc = Math.min((c / 6) * 100, 100);
                 summary.innerHTML += `
                     <div class="user-summary-item">
-                        <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:4px;">
-                            <span>${name}</span><span style="color:var(--accent)">${count}/6</span>
+                        <div style="display:flex; justify-content:space-between; font-size:0.65rem; font-weight:bold;">
+                            <span>${name}</span><span>${c}/6</span>
                         </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width:${perc}%; background:${perc >= 100 ? 'var(--green)' : 'var(--accent)'}; box-shadow: 0 0 10px ${perc >= 100 ? 'var(--green)' : 'var(--accent)'}"></div>
-                        </div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${perc}%; background:var(--accent)"></div></div>
                     </div>
                 `;
             });
