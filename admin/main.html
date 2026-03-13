@@ -10,53 +10,59 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html, body { height: 100vh; width: 100vw; background: #121212; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
 
-        /* LOGIN BOX */
+        /* --- LOGIN OVERLAY --- */
         #login-overlay {
             position: fixed; inset: 0; background: #121212;
-            display: flex; justify-content: center; align-items: center; z-index: 9999;
+            display: flex; justify-content: center; align-items: center; z-index: 10000;
         }
         .login-box {
             background: #1a1a1a; padding: 40px; border-radius: 12px; width: 350px; 
             text-align: center; border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
         .login-box img { width: 80px; margin-bottom: 20px; }
+        .login-box h2 { color: #ffcc00; margin-bottom: 20px; font-size: 1.1rem; letter-spacing: 1px; }
         .login-box input {
-            width: 100%; padding: 12px; margin-bottom: 10px; background: #252525;
+            width: 100%; padding: 12px; margin-bottom: 12px; background: #252525;
             border: 1px solid #444; color: white; border-radius: 6px; outline: none;
         }
-        /* Remember Me Styling */
-        .remember-me {
-            display: flex; align-items: center; justify-content: flex-start;
-            gap: 8px; color: #aaa; font-size: 13px; margin-bottom: 20px; cursor: pointer;
+        
+        /* Remember Me UI */
+        .remember-container {
+            display: flex; align-items: center; gap: 8px; color: #888; 
+            font-size: 13px; margin-bottom: 20px; cursor: pointer; justify-content: flex-start;
         }
-        .remember-me input { width: auto; margin: 0; cursor: pointer; }
+        .remember-container input { width: auto; margin: 0; cursor: pointer; }
 
         .login-box button {
-            width: 100%; padding: 12px; background: #ffcc00; border: none; font-weight: bold; cursor: pointer; border-radius: 6px;
+            width: 100%; padding: 12px; background: #ffcc00; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; transition: 0.3s;
         }
+        .login-box button:hover { background: #e6b800; }
 
-        /* DASHBOARD LAYOUT */
+        /* --- DASHBOARD WRAPPER --- */
         #main-wrapper { display: none; height: 100vh; width: 100vw; }
-        #sidebar { width: 260px; background: #1a1a1a; border-right: 1px solid #333; display: flex; flex-direction: column; height: 100vh; }
+        
+        #sidebar { width: 260px; background: #1a1a1a; border-right: 1px solid #333; display: flex; flex-direction: column; flex-shrink: 0; }
         .brand { padding: 25px; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 10px; }
         .brand img { width: 30px; }
-        .brand span { font-weight: bold; color: #ffcc00; }
+        .brand span { font-weight: bold; color: #ffcc00; font-size: 1.1rem; }
         
         .nav-item { padding: 15px 25px; cursor: pointer; color: #aaa; transition: 0.3s; display: flex; align-items: center; }
         .nav-item:hover, .nav-item.active { background: #252525; color: #ffcc00; border-left: 4px solid #ffcc00; }
-        .nav-item i { margin-right: 15px; width: 20px; }
+        .nav-item i { margin-right: 15px; width: 20px; text-align: center; }
 
         #content-area { flex-grow: 1; height: 100vh; display: flex; flex-direction: column; background: #000; }
-        .top-bar { height: 60px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 25px; color: #eee; justify-content: space-between; }
+        .top-bar { height: 60px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; align-items: center; padding: 0 25px; color: #eee; font-weight: 500; }
 
-        /* IFRAME CONTAINER */
-        #viewer-container { flex-grow: 1; position: relative; width: 100%; background: #121212; }
-        iframe { width: 100%; height: 100%; border: none; background: white; opacity: 0; transition: opacity 0.5s; }
+        /* IFRAME & LOADING FIX */
+        #iframe-container { flex-grow: 1; position: relative; width: 100%; background: #121212; overflow: hidden; }
+        iframe { width: 100%; height: 100%; border: none; opacity: 0; transition: opacity 0.6s ease-in-out; }
         
         #loading-msg {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: #ffcc00; text-align: center; z-index: 1;
+            color: #ffcc00; text-align: center; font-size: 14px;
         }
+
+        .logout-btn { margin-top: auto; border-top: 1px solid #333; color: #ff4444 !important; }
     </style>
 </head>
 <body>
@@ -64,15 +70,16 @@
     <div id="login-overlay">
         <div class="login-box">
             <img src="https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/logo1.png">
-            <h2 style="color: #ffcc00; margin-bottom: 20px; font-size: 1rem;">IMERCH ADMIN</h2>
+            <h2>ADMIN PORTAL</h2>
             <input type="text" id="user" placeholder="Username">
             <input type="password" id="pass" placeholder="Password">
             
-            <label class="remember-me">
-                <input type="checkbox" id="remember"> Remember this device
+            <label class="remember-container">
+                <input type="checkbox" id="remember"> Remember this session
             </label>
 
-            <button onclick="doLogin()">ENTER SYSTEM</button>
+            <button onclick="doLogin()">SIGN IN</button>
+            <p id="err" style="color: red; font-size: 12px; margin-top: 10px; display: none;">Invalid credentials</p>
         </div>
     </div>
 
@@ -82,36 +89,36 @@
                 <img src="https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/logo1.png">
                 <span>IMERCH MEDIA</span>
             </div>
-            <div class="nav-item active" id="default-tab" onclick="go('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin', this)">
+            <div class="nav-item active" onclick="go('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin', this)">
                 <i class="fas fa-users-cog"></i> User Admin
             </div>
             <div class="nav-item" onclick="go('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/monitoring.html', this)">
                 <i class="fas fa-desktop"></i> Monitoring
             </div>
-            <div onclick="logout()" class="nav-item" style="margin-top: auto; border-top: 1px solid #333; color: #ff4444;">
-                <i class="fas fa-power-off"></i> Logout
+            <div onclick="logout()" class="nav-item logout-btn">
+                <i class="fas fa-power-off"></i> Logout System
             </div>
         </div>
         <div id="content-area">
-            <div class="top-bar">
-                <h3 id="title">User Admin</h3>
-                <span id="session-status" style="font-size: 10px; color: #555;">SECURE SESSION ACTIVE</span>
-            </div>
-            <div id="viewer-container">
-                <div id="loading-msg"><i class="fas fa-sync-alt fa-spin"></i> Initializing Secure Portal...</div>
+            <div class="top-bar"><h3 id="title">User Admin Dashboard</h3></div>
+            <div id="iframe-container">
+                <div id="loading-msg">
+                    <i class="fas fa-circle-notch fa-spin"></i><br><br>
+                    <span>Synchronizing Secure Connection...</span>
+                </div>
                 <iframe id="ifr" src=""></iframe>
             </div>
         </div>
     </div>
 
     <script>
+        // CREDENTIALS
         const AUTH_U = "ron.sarmenta@gmail.com";
         const AUTH_P = "Ron2026@";
 
-        // Check if session exists on start
+        // Check if session is remembered
         window.onload = function() {
-            const savedSession = localStorage.getItem('imerch_auth_key');
-            if (savedSession === 'active_admin') {
+            if (localStorage.getItem('imerch_remembered') === 'true' || sessionStorage.getItem('imerch_active') === 'true') {
                 showDashboard();
             }
         };
@@ -119,38 +126,41 @@
         function doLogin() {
             const u = document.getElementById('user').value;
             const p = document.getElementById('pass').value;
-            const remember = document.getElementById('remember').checked;
+            const rem = document.getElementById('remember').checked;
 
-            if(u === AUTH_U && p === AUTH_P) {
-                if(remember) {
-                    localStorage.setItem('imerch_auth_key', 'active_admin');
-                } else {
-                    sessionStorage.setItem('imerch_auth_key', 'active_admin');
-                }
+            if (u === AUTH_U && p === AUTH_P) {
+                if (rem) localStorage.setItem('imerch_remembered', 'true');
+                sessionStorage.setItem('imerch_active', 'true');
                 showDashboard();
             } else {
-                alert("Access Denied");
+                document.getElementById('err').style.display = 'block';
             }
         }
 
         function showDashboard() {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('main-wrapper').style.display = 'flex';
-            // Start with the default portal
-            go('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin', document.getElementById('default-tab'));
+            // Start loading the first page immediately
+            go('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin', document.querySelector('.nav-item'));
         }
 
         function go(url, el) {
             const ifr = document.getElementById('ifr');
             const loader = document.getElementById('loading-msg');
             
+            // Anti-Glitch: Itago muna ang lumang content
+            ifr.style.opacity = '0';
             loader.style.display = 'block';
-            ifr.style.opacity = '0'; 
+            
+            // I-load ang bagong URL
             ifr.src = url;
 
-            ifr.onload = () => {
-                loader.style.display = 'none';
-                ifr.style.opacity = '1';
+            // Ilitaw lang ang iframe kapag fully loaded na
+            ifr.onload = function() {
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    ifr.style.opacity = '1';
+                }, 500); // Konting delay para sure na render na ang content
             };
 
             document.getElementById('title').innerText = el.innerText;
@@ -159,8 +169,8 @@
         }
 
         function logout() {
-            localStorage.removeItem('imerch_auth_key');
-            sessionStorage.removeItem('imerch_auth_key');
+            localStorage.removeItem('imerch_remembered');
+            sessionStorage.removeItem('imerch_active');
             location.reload();
         }
     </script>
