@@ -5,15 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iMerch Admin Central</title>
     
-    <link rel="icon" type="image/x-icon" href="https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/logo1.png">
+    <link rel="icon" type="image/png" href="https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/logo1.png">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* CSS RESET PARA SA ANTI-GLITCH */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100%; width: 100%; background: #121212; overflow: hidden; }
-        
-        /* LOGIN OVERLAY */
+        html, body { height: 100%; width: 100%; background: #121212; font-family: 'Segoe UI', Arial, sans-serif; overflow: hidden; }
+
+        /* --- LOGIN OVERLAY --- */
         #login-overlay {
             position: fixed; inset: 0; background: #121212;
             display: flex; justify-content: center; align-items: center; z-index: 10000;
@@ -21,38 +20,44 @@
         .login-box {
             background: #1a1a1a; padding: 40px; border-radius: 12px; 
             width: 360px; text-align: center; border: 1px solid #333;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
         .login-box img { width: 100px; margin-bottom: 20px; }
-        .login-box h2 { color: #ffcc00; margin-bottom: 25px; font-size: 1.2rem; }
+        .login-box h2 { color: #ffcc00; margin-bottom: 25px; font-size: 1.2rem; letter-spacing: 1px; }
         .login-box input {
-            width: 100%; padding: 12px; margin-bottom: 15px;
-            background: #252525; border: 1px solid #444; color: white; border-radius: 6px;
+            width: 100%; padding: 14px; margin-bottom: 15px;
+            background: #252525; border: 1px solid #444; color: white; border-radius: 6px; outline: none;
         }
         .login-box button {
-            width: 100%; padding: 12px; background: #ffcc00; border: none;
-            color: black; font-weight: bold; cursor: pointer; border-radius: 6px;
+            width: 100%; padding: 14px; background: #ffcc00; border: none;
+            color: black; font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 1rem;
         }
 
-        /* MAIN WRAPPER - FLEXBOX DESIGN */
-        #main-wrapper { display: none; height: 100vh; width: 100vw; flex-direction: row; }
+        /* --- DASHBOARD STRUCTURE --- */
+        #main-wrapper { display: none; height: 100vh; width: 100vw; }
         
-        /* SIDEBAR */
-        #sidebar { width: 260px; background: #1a1a1a; flex-shrink: 0; border-right: 1px solid #333; display: flex; flex-direction: column; }
-        .brand { padding: 25px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #333; }
+        #sidebar { width: 260px; background: #1a1a1a; border-right: 1px solid #333; display: flex; flex-direction: column; flex-shrink: 0; }
+        .brand { padding: 25px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #333; }
         .brand img { width: 30px; }
-        .brand span { font-weight: bold; color: #ffcc00; }
+        .brand span { font-weight: bold; color: #ffcc00; font-size: 1.1rem; }
         
-        .nav-item { padding: 15px 25px; cursor: pointer; display: flex; align-items: center; color: #aaa; transition: 0.2s; }
+        .nav-item { padding: 15px 25px; cursor: pointer; display: flex; align-items: center; color: #aaa; transition: 0.3s; }
         .nav-item:hover { background: #222; color: #ffcc00; }
         .nav-item.active { background: #252525; color: #ffcc00; border-left: 4px solid #ffcc00; }
-        .nav-item i { margin-right: 15px; width: 20px; }
+        .nav-item i { margin-right: 15px; width: 20px; text-align: center; }
 
-        /* CONTENT AREA - IFRAME CONTAINER */
-        #content-area { flex-grow: 1; display: flex; flex-direction: column; background: #000; overflow: hidden; }
-        .top-bar { height: 55px; background: #1a1a1a; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid #333; }
+        /* --- CONTENT AREA --- */
+        #content-area { flex-grow: 1; display: flex; flex-direction: column; background: #000; position: relative; }
+        .top-bar { height: 60px; background: #1a1a1a; display: flex; align-items: center; padding: 0 25px; border-bottom: 1px solid #333; justify-content: space-between; }
         
-        /* IFRAME FIX - PARA WALANG WHITE FLASH */
-        #viewer { flex-grow: 1; width: 100%; height: 100%; border: none; background: #121212; }
+        /* Iframe & Loading Fix */
+        #iframe-container { position: relative; flex-grow: 1; width: 100%; height: 100%; background: #121212; }
+        #viewer { width: 100%; height: 100%; border: none; visibility: hidden; }
+        
+        #loader {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: #ffcc00; font-size: 14px; text-align: center;
+        }
 
         .logout-btn { margin-top: auto; border-top: 1px solid #333; color: #ff4444 !important; }
     </style>
@@ -82,56 +87,75 @@
                 <i class="fas fa-desktop"></i> Monitoring
             </div>
             <div class="nav-item logout-btn" onclick="logout()">
-                <i class="fas fa-power-off"></i> Logout
+                <i class="fas fa-power-off"></i> Sign Out
             </div>
         </div>
         <div id="content-area">
-            <div class="top-bar"><span id="current-title">User Admin Dashboard</span></div>
-            <iframe id="viewer" src="about:blank"></iframe>
+            <div class="top-bar"><span id="current-title" style="font-weight: 500;">User Admin Dashboard</span></div>
+            <div id="iframe-container">
+                <div id="loader"><i class="fas fa-circle-notch fa-spin"></i> Loading Portal...</div>
+                <iframe id="viewer" name="viewer" src=""></iframe>
+            </div>
         </div>
     </div>
 
     <script>
-        const ADMIN_USER = "ron.sarmenta@gmail.com";
-        const ADMIN_PASS = "Ron2026@"; // Palitan mo ito
+        // PALITAN MO ITO NG GUSTO MONG LOGIN PARA SA MAIN.HTML
+        const MAIN_USER = "ron.sarmenta@gmail.com";
+        const MAIN_PASS = "Ron2026@";
+
+        const overlay = document.getElementById('login-overlay');
+        const wrapper = document.getElementById('main-wrapper');
+        const viewer = document.getElementById('viewer');
+        const loader = document.getElementById('loader');
 
         function checkLogin() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
-            if(u === ADMIN_USER && p === ADMIN_PASS) {
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('main-wrapper').style.display = 'flex';
-                localStorage.setItem('imerch_auth', 'true');
-                // I-load lang ang iframe PAGKATAPOS ng login para iwas glitch
-                document.getElementById('viewer').src = 'https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin';
+            if(u === MAIN_USER && p === MAIN_PASS) {
+                sessionStorage.setItem('imerch_session', 'active');
+                initDashboard();
+            } else {
+                alert("Wrong credentials");
             }
         }
 
-        function changePage(url, el) {
-            const viewer = document.getElementById('viewer');
-            // Iwas "White Flash" glitch: Itago muna ang iframe bago mag-load ng bago
-            viewer.style.opacity = '0';
-            viewer.src = url;
-            viewer.onload = () => { viewer.style.opacity = '1'; };
+        function initDashboard() {
+            overlay.style.display = 'none';
+            wrapper.style.display = 'flex';
+            // Simulan ang loading ng unang page
+            loadIframe('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin');
+        }
 
+        function loadIframe(url) {
+            loader.style.display = 'block';
+            viewer.style.visibility = 'hidden';
+            viewer.src = url;
+            
+            viewer.onload = () => {
+                loader.style.display = 'none';
+                viewer.style.visibility = 'visible';
+            };
+        }
+
+        function changePage(url, el) {
             document.getElementById('current-title').innerText = el.innerText;
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             el.classList.add('active');
+            loadIframe(url);
         }
 
         function logout() {
-            localStorage.removeItem('imerch_auth');
+            sessionStorage.removeItem('imerch_session');
             location.reload();
         }
 
+        // Auto-check session on load
         window.onload = () => {
-            if(localStorage.getItem('imerch_auth') === 'true') {
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('main-wrapper').style.display = 'flex';
-                document.getElementById('viewer').src = 'https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin';
+            if(sessionStorage.getItem('imerch_session') === 'active') {
+                initDashboard();
             }
         }
     </script>
 </body>
 </html>
-
