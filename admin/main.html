@@ -4,105 +4,145 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iMerch Admin Central</title>
+    
+    <link rel="icon" type="image/png" href="https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/logo1.png">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: #121212; color: white; overflow: hidden; }
-        
-        /* LOGIN OVERLAY */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #121212; color: white; height: 100vh; overflow: hidden; }
+
+        /* --- LOGIN OVERLAY --- */
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #121212; display: flex; justify-content: center; align-items: center;
-            z-index: 9999;
+            z-index: 10000;
         }
         .login-box {
-            background: #1a1a1a; padding: 40px; border-radius: 8px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 350px; text-align: center;
+            background: #1a1a1a; padding: 40px; border-radius: 12px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.7); width: 360px; text-align: center;
             border: 1px solid #333;
         }
-        .login-box h2 { color: #ffcc00; margin-bottom: 25px; }
+        .login-box img {
+            width: 120px; margin-bottom: 20px; filter: drop-shadow(0 0 5px rgba(255,204,0,0.3));
+        }
+        .login-box h2 { color: #ffcc00; margin-bottom: 25px; font-size: 1.5rem; letter-spacing: 1px; }
         .login-box input {
-            width: 100%; padding: 12px; margin-bottom: 15px;
-            background: #252525; border: 1px solid #444; color: white; border-radius: 4px;
+            width: 100%; padding: 14px; margin-bottom: 15px;
+            background: #252525; border: 1px solid #444; color: white; border-radius: 6px;
+            outline: none; transition: 0.3s;
         }
+        .login-box input:focus { border-color: #ffcc00; box-shadow: 0 0 5px rgba(255,204,0,0.5); }
         .login-box button {
-            width: 100%; padding: 12px; background: #ffcc00; border: none;
-            color: black; font-weight: bold; cursor: pointer; border-radius: 4px;
+            width: 100%; padding: 14px; background: #ffcc00; border: none;
+            color: black; font-weight: bold; cursor: pointer; border-radius: 6px;
+            transition: 0.3s; font-size: 1rem;
         }
-        .login-box button:hover { background: #e6b800; }
+        .login-box button:hover { background: #e6b800; transform: translateY(-2px); }
+        #error-msg { color: #ff4444; font-size: 13px; margin-top: 10px; display: none; }
 
-        /* MAIN DASHBOARD (Hidden by default) */
-        #main-wrapper { display: flex; height: 100vh; visibility: hidden; }
+        /* --- MAIN DASHBOARD (Anti-Glitch) --- */
+        #main-wrapper { display: none; height: 100vh; width: 100%; }
         
         /* Sidebar */
-        #sidebar { width: 250px; background: #1a1a1a; display: flex; flex-direction: column; border-right: 1px solid #333; }
-        .brand { padding: 25px 20px; font-size: 1.2rem; font-weight: bold; color: #ffcc00; text-align: center; border-bottom: 1px solid #333; }
-        .nav-item { padding: 15px 20px; cursor: pointer; display: flex; align-items: center; color: #bbb; transition: 0.3s; }
+        #sidebar { width: 260px; background: #1a1a1a; display: flex; flex-direction: column; border-right: 1px solid #333; }
+        .brand { padding: 30px 20px; display: flex; align-items: center; justify-content: center; gap: 10px; border-bottom: 1px solid #333; }
+        .brand img { width: 35px; }
+        .brand span { font-weight: bold; font-size: 1.1rem; color: #ffcc00; letter-spacing: 1px; }
+        
+        .nav-group { margin-top: 20px; }
+        .nav-item { padding: 15px 25px; cursor: pointer; display: flex; align-items: center; color: #aaa; transition: 0.3s; font-weight: 500; }
         .nav-item:hover { background: #252525; color: #ffcc00; }
         .nav-item.active { background: #252525; color: #ffcc00; border-left: 5px solid #ffcc00; }
-        .nav-item i { margin-right: 15px; width: 20px; }
+        .nav-item i { margin-right: 15px; width: 20px; font-size: 1.1rem; }
 
-        /* Content */
-        #content-area { flex-grow: 1; display: flex; flex-direction: column; }
-        .top-bar { height: 60px; background: #1a1a1a; display: flex; align-items: center; padding: 0 20px; border-bottom: 1px solid #333; justify-content: space-between; }
+        /* Content Area */
+        #content-area { flex-grow: 1; display: flex; flex-direction: column; background: #000; }
+        .top-bar { height: 60px; background: #1a1a1a; display: flex; align-items: center; padding: 0 25px; border-bottom: 1px solid #333; justify-content: space-between; }
+        .top-bar h3 { font-size: 1rem; color: #eee; font-weight: 500; }
+        
         iframe { width: 100%; height: calc(100vh - 60px); border: none; background: white; }
+
+        .logout-btn { margin-top: auto; border-top: 1px solid #333; color: #ff4444 !important; }
+        .logout-btn:hover { background: #3d1a1a; }
     </style>
 </head>
 <body>
 
     <div id="login-overlay">
         <div class="login-box">
-            <h2>IMERCH ADMIN</h2>
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Password">
+            <img src="https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/logo1.png" alt="iMerch Logo">
+            <h2>ADMIN ACCESS</h2>
+            <input type="text" id="username" placeholder="Username" onkeypress="handleEnter(event)">
+            <input type="password" id="password" placeholder="Password" onkeypress="handleEnter(event)">
             <button onclick="checkLogin()">LOGIN</button>
-            <p id="error-msg" style="color: red; font-size: 12px; margin-top: 10px; display: none;">Invalid Credentials</p>
+            <p id="error-msg">Invalid credentials. Please try again.</p>
         </div>
     </div>
 
     <div id="main-wrapper">
         <div id="sidebar">
-            <div class="brand">IMERCH MEDIA</div>
-            <div class="nav-item active" onclick="changePage('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin', this)">
-                <i class="fas fa-users-cog"></i> User Admin
+            <div class="brand">
+                <img src="https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/logo1.png" alt="Logo">
+                <span>IMERCH MEDIA</span>
             </div>
-            <div class="nav-item" onclick="changePage('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/monitoring.html', this)">
-                <i class="fas fa-chart-line"></i> Monitoring
+            
+            <div class="nav-group">
+                <div class="nav-item active" onclick="changePage('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin', this)">
+                    <i class="fas fa-users-cog"></i> User Admin
+                </div>
+                <div class="nav-item" onclick="changePage('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/monitoring.html', this)">
+                    <i class="fas fa-desktop"></i> Monitoring
+                </div>
             </div>
-            <div class="nav-item" onclick="logout()" style="margin-top: auto; border-top: 1px solid #333;">
-                <i class="fas fa-sign-out-alt"></i> Logout
+
+            <div class="nav-item logout-btn" onclick="logout()">
+                <i class="fas fa-power-off"></i> Sign Out
             </div>
         </div>
 
         <div id="content-area">
             <div class="top-bar">
-                <span id="current-title">User Admin Dashboard</span>
-                <span style="font-size: 12px; color: #666;">Admin Mode</span>
+                <h3 id="current-title">User Admin Dashboard</h3>
+                <span style="font-size: 12px; color: #555;">v1.2.0 | Admin Central</span>
             </div>
             <iframe id="viewer" src="https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin"></iframe>
         </div>
     </div>
 
     <script>
-        // Palitan ang mga ito ng actual credentials mo sa portal
+        // CREDENTIALS - Palitan ayon sa gusto mo
         const ADMIN_USER = "ron.sarmenta@gmail.com"; 
         const ADMIN_PASS = "Ron2026@"; 
 
+        // LOGIN LOGIC
         function checkLogin() {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
             const error = document.getElementById('error-msg');
+            const overlay = document.getElementById('login-overlay');
+            const wrapper = document.getElementById('main-wrapper');
 
             if (user === ADMIN_USER && pass === ADMIN_PASS) {
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('main-wrapper').style.visibility = 'visible';
-                // I-save ang session para hindi laging nag-re-login (optional)
-                localStorage.setItem('imerch_admin_session', 'active');
+                overlay.style.display = 'none';
+                wrapper.style.display = 'flex'; // Gamit ay flex para hindi ma-glitch
+                localStorage.setItem('imerch_session', 'active');
             } else {
                 error.style.display = 'block';
+                // Shake effect on error (optional)
+                document.querySelector('.login-box').animate([
+                    { transform: 'translateX(-5px)' },
+                    { transform: 'translateX(5px)' }
+                ], { duration: 100, iterations: 3 });
             }
         }
 
+        // ENTER KEY HANDLER
+        function handleEnter(e) {
+            if (e.key === "Enter") checkLogin();
+        }
+
+        // PAGE CHANGER
         function changePage(url, el) {
             document.getElementById('viewer').src = url;
             document.getElementById('current-title').innerText = el.innerText;
@@ -110,16 +150,17 @@
             el.classList.add('active');
         }
 
+        // LOGOUT
         function logout() {
-            localStorage.removeItem('imerch_admin_session');
+            localStorage.removeItem('imerch_session');
             location.reload();
         }
 
-        // Auto-login check
+        // ANTI-GLITCH INITIALIZER
         window.onload = function() {
-            if (localStorage.getItem('imerch_admin_session') === 'active') {
+            if (localStorage.getItem('imerch_session') === 'active') {
                 document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('main-wrapper').style.visibility = 'visible';
+                document.getElementById('main-wrapper').style.display = 'flex';
             }
         }
     </script>
