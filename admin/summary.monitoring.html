@@ -14,6 +14,7 @@
         :root { --primary: #d90429; --bg: #f8f9fa; }
         body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
         
+        /* White Navbar with Red Lining */
         .navbar { 
             background: white !important; 
             border-bottom: 3px solid var(--primary); 
@@ -58,7 +59,7 @@
         .table-container { max-height: 450px; overflow-y: auto; }
         .staff-name-cell { font-weight: 700; color: #334155; }
         .geo-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.75rem; }
-        .sync-time { font-size: 0.65rem; color: #94a3b8; font-weight: 600; }
+        .sync-info { font-size: 0.65rem; color: #94a3b8; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -88,7 +89,7 @@
             <div class="live-badge" id="liveIndicator" style="display: none;">
                 <span class="pulse-live"></span> Live: <span id="liveLogCount" class="ms-1">0</span>
             </div>
-            <div id="lastSync" class="sync-time"></div>
+            <div id="syncStatus" class="sync-info"></div>
         </div>
         <button class="btn btn-outline-secondary btn-sm border-0" onclick="logout()" title="Logout">
             <i class="fas fa-sign-out-alt"></i>
@@ -107,27 +108,9 @@
         </div>
 
         <div class="row g-4 mb-2">
-            <div class="col-md-4">
-                <div class="glass-card text-center">
-                    <i class="fas fa-clipboard-list mb-2" style="color: #64748b;"></i>
-                    <div class="stat-label">Total Store Logs</div>
-                    <div id="totalStores" class="stat-value">0</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="glass-card text-center">
-                    <i class="fas fa-users mb-2" style="color: #64748b;"></i>
-                    <div class="stat-label">Active Field Staff</div>
-                    <div id="activeStaff" class="stat-value">0</div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="glass-card text-center">
-                    <i class="fas fa-trophy mb-2" style="color: #f59e0b;"></i>
-                    <div class="stat-label">Top Performer</div>
-                    <div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 10px;">--</div>
-                </div>
-            </div>
+            <div class="col-md-4"><div class="glass-card text-center"><i class="fas fa-clipboard-list mb-2" style="color: #64748b;"></i><div class="stat-label">Total Store Logs</div><div id="totalStores" class="stat-value">0</div></div></div>
+            <div class="col-md-4"><div class="glass-card text-center"><i class="fas fa-users mb-2" style="color: #64748b;"></i><div class="stat-label">Active Field Staff</div><div id="activeStaff" class="stat-value">0</div></div></div>
+            <div class="col-md-4"><div class="glass-card text-center"><i class="fas fa-trophy mb-2" style="color: #f59e0b;"></i><div class="stat-label">Top Performer</div><div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 10px;">--</div></div></div>
         </div>
 
         <div class="row g-4">
@@ -238,7 +221,7 @@
         );
 
         unsubscribe = onSnapshot(q, (snap) => {
-            document.getElementById('lastSync').innerText = `Last Sync: ${new Date().toLocaleTimeString()}`;
+            document.getElementById('syncStatus').innerText = `Last Sync: ${new Date().toLocaleTimeString()}`;
             
             let counts = {}, staffActivity = {}, tableData = [];
 
@@ -267,7 +250,7 @@
                 }
             });
 
-            // TABLE RENDERING
+            // RENDERING TABLE
             let rowsHtml = "";
             tableData.reverse().forEach((row, idx) => {
                 const badgeClass = row.mins < 10 ? 'duration-warning' : 'duration-normal';
@@ -277,7 +260,7 @@
                     <tr>
                         <td class="staff-name-cell">${row.name}</td>
                         <td id="addr-${idx}" class="text-muted" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            ${row.loc || '<i>Auto-fetching...</i>'} ${mapLink}
+                            ${row.loc || '<i>Auto-fetching address...</i>'} ${mapLink}
                         </td>
                         <td><span class="duration-badge ${badgeClass}">${row.mins} mins</span></td>
                     </tr>
@@ -307,9 +290,6 @@
                 document.getElementById('topStaff').innerText = "--";
             }
             document.getElementById('loadingScreen').style.display = 'none';
-        }, (err) => {
-            console.error("Firebase Error: ", err);
-            document.getElementById('loadingScreen').style.display = 'none';
         });
     }
 
@@ -332,7 +312,7 @@
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false, 
-                animation: { duration: 500 },
+                animation: false,
                 plugins: { legend: { display: false } },
                 scales: {
                     y: { beginAtZero: true, ticks: { stepSize: 1 } },
