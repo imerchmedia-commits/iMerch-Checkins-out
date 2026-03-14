@@ -138,7 +138,7 @@
         }
 
         .table-container { max-height: 520px; overflow-y: auto; padding-right: 5px; }
-        .staff-name-cell { font-weight: 700; color: var(--dark); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.2px; }
+        .staff-name-cell { font-weight: 700; color: #000; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.2px; }
         .geo-link { 
             color: var(--primary); text-decoration: none; 
             font-weight: 700; font-size: 0.75rem; 
@@ -278,10 +278,11 @@
     let perfChart, unsubscribe = null;
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
     
+    // Updated Personnel List
     const authorizedStaff = [
-        "VICTORINO JENNIFER", "MANANSALA PRINCESS", "DELOS SANTOS JOSEPH", "MOLINA MARCO", 
-        "ABENIR JESSA", "ACANTILADO ROMEO", "GONZALES MANUEL ERIC", "GETARUELAS ROGEL", 
-        "NINO ROSALINDA", "EDINIEL ANNA MARIE", "ENDITA MARK", "ELENA YBARITTA", 
+        "JENNIFER VICTORINO", "PRINCESS MANANSALA", "JOSEPH DELOS SANTOS", "MARCO MOLINA", 
+        "JESSA ABENIR", "ROMEO ACANTILADO", "MANUEL ERIC GONZALES", "ROGEL GETARUELAS", 
+        "ROSALINDA NINO", "ANNA MARIE EDINIEL", "MARK ENDITA", "YBARITTA ELENA", 
         "Carl Francisco", "Fernand Digamon", "Gervie Espinosa"
     ];
 
@@ -300,12 +301,21 @@
         } catch { return "Unknown GPS Point"; }
     }
 
-    // Helper: Smart Duration (mins to h/m)
     function formatDuration(mins) {
         if (mins < 60) return `${mins}m`;
         const hrs = Math.floor(mins / 60);
         const rem = mins % 60;
         return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`;
+    }
+
+    // New Helper: Clean email to Full Name
+    function nameFromEmail(input) {
+        if (!input) return "Unknown Staff";
+        if (input.includes('@')) {
+            let namePart = input.split('@')[0];
+            return namePart.split(/[._]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+        return input;
     }
 
     document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
@@ -340,10 +350,10 @@
 
             snap.docs.forEach(doc => {
                 const d = doc.data();
-                let raw = d.staffName || d.name || d.user || d.employeeName || d.email || "Unknown Staff";
-                let person = authorizedStaff.find(s => s.toLowerCase() === raw.toLowerCase()) || raw;
+                let rawInput = d.staffName || d.name || d.user || d.employeeName || d.email || "";
+                let person = nameFromEmail(rawInput); // Convert email to Name
 
-                if (adminExclusion.includes(person)) return;
+                if (adminExclusion.includes(person) || !person) return;
 
                 const type = (d.type || "").toLowerCase();
                 const time = d.timestamp?.toDate() || new Date();
@@ -402,8 +412,7 @@
         const ctx = document.getElementById('performanceChart').getContext('2d');
         if (perfChart) perfChart.destroy();
         
-        // Dynamic Colors for each personnel
-        const colors = l.map((_, i) => `hsl(${(i * 360) / l.length}, 70%, 50%)`);
+        const colors = l.map((_, i) => `hsl(${(i * 360) / l.length}, 75%, 55%)`);
 
         perfChart = new Chart(ctx, {
             type: 'bar',
@@ -422,11 +431,7 @@
                 maintainAspectRatio: false, 
                 plugins: { 
                     legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => ` Visits: ${ctx.raw}`
-                        }
-                    }
+                    tooltip: { callbacks: { label: (ctx) => ` Visits: ${ctx.raw}` } }
                 },
                 scales: {
                     y: { beginAtZero: true, grid: { color: '#f0f0f0' }, border: { display: false } },
@@ -434,8 +439,10 @@
                         grid: { display: false }, 
                         border: { display: false },
                         ticks: {
-                            font: { size: 10, weight: '700' },
-                            color: '#475569'
+                            color: '#000', // Bold Black
+                            font: { size: 10, weight: '800' }, // Extra Bold
+                            maxRotation: 45,
+                            minRotation: 45
                         }
                     }
                 }
