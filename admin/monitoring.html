@@ -60,11 +60,32 @@
             margin-bottom: 10px;
             transition: 0.2s;
             cursor: pointer;
+            position: relative; /* Added for Badge Positioning */
         }
 
         .nav-link:hover { background: rgba(217, 4, 41, 0.05); color: var(--primary-red); }
         .nav-link.active { background: var(--primary-red); color: #fff; }
         .nav-link i { margin-right: 12px; width: 20px; text-align: center; }
+
+        /* --- NOTIFICATION BADGE --- */
+        .sync-badge {
+            background-color: var(--primary-red);
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            position: absolute;
+            right: 10px;
+            display: none; /* Hidden initially */
+            animation: pulseBadge 2s infinite;
+            letter-spacing: 1px;
+        }
+
+        @keyframes pulseBadge {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(217, 4, 41, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(217, 4, 41, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(217, 4, 41, 0); }
+        }
 
         /* --- MAIN CONTENT AREA --- */
         #content-wrapper {
@@ -133,9 +154,10 @@
                 <i class="fas fa-chart-line"></i>
                 <span>Realtime Monitoring</span>
             </div>
-            <div class="nav-link" onclick="switchView('summary', this)">
+            <div class="nav-link" id="summaryNavLink" onclick="switchView('summary', this); clearSyncBadge();">
                 <i class="fas fa-file-contract"></i>
                 <span>Summary Monitoring</span>
+                <span id="sync-badge" class="sync-badge">NEW</span>
             </div>
             <div class="nav-link" onclick="switchView('mcp', this)">
                 <i class="fas fa-users-cog"></i>
@@ -249,7 +271,6 @@
             document.getElementById(view + '-view').classList.add('active');
             element.classList.add('active');
             
-            // Logic para sa Title Updates
             const titleMap = {
                 'monitoring': ['Realtime CCPI Monitoring', 'FIELD STAFF LIVE FEED'],
                 'summary': ['Summary Monitoring', 'CONSOLIDATED REPORTS'],
@@ -258,6 +279,11 @@
             
             document.getElementById('current-view-title').innerText = titleMap[view][0];
             document.getElementById('current-view-subtitle').innerText = titleMap[view][1];
+        }
+
+        // Global function to clear badge
+        window.clearSyncBadge = function() {
+            document.getElementById('sync-badge').style.display = 'none';
         }
 
         const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
@@ -275,6 +301,8 @@
         const db = getFirestore(app);
 
         let perfChart, compChart, staffRegistry = {}, currentLogs = [];
+        let isInitialLoad = true; // Control variable for notification badge
+
         const dateInput = document.getElementById('dateFilter');
         dateInput.valueAsDate = new Date();
 
@@ -339,18 +367,31 @@
             const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(s)), where("timestamp", "<=", Timestamp.fromDate(e)), orderBy("timestamp", "desc"));
             
             onSnapshot(q, (snap) => {
-                currentLogs = snap.docs.map(doc => doc.data());
+                const newLogs = snap.docs.map(doc => doc.data());
+                
+                // Show badge if not initial load and document count increased
+                if (!isInitialLoad && newLogs.length > currentLogs.length) {
+                    const badge = document.getElementById('sync-badge');
+                    // Check if current view is not summary to show badge
+                    if (!document.getElementById('summary-view').classList.contains('active')) {
+                        badge.style.display = 'block';
+                    }
+                }
+
+                currentLogs = newLogs;
                 renderData();
                 compChart.data.datasets[0].data[0] = currentLogs.length;
                 compChart.update();
                 document.getElementById('totalLogsToday').innerText = currentLogs.length;
+                
+                isInitialLoad = false;
             });
         }
 
         function renderData() {
             const search = document.getElementById('logSearch').value.toLowerCase();
             const body = document.getElementById('logsBody');
-            const summary = document.getElementById('userSummaryList');
+            const summaryList = document.getElementById('userSummaryList');
             let tableHTML = "", counts = {}, chartColors = [];
 
             currentLogs.forEach(log => {
@@ -360,6 +401,7 @@
                 const type = log.type || "Check-in";
 
                 if (adminExclusion.includes(name)) return;
+                
                 if (name.toLowerCase().includes(search) || branch.toLowerCase().includes(search)) {
                     const time = log.timestamp ? log.timestamp.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '--:--';
                     tableHTML += `<tr>
@@ -394,14 +436,17 @@
             perfChart.data.datasets[0].backgroundColor = chartColors;
             perfChart.update();
             document.getElementById('presentCount').innerText = names.length;
-            summary.innerHTML = summaryHTML;
+            summaryList.innerHTML = summaryHTML;
         }
 
         document.getElementById('themeToggle').addEventListener('click', () => {
             const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         });
         document.getElementById('logoutBtnSide').addEventListener('click', () => signOut(auth).then(() => window.location.href = "../index.html"));
-        dateInput.addEventListener('change', startMonitoring);
+        dateInput.addEventListener('change', () => {
+            isInitialLoad = true; // Reset for new date monitoring
+            startMonitoring();
+        });
         document.getElementById('logSearch').addEventListener('input', renderData);
     </script>
 </body>
