@@ -50,8 +50,7 @@
         .duration-warning { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
         .table-container { max-height: 350px; overflow-y: auto; }
         .staff-name-cell { font-weight: 700; color: #334155; }
-        .geo-link { color: #dc2626; text-decoration: none; font-weight: 600; font-size: 0.75rem; }
-        .geo-link:hover { text-decoration: underline; }
+        .geo-link { color: #dc2626; text-decoration: none; font-weight: 600; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -152,6 +151,25 @@
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
 
+    // Cache para sa Geocoding para iwas gastos sa API calls
+    const addressCache = {};
+
+    async function getAddress(lat, lng) {
+        const key = `${lat},${lng}`;
+        if (addressCache[key]) return addressCache[key];
+
+        try {
+            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
+            const data = await response.json();
+            if (data.results && data.results[0]) {
+                const addr = data.results[0].formatted_address.split(',').slice(0, 2).join(',');
+                addressCache[key] = addr;
+                return addr;
+            }
+            return "Unknown Location";
+        } catch (e) { return "Location Error"; }
+    }
+
     document.getElementById('loginBtn').onclick = async () => {
         try { await signInWithPopup(auth, provider); } catch (e) { alert("Login failed: " + e.message); }
     };
@@ -189,7 +207,7 @@
             orderBy("timestamp", "asc")
         );
 
-        unsubscribe = onSnapshot(q, (snap) => {
+        unsubscribe = onSnapshot(q, async (snap) => {
             if (snap.size === currentTotalCount && currentTotalCount !== -1) {
                 document.getElementById('loadingScreen').style.display = 'none';
                 return;
@@ -203,22 +221,21 @@
             const tableBody = document.getElementById('durationTableBody');
             tableBody.innerHTML = '';
 
-            snap.forEach(doc => {
+            const docs = snap.docs;
+            for (const doc of docs) {
                 const data = doc.data();
                 const name = data.name || data.staffName || "Unknown";
                 const type = (data.type || "").toLowerCase();
                 
-                // --- DETAILED LOCATION PICKER ---
-                let store = data.storeName || data.location || data.address;
-                
-                // Detect Geopoint object or separate lat/long fields
+                let store = data.location || data.storeName || data.address;
                 const lat = data.latitude || (data.geopoint ? data.geopoint.latitude : null);
                 const lng = data.longitude || (data.geopoint ? data.geopoint.longitude : null);
-
-                if (!store && lat && lng) {
-                    store = `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt me-1"></i> View on Map</a>`;
+                
+                // Automatic Geocoding if store name is missing
+                if ((!store || store === "Unknown Store") && lat && lng) {
+                    store = await getAddress(lat, lng);
                 } else if (!store) {
-                    store = '<span class="text-muted opacity-50">Unknown Store</span>';
+                    store = "No Location Info";
                 }
 
                 const time = data.timestamp.toDate();
@@ -227,18 +244,24 @@
                     totalLogsCount++; 
                     if (type.includes('in')) {
                         counts[name] = (counts[name] || 0) + 1;
-                        // Storing the IN state
-                        staffActivity[name] = { inTime: time, loc: store };
+                        staffActivity[name] = { inTime: time, loc: store, coords: lat && lng ? `${lat},${lng}` : null };
                     } else if (type.includes('out')) {
                         const activity = staffActivity[name];
                         if (activity) {
                             const diffMins = Math.floor((time - activity.inTime) / 60000);
                             const badgeClass = diffMins < 10 ? 'duration-warning' : 'duration-normal';
                             
+                            const mapLink = activity.coords ? `<br><a href="https://www.google.com/maps?q=${activity.coords}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt me-1"></i>View Map</a>` : "";
+
                             const row = `
                                 <tr>
                                     <td class="staff-name-cell">${name}</td>
-                                    <td class="text-muted" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${activity.loc}</td>
+                                    <td class="text-muted">
+                                        <div style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            <i class="fas fa-store me-1" style="font-size: 0.7rem;"></i> ${activity.loc}
+                                        </div>
+                                        ${mapLink}
+                                    </td>
                                     <td><span class="duration-badge ${badgeClass}">${diffMins} mins</span></td>
                                 </tr>
                             `;
@@ -247,7 +270,7 @@
                         }
                     }
                 }
-            });
+            }
 
             const labels = Object.keys(counts);
             const values = Object.values(counts);
