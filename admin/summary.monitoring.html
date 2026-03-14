@@ -14,6 +14,14 @@
         :root { --primary: #d90429; --bg: #f8f9fa; }
         body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
         
+        /* Navbar: White with Red Lining */
+        .navbar { 
+            background: white !important; 
+            border-bottom: 3px solid var(--primary); 
+            padding: 0.8rem 2rem;
+            z-index: 1050;
+        }
+
         .pulse-live {
             width: 8px; height: 8px; background: #22c55e; border-radius: 50%;
             display: inline-block; margin-right: 5px;
@@ -37,7 +45,7 @@
         .login-card { text-align: center; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         .btn-google { background: #4285f4; color: white; border-radius: 10px; padding: 12px; font-weight: 700; border: none; width: 100%; transition: 0.3s; }
         
-        .main-content { width: 100%; padding: 1rem; display: none; }
+        .main-content { width: 100%; padding: 1rem; display: none; margin-top: 70px; }
         .glass-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 1.5rem; }
         .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
         .stat-label { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; }
@@ -48,10 +56,9 @@
         .duration-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; }
         .duration-normal { background: #f1f5f9; color: #475569; }
         .duration-warning { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-        .table-container { max-height: 350px; overflow-y: auto; }
+        .table-container { max-height: 450px; overflow-y: auto; }
         .staff-name-cell { font-weight: 700; color: #334155; }
-        .geo-link { color: #dc2626; text-decoration: none; font-weight: 600; }
-        .geo-link:hover { text-decoration: underline; }
+        .geo-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.75rem; }
     </style>
 </head>
 <body>
@@ -63,63 +70,60 @@
         <button class="btn-google" id="loginBtn">
             <i class="fab fa-google me-2"></i> Sign in with Google
         </button>
-        <p class="text-muted small mt-3">Only authorized iMerch accounts can access.</p>
     </div>
 </div>
 
 <div id="loadingScreen" class="loader">
-    <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
-    <div class="mt-4 text-center">
-        <h5 class="fw-bold text-dark m-0">Fast-Syncing Data...</h5>
-    </div>
+    <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem;"></div>
+    <div class="mt-4"><h5>Fast-Syncing Data...</h5></div>
 </div>
 
 <div class="main-content" id="dashboardContent">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-        <div>
-            <div class="d-flex align-items-center gap-3">
-                <h4 class="fw-bold m-0">PERFORMANCE INDEX</h4>
-                <div class="live-badge" id="liveIndicator" style="display: none;">
-                    <span class="pulse-live"></span> Live: <span id="liveLogCount" class="ms-1">0</span>
-                </div>
-                <button class="btn btn-outline-secondary btn-sm border-0" onclick="logout()" title="Logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
+    <nav class="navbar fixed-top d-flex justify-content-between align-items-center">
+        <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="35">
+        <div class="d-flex align-items-center gap-3">
+            <div class="live-badge" id="liveIndicator" style="display: none;">
+                <span class="pulse-live"></span> Live Updates
             </div>
-            <small class="text-muted" id="dateSubtitle">Monitoring for Today</small>
+            <button class="btn btn-outline-secondary btn-sm border-0" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
         </div>
-        <div>
+    </nav>
+
+    <div class="container-fluid pt-3">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <h4 class="fw-bold m-0">PERFORMANCE INDEX</h4>
+                <small class="text-muted" id="dateSubtitle"></small>
+            </div>
             <input type="date" id="summaryDateFilter" class="filter-input shadow-sm">
         </div>
-    </div>
 
-    <div class="row g-4 mb-2">
-        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Total Store Logs</div><div id="totalStores" class="stat-value">0</div></div></div>
-        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Active Field Staff</div><div id="activeStaff" class="stat-value">0</div></div></div>
-        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Top Performer</div><div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 10px;">--</div></div></div>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-lg-7">
-            <div class="glass-card">
-                <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2"></i>Staff Performance (Visits)</h6>
-                <div style="height: 350px;"><canvas id="performanceChart"></canvas></div>
-            </div>
+        <div class="row g-4 mb-2">
+            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Total Logs</div><div id="totalStores" class="stat-value">0</div></div></div>
+            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Active Staff</div><div id="activeStaff" class="stat-value">0</div></div></div>
+            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Top Performer</div><div id="topStaff" class="stat-value" style="font-size: 1.1rem; padding-top: 15px;">--</div></div></div>
         </div>
-        <div class="col-lg-5">
-            <div class="glass-card">
-                <h6 class="fw-bold mb-3"><i class="fas fa-clock me-2"></i>Live Store Durations</h6>
-                <div class="table-container">
-                    <table class="table table-hover align-middle" style="font-size: 0.85rem;">
-                        <thead class="table-light">
-                            <tr style="font-size: 0.7rem; text-transform: uppercase;">
-                                <th>Staff</th>
-                                <th>Location / Store</th>
-                                <th>Time Spent</th>
-                            </tr>
-                        </thead>
-                        <tbody id="durationTableBody"></tbody>
-                    </table>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="glass-card">
+                    <h6 class="fw-bold mb-3">Staff Visits</h6>
+                    <div style="height: 350px;"><canvas id="performanceChart"></canvas></div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="glass-card">
+                    <h6 class="fw-bold mb-3">Live Durations</h6>
+                    <div class="table-container">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr style="font-size: 0.7rem;"><th>STAFF</th><th>LOCATION</th><th>TIME</th></tr>
+                            </thead>
+                            <tbody id="durationTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -128,7 +132,12 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, where, onSnapshot, Timestamp, orderBy, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { 
+        initializeFirestore, 
+        persistentLocalCache, 
+        persistentMultipleTabManager,
+        collection, query, where, onSnapshot, Timestamp, orderBy 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -139,11 +148,12 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // 1. UPDATED CACHE SETTINGS (No more warnings)
+    const db = initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
-
-    try { enableIndexedDbPersistence(db).catch(() => {}); } catch(e) {}
 
     let perfChart;
     let unsubscribe = null;
@@ -152,11 +162,19 @@
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
 
-    document.getElementById('loginBtn').onclick = async () => {
-        try { await signInWithPopup(auth, provider); } catch (e) { alert("Login failed: " + e.message); }
-    };
+    const addressCache = {};
 
-    window.logout = () => signOut(auth);
+    async function getStoreName(lat, lng) {
+        const key = `${lat},${lng}`;
+        if (addressCache[key]) return addressCache[key];
+        try {
+            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
+            const data = await res.json();
+            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "Unknown Store";
+            addressCache[key] = addr;
+            return addr;
+        } catch { return "Geo Error"; }
+    }
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -166,7 +184,6 @@
         } else {
             document.getElementById('loginContainer').style.display = 'flex';
             document.getElementById('dashboardContent').style.display = 'none';
-            if (unsubscribe) unsubscribe();
         }
     });
 
@@ -175,19 +192,14 @@
         document.getElementById('loadingScreen').style.display = 'flex';
         
         const selectedDate = new Date(dateInput.value);
-        const start = new Date(selectedDate.setHours(0,0,0,0));
-        const end = new Date(selectedDate.setHours(23,59,59,999));
+        const start = Timestamp.fromDate(new Date(selectedDate.setHours(0,0,0,0)));
+        const end = Timestamp.fromDate(new Date(selectedDate.setHours(23,59,59,999)));
         
         const isToday = new Date().toDateString() === selectedDate.toDateString();
         document.getElementById('liveIndicator').style.display = isToday ? 'flex' : 'none';
-        document.getElementById('dateSubtitle').innerText = `Monitoring for ${selectedDate.toDateString()}`;
+        document.getElementById('dateSubtitle').innerText = `Monitoring: ${selectedDate.toDateString()}`;
 
-        const q = query(
-            collection(db, "attendance"), 
-            where("timestamp", ">=", Timestamp.fromDate(start)), 
-            where("timestamp", "<=", Timestamp.fromDate(end)),
-            orderBy("timestamp", "asc")
-        );
+        const q = query(collection(db, "attendance"), where("timestamp", ">=", start), where("timestamp", "<=", end), orderBy("timestamp", "asc"));
 
         unsubscribe = onSnapshot(q, (snap) => {
             if (snap.size === currentTotalCount && currentTotalCount !== -1) {
@@ -196,114 +208,79 @@
             }
             
             currentTotalCount = snap.size;
-            let counts = {};
-            let totalLogsCount = 0;
-            let staffActivity = {}; 
-            
-            const tableBody = document.getElementById('durationTableBody');
-            tableBody.innerHTML = '';
+            let counts = {}, staffActivity = {}, tableData = [];
 
-            snap.forEach(doc => {
+            // 2. SYNC PROCESSING (Freeze names immediately)
+            snap.docs.forEach(doc => {
                 const data = doc.data();
-                const name = data.name || data.staffName || "Unknown";
+                const name = data.staffName || data.name || data.user || "Unknown";
+                if (adminExclusion.includes(name)) return;
+
                 const type = (data.type || "").toLowerCase();
-                
-                // Get Location / Store Name / Coordinates
-                let store = data.location || data.storeName || data.address;
-                const coords = data.latitude && data.longitude ? `${data.latitude},${data.longitude}` : (data.geopoint ? `${data.geopoint.latitude},${data.geopoint.longitude}` : null);
-                
-                if (!store && coords) {
-                    store = `<a href="https://www.google.com/maps?q=${coords}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt me-1"></i> View on Map</a>`;
-                } else if (!store) {
-                    store = "No Location Info";
-                }
-
                 const time = data.timestamp.toDate();
+                const lat = data.latitude || data.geopoint?.latitude;
+                const lng = data.longitude || data.geopoint?.longitude;
 
-                if (!adminExclusion.includes(name)) {
-                    totalLogsCount++; 
-                    if (type.includes('in')) {
-                        counts[name] = (counts[name] || 0) + 1;
-                        staffActivity[name] = { inTime: time, loc: store };
-                    } else if (type.includes('out')) {
-                        const activity = staffActivity[name];
-                        if (activity) {
-                            const diffMins = Math.floor((time - activity.inTime) / 60000);
-                            const badgeClass = diffMins < 10 ? 'duration-warning' : 'duration-normal';
-                            
-                            const row = `
-                                <tr>
-                                    <td class="staff-name-cell">${name}</td>
-                                    <td class="text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${activity.loc}</td>
-                                    <td><span class="duration-badge ${badgeClass}">${diffMins} mins</span></td>
-                                </tr>
-                            `;
-                            tableBody.insertAdjacentHTML('afterbegin', row);
-                            delete staffActivity[name];
-                        }
-                    }
+                if (type.includes('in')) {
+                    counts[name] = (counts[name] || 0) + 1;
+                    staffActivity[name] = { inTime: time, loc: data.location || data.storeName, lat, lng };
+                } else if (type.includes('out') && staffActivity[name]) {
+                    const act = staffActivity[name];
+                    const diff = Math.floor((time - act.inTime) / 60000);
+                    tableData.push({ name, mins: diff, ...act });
+                    delete staffActivity[name];
                 }
             });
 
-            const labels = Object.keys(counts);
-            const values = Object.values(counts);
+            // 3. LAZY LOADING RENDER (Instant display)
+            let rowsHtml = "";
+            tableData.reverse().forEach((row, idx) => {
+                const badge = row.mins < 15 ? 'duration-warning' : 'duration-normal';
+                rowsHtml += `<tr>
+                    <td class="staff-name-cell">${row.name}</td>
+                    <td id="addr-${idx}" class="text-muted small">${row.loc || 'Fetching location...'}</td>
+                    <td><span class="duration-badge ${badge}">${row.mins}m</span></td>
+                </tr>`;
 
-            document.getElementById('totalStores').innerText = totalLogsCount;
-            document.getElementById('liveLogCount').innerText = totalLogsCount;
-            document.getElementById('activeStaff').innerText = labels.length;
+                // Fetch address in background if missing
+                if (!row.loc && row.lat) {
+                    getStoreName(row.lat, row.lng).then(addr => {
+                        const cell = document.getElementById(`addr-${idx}`);
+                        if (cell) cell.innerText = addr;
+                    });
+                }
+            });
+
+            document.getElementById('durationTableBody').innerHTML = rowsHtml;
+            document.getElementById('totalStores').innerText = snap.size;
+            document.getElementById('activeStaff').innerText = Object.keys(counts).length;
             
-            if (labels.length > 0) {
-                const maxVal = Math.max(...values);
-                const topPerson = labels.find(key => counts[key] === maxVal);
-                document.getElementById('topStaff').innerText = `${topPerson} (${maxVal})`;
-            } else {
-                document.getElementById('topStaff').innerText = "--";
+            if (Object.keys(counts).length > 0) {
+                const labels = Object.keys(counts);
+                const values = Object.values(counts);
+                const max = Math.max(...values);
+                const top = labels.find(k => counts[k] === max);
+                document.getElementById('topStaff').innerText = `${top} (${max})`;
+                renderChart(labels, values);
             }
 
-            renderChart(labels, values);
             document.getElementById('loadingScreen').style.display = 'none';
         });
     }
 
     function renderChart(labels, data) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
-        const combined = labels.map((l, i) => ({label: l, value: data[i]})).sort((a, b) => b.value - a.value);
-        
-        if (perfChart) {
-            perfChart.data.labels = combined.map(x => x.label);
-            perfChart.data.datasets[0].data = combined.map(x => x.value);
-            perfChart.update('none');
-        } else {
-            perfChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: combined.map(x => x.label),
-                    datasets: [{ 
-                        label: 'Visits', 
-                        data: combined.map(x => x.value), 
-                        backgroundColor: '#d90429', 
-                        borderRadius: 8,
-                        barThickness: 20
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    animation: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
+        if (perfChart) perfChart.destroy();
+        perfChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Visits', data, backgroundColor: '#d90429', borderRadius: 5 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, animation: false }
+        });
     }
 
-    dateInput.addEventListener('change', () => {
-        currentTotalCount = -1;
-        startSummaryMonitoring();
-    });
+    document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
+    window.logout = () => signOut(auth).then(() => location.reload());
+    dateInput.addEventListener('change', () => { currentTotalCount = -1; startSummaryMonitoring(); });
 </script>
 </body>
 </html>
