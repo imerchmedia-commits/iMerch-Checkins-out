@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iMerch MCP Cloud System</title>
+    
+    <link rel="icon" type="image/png" href="https://imerchmedia.net/images/favicon.png">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/all.min.css">
+    
+    <style>
+        :root { 
+            --imerch-red: #ff0000;
+            --bg: #f4f6f9;
+            --card: #ffffff;
+            --txt: #333;
+            --nav-bg: #ffffff;
+        }
+
+        [data-bs-theme="dark"] {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --txt: #e0e0e0;
+            --nav-bg: #1e1e1e;
+        }
+
+        body { background-color: var(--bg); color: var(--txt); font-family: 'Segoe UI', sans-serif; transition: 0.3s; }
+        
+        .navbar { 
+            background-color: var(--nav-bg) !important; 
+            border-bottom: 3px solid var(--imerch-red) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card { background-color: var(--card); border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        
+        .btn-sync { 
+            background-color: var(--imerch-red); 
+            color: white; 
+            font-weight: bold; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 8px; 
+            transition: 0.3s; 
+        }
+        .btn-sync:hover { background-color: #cc0000; transform: translateY(-2px); color: white; }
+        
+        #calendar { background: var(--card); padding: 15px; border-radius: 12px; min-height: 750px; }
+        
+        /* Event Styling */
+        .fc-daygrid-event { 
+            white-space: normal !important; 
+            font-size: 0.72rem; 
+            padding: 2px 5px; 
+            border: none; 
+            border-radius: 4px; 
+            margin-bottom: 2px; 
+        }
+
+        #liveClock { font-weight: 600; font-size: 0.9rem; }
+        .theme-switch { cursor: pointer; font-size: 1.2rem; margin-left: 15px; }
+        .sidebar-label { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--imerch-red); margin-bottom: 5px; display: block; }
+    </style>
+</head>
+<body data-bs-theme="light">
+
+<nav class="navbar navbar-expand-lg px-4 mb-4 sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+            <img src="https://imerchmedia.net/images/favicon.png" width="30" height="30" class="me-2">
+            <span style="color:red">iMerch</span>&nbsp;MCP CLOUD
+        </a>
+        <div class="ms-auto d-flex align-items-center">
+            <div id="liveClock" class="me-3 d-none d-md-block"></div>
+            <i class="fas fa-moon theme-switch" id="themeToggle"></i>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row px-2">
+        <div class="col-lg-3 col-md-4">
+            <div class="card p-4 mb-3 shadow-sm">
+                <h6 class="fw-bold mb-4" style="color:red"><i class="fas fa-database"></i> DATA CONTROL</h6>
+                
+                <div class="mb-3">
+                    <span class="sidebar-label">Select Year</span>
+                    <select id="mcpYear" class="form-select" onchange="syncWithCloud()">
+                        <option value="2026" selected>2026</option>
+                        <option value="2027">2027</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <span class="sidebar-label">Select Month</span>
+                    <select id="mcpMonth" class="form-select" onchange="syncWithCloud()">
+                        <option value="01">January</option><option value="02">February</option>
+                        <option value="03" selected>March</option><option value="04">April</option>
+                        <option value="05">May</option><option value="06">June</option>
+                        <option value="07">July</option><option value="08">August</option>
+                        <option value="09">September</option><option value="10">October</option>
+                        <option value="11">November</option><option value="12">December</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <span class="sidebar-label">Coordinator</span>
+                    <select id="userSelect" class="form-select" onchange="syncWithCloud()">
+                        <option value="" disabled selected>Select Coordinator...</option>
+                        <option value="ELENA">ELENA</option>
+                        <option value="ROLDAN">ROLDAN</option>
+                        <option value="ANNA MAE">ANNA MAE</option>
+                        <option value="ROSALINDA">ROSALINDA</option>
+                        <option value="ROGEL">ROGEL</option>
+                        <option value="MANUEL">MANUEL</option>
+                        <option value="ROMEO">ROMEO</option>
+                        <option value="JESSA">JESSA</option>
+                        <option value="MARCO">MARCO</option>
+                        <option value="JOSEPH">JOSEPH</option>
+                        <option value="PRINCESS">PRINCESS</option>
+                        <option value="JENNIFER">JENNIFER</option>
+                        <option value="GERVIE">GERVIE</option>
+                        <option value="FERNAND">FERNAND</option>
+                        <option value="CARL">CARL</option>
+                    </select>
+                </div>
+
+                <button onclick="syncWithCloud()" class="btn btn-sync w-100 shadow-sm mb-3">
+                    <i class="fas fa-sync-alt"></i> MANUAL REFRESH
+                </button>
+
+                <div id="statusAlert" class="alert alert-secondary py-2 mb-0" style="font-size: 0.75rem;">
+                    <i class="fas fa-info-circle"></i> <span id="syncStatus">Ready.</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9 col-md-8">
+            <div class="card p-2 shadow-sm">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    let calendar;
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFekw4GYStT6tXFaYw9iGNGs8X_z8n4sAaoQZILGs1peeuexaxTV5SRc8pyCreZyW2gg/exec"; 
+
+    // Live Clock
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('liveClock').innerText = now.toLocaleString('en-PH', { 
+            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', 
+            hour: '2-digit', minute: '2-digit', second: '2-digit' 
+        });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Theme Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    themeToggle.addEventListener('click', () => {
+        const isDark = document.body.getAttribute('data-bs-theme') === 'dark';
+        document.body.setAttribute('data-bs-theme', isDark ? 'light' : 'dark');
+        themeToggle.className = isDark ? 'fas fa-moon theme-switch' : 'fas fa-sun theme-switch';
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            initialDate: '2026-03-01',
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
+            height: 'auto'
+        });
+        calendar.render();
+
+        // Load Cache
+        const savedData = localStorage.getItem("imerch_mcp_cache");
+        const savedUser = localStorage.getItem("imerch_mcp_user");
+        if(savedData) {
+            calendar.addEventSource(JSON.parse(savedData));
+            document.getElementById('syncStatus').innerText = "Cached: " + savedUser;
+            if(savedUser) document.getElementById('userSelect').value = savedUser;
+        }
+    });
+
+    async function syncWithCloud() {
+        const coordinator = document.getElementById('userSelect').value;
+        const year = document.getElementById('mcpYear').value;
+        const month = document.getElementById('mcpMonth').value;
+
+        if(!coordinator) return;
+
+        // Jump to selected date
+        calendar.gotoDate(`${year}-${month}-01`);
+
+        Swal.fire({
+            title: 'Cloud Syncing...',
+            text: `Updating schedule for ${coordinator}`,
+            allowOutsideClick: false,
+            timer: 2000,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const response = await fetch(`${SCRIPT_URL}?sheet=${coordinator}`, {
+                method: "GET",
+                redirect: "follow"
+            });
+            const data = await response.json();
+            
+            if(data.error) throw new Error(data.error);
+            
+            renderData(data, coordinator);
+        } catch (error) {
+            console.error(error);
+            Swal.fire("Sync Error", "Could not connect to database.", "error");
+        }
+    }
+
+    function renderData(rows, user) {
+        calendar.removeAllEvents();
+        const year = document.getElementById('mcpYear').value;
+        const month = document.getElementById('mcpMonth').value;
+        let events = [];
+
+        rows.forEach((row, i) => {
+            row.forEach((cell, colIndex) => {
+                // Find date cells (1-31)
+                if (cell && !isNaN(cell) && cell >= 1 && cell <= 31) {
+                    let dateStr = `${year}-${month}-${cell.toString().padStart(2, '0')}`;
+                    
+                    // Look for store names in the 10 rows below the date
+                    for (let n = 1; n <= 10; n++) {
+                        if (rows[i + n] && rows[i + n][colIndex]) {
+                            let store = rows[i + n][colIndex].toString().trim();
+                            if (store && !store.includes("WEEK") && isNaN(store)) {
+                                let isOff = store.includes("REST") || store.includes("ADMIN");
+                                events.push({
+                                    title: store,
+                                    start: dateStr,
+                                    backgroundColor: isOff ? "#6c757d" : "#ff0000",
+                                    borderColor: "transparent",
+                                    allDay: true
+                                });
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        calendar.addEventSource(events);
+        localStorage.setItem("imerch_mcp_cache", JSON.stringify(events));
+        localStorage.setItem("imerch_mcp_user", user);
+        document.getElementById('syncStatus').innerText = "Last Sync: " + user;
+    }
+</script>
+</body>
+</html>
