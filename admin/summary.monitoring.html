@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
         :root { 
             --primary: #d90429; 
@@ -16,173 +17,281 @@
             --dark: #2b2d42;
             --light: #8d99ae;
             --bg: #f8f9fa; 
+            --white: #ffffff;
+            --success: #22c55e;
         }
 
+        /* Base Body & Typography */
         body { 
             background-color: var(--bg); 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             margin: 0; 
             overflow-x: hidden; 
             color: var(--dark);
+            -webkit-font-smoothing: antialiased;
         }
-        
+
+        /* -------------------------------------------------------------------------
+           NAVIGATION BAR (Updated: White with Red Lining)
+        -------------------------------------------------------------------------- */
         .navbar { 
-            background: rgba(255, 255, 255, 0.95) !important; 
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.98) !important; 
+            backdrop-filter: blur(15px);
             border-bottom: 3px solid var(--primary); 
-            padding: 0.8rem 2rem; 
+            padding: 0.8rem 2.5rem; 
             z-index: 1050; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            height: 75px;
         }
 
         .brand-text {
             font-weight: 800;
-            font-size: 1.4rem;
-            letter-spacing: -1px;
+            font-size: 1.5rem;
+            letter-spacing: -1.2px;
             color: var(--dark);
             text-decoration: none;
+            display: flex;
+            align-items: center;
         }
         .brand-text span { color: var(--primary); }
 
+        /* Live Indicator Animation */
         .pulse-live { 
-            width: 10px; height: 10px; 
-            background: #22c55e; 
+            width: 11px; height: 11px; 
+            background: var(--success); 
             border-radius: 50%; 
             display: inline-block; 
-            margin-right: 8px; 
+            margin-right: 10px; 
             box-shadow: 0 0 0 rgba(34, 197, 94, 0.4); 
             animation: pulse 2s infinite; 
         }
 
         @keyframes pulse { 
             0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
-            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 
+            70% { box-shadow: 0 0 0 12px rgba(34, 197, 94, 0); } 
             100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
         }
         
         .live-badge { 
-            background: rgba(34, 197, 94, 0.1); 
+            background: rgba(34, 197, 94, 0.08); 
             color: #166534; 
-            padding: 6px 16px; 
+            padding: 8px 18px; 
             border-radius: 50px; 
             font-size: 0.75rem; 
             font-weight: 800; 
             display: flex; 
             align-items: center; 
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            border: 1px solid rgba(34, 197, 94, 0.1);
         }
 
+        /* -------------------------------------------------------------------------
+           LOGIN SCREEN
+        -------------------------------------------------------------------------- */
         #loginContainer { 
             height: 100vh; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             background: radial-gradient(circle at top right, #fff5f5, #ffffff);
+            position: relative;
         }
 
         .login-card { 
             text-align: center; 
-            padding: 3rem; 
-            border-radius: 24px; 
-            background: white;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.08); 
+            padding: 3.5rem; 
+            border-radius: 30px; 
+            background: var(--white);
+            box-shadow: 0 25px 70px rgba(0,0,0,0.07); 
             width: 100%; 
-            max-width: 420px; 
-            border: 1px solid rgba(0,0,0,0.03);
+            max-width: 440px; 
+            border: 1px solid rgba(0,0,0,0.02);
+            z-index: 2;
         }
 
         .btn-google { 
             background: #4285f4; 
-            color: white; 
-            border-radius: 12px; 
-            padding: 14px; 
+            color: var(--white); 
+            border-radius: 14px; 
+            padding: 16px; 
             font-weight: 700; 
             border: none; 
             width: 100%; 
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
+            font-size: 1rem;
         }
 
-        .btn-google:hover { background: #3367d6; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(66, 133, 244, 0.3); }
-        
-        .main-content { width: 100%; padding: 2rem; display: none; margin-top: 85px; }
+        .btn-google:hover { 
+            background: #3367d6; 
+            transform: translateY(-4px); 
+            box-shadow: 0 10px 20px rgba(66, 133, 244, 0.3); 
+        }
+
+        /* Added Remember Me Feature Styling */
+        .remember-login-wrap {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: var(--light);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .remember-login-wrap input {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+
+        /* -------------------------------------------------------------------------
+           DASHBOARD CONTENT & CARDS
+        -------------------------------------------------------------------------- */
+        .main-content { 
+            width: 100%; 
+            padding: 2.5rem; 
+            display: none; 
+            margin-top: 90px; 
+        }
         
         .glass-card { 
-            background: white; 
-            border-radius: 24px; 
-            padding: 1.8rem; 
+            background: var(--white); 
+            border-radius: 28px; 
+            padding: 2rem; 
             border: 1px solid rgba(0,0,0,0.04); 
-            box-shadow: 0 12px 35px rgba(0,0,0,0.02); 
-            margin-bottom: 1.5rem;
-            transition: transform 0.3s ease;
+            box-shadow: 0 15px 45px rgba(0,0,0,0.03); 
+            margin-bottom: 1.8rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
-        .glass-card:hover { transform: translateY(-5px); }
+        .glass-card:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.06); }
         
-        .stat-value { font-size: 2.5rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
-        .stat-label { font-size: 0.8rem; font-weight: 700; color: var(--light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .stat-value { 
+            font-size: 2.8rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            letter-spacing: -1.5px; 
+            line-height: 1.1;
+        }
 
+        .stat-label { 
+            font-size: 0.8rem; 
+            font-weight: 700; 
+            color: var(--light); 
+            text-transform: uppercase; 
+            letter-spacing: 1.2px; 
+            margin-bottom: 8px; 
+        }
+
+        /* Progress Bar Styles */
+        .progress-meter {
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 1.5s cubic-bezier(0.1, 0, 0.3, 1);
+        }
+
+        /* -------------------------------------------------------------------------
+           LOADER & SEARCH
+        -------------------------------------------------------------------------- */
         .loader { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: white; display: none; flex-direction: column; 
+            background: var(--white); display: none; flex-direction: column; 
             justify-content: center; align-items: center; z-index: 9999; 
         }
 
         .filter-input { 
-            border-radius: 12px; border: 1px solid #eee; 
-            padding: 8px 20px; font-weight: 600; outline: none; 
-            background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            border-radius: 14px; border: 1.5px solid #eee; 
+            padding: 10px 24px; font-weight: 600; outline: none; 
+            background: var(--white); box-shadow: 0 6px 15px rgba(0,0,0,0.03);
+            transition: 0.3s;
         }
+        .filter-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(217, 4, 41, 0.1); }
 
-        /* Added search specific style */
         .search-container {
             position: relative;
-            margin-bottom: 15px;
+            margin-bottom: 18px;
         }
         .search-container i {
             position: absolute;
-            left: 15px;
+            left: 18px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--light);
         }
-        .search-input {
-            width: 100%;
-            padding-left: 40px !important;
-        }
+        .search-input { width: 100%; padding-left: 48px !important; }
         
+        /* -------------------------------------------------------------------------
+           TABLE & DATA ROWS
+        -------------------------------------------------------------------------- */
+        .table-container { 
+            max-height: 550px; 
+            overflow-y: auto; 
+            padding-right: 8px; 
+        }
+
         .duration-badge { 
-            padding: 5px 12px; border-radius: 8px; 
+            padding: 6px 14px; border-radius: 10px; 
             font-size: 0.7rem; font-weight: 800; 
             background: #f1f5f9; color: #475569; 
             display: inline-block;
             white-space: nowrap;
+            border: 1px solid rgba(0,0,0,0.02);
         }
 
-        .table-container { max-height: 520px; overflow-y: auto; padding-right: 5px; }
-        .staff-name-cell { font-weight: 700; color: #000; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.2px; }
+        .staff-name-cell { 
+            font-weight: 800; 
+            color: var(--dark); 
+            text-transform: uppercase; 
+            font-size: 0.75rem; 
+            letter-spacing: 0.3px; 
+        }
+
         .geo-link { 
             color: var(--primary); text-decoration: none; 
             font-weight: 700; font-size: 0.75rem; 
-            display: inline-flex; align-items: center; gap: 4px;
+            display: inline-flex; align-items: center; gap: 5px;
+            transition: 0.2s;
         }
+        .geo-link:hover { opacity: 0.7; transform: scale(1.05); }
         
+        /* Scrollbar Styling */
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: #f8f9fa; }
+        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
         .table thead th {
             background: #fcfcfc;
-            border-bottom: 2px solid #eee;
+            position: sticky; top: 0; z-index: 10;
+            border-bottom: 2px solid #f1f1f1;
             font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
             color: var(--light);
-            padding: 15px;
+            padding: 18px;
+        }
+
+        .table td { padding: 15px 18px; border-bottom: 1px solid #f9f9f9; }
+
+        @media (max-width: 768px) {
+            .navbar { padding: 0.8rem 1rem; }
+            .stat-value { font-size: 2.2rem; }
+            .main-content { padding: 1rem; }
         }
     </style>
 </head>
@@ -190,19 +299,25 @@
 
 <div id="loginContainer">
     <div class="login-card">
-        <div class="brand-text mb-4" style="font-size: 2.2rem;">iMERCH<span>MEDIA</span></div>
-        <h4 class="fw-800 mb-2">Admin Dashboard</h4>
-        <p class="text-muted small mb-4">Summary & Real-time Performance Tracker</p>
+        <div class="brand-text mb-4" style="font-size: 2.5rem; justify-content: center;">iMERCH<span>MEDIA</span></div>
+        <h4 class="fw-800 mb-2" style="letter-spacing: -0.5px;">Admin Control Panel</h4>
+        <p class="text-muted small mb-5">Summary & Field Performance Insight</p>
+        
         <button class="btn-google" id="loginBtn">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
-            Login with Google
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="22">
+            Sign in with Google
         </button>
+
+        <div class="remember-login-wrap">
+            <input type="checkbox" id="rememberMe">
+            <label for="rememberMe">Stay logged in</label>
+        </div>
     </div>
 </div>
 
 <div id="loadingScreen" class="loader">
-    <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem; border-width: 0.25em;" role="status"></div>
-    <div class="mt-4 fw-800 text-dark" style="letter-spacing: 2px;">SYNCING LIVE DATA...</div>
+    <div class="spinner-border text-danger" style="width: 4rem; height: 4rem; border-width: 0.3em;" role="status"></div>
+    <div class="mt-4 fw-800 text-dark" style="letter-spacing: 3px; font-size: 0.8rem;">INITIALIZING SECURE DATA SYNC...</div>
 </div>
 
 <div class="main-content" id="dashboardContent">
@@ -214,41 +329,56 @@
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <button class="btn btn-light btn-sm rounded-circle shadow-sm" onclick="logout()">
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm" style="width: 40px; height: 40px;" onclick="logout()">
                 <i class="fas fa-sign-out-alt"></i>
             </button>
         </div>
     </nav>
 
     <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+        <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-4">
             <div>
-                <h3 class="fw-800 m-0" style="letter-spacing: -1px;">SUMMARY MONITORING</h3>
-                <p class="text-muted m-0" id="dateSubtitle" style="font-size: 0.9rem;"></p>
+                <h2 class="fw-800 m-0" style="letter-spacing: -1.5px;">MONITORING OVERVIEW</h2>
+                <p class="text-muted m-0 fw-600" id="dateSubtitle" style="font-size: 0.95rem;"></p>
             </div>
-            <div class="d-flex gap-2 align-items-center">
-                <span class="small fw-700 text-muted uppercase">Select Date:</span>
-                <input type="date" id="summaryDateFilter" class="filter-input">
+            <div class="d-flex gap-3 align-items-center bg-white p-2 rounded-4 shadow-sm px-3">
+                <span class="small fw-800 text-muted text-uppercase" style="font-size: 0.65rem;">Timeline Select:</span>
+                <input type="date" id="summaryDateFilter" class="filter-input border-0 p-0" style="box-shadow: none;">
             </div>
         </div>
 
-        <div class="row g-4 mb-4">
+        <div class="row g-4 mb-5">
             <div class="col-md-4">
-                <div class="glass-card text-center">
-                    <div class="stat-label">Total Logs Found</div>
+                <div class="glass-card">
+                    <div class="stat-label">System-wide Logs</div>
                     <div id="totalStores" class="stat-value">0</div>
+                    <div class="mt-3 d-flex justify-content-between small fw-700">
+                        <span class="text-muted">Goal Alignment</span>
+                        <span id="progressText">0%</span>
+                    </div>
+                    <div class="progress-meter">
+                        <div id="goalProgressBar" class="progress-bar-fill"></div>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="glass-card text-center">
+                <div class="glass-card">
                     <div class="stat-label">Active Field Personnel</div>
                     <div id="activeStaff" class="stat-value">0</div>
+                    <div class="mt-3 d-flex justify-content-between small fw-700">
+                        <span class="text-muted">Deployment Rate</span>
+                        <span id="deployText">0%</span>
+                    </div>
+                    <div class="progress-meter">
+                        <div id="deployProgressBar" class="progress-bar-fill" style="background: var(--success);"></div>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="glass-card text-center">
-                    <div class="stat-label">Top Coordinator</div>
-                    <div id="topStaff" class="stat-value" style="font-size: 1.1rem; padding-top: 15px;">--</div>
+                <div class="glass-card text-center d-flex flex-column justify-content-center" style="min-height: 180px;">
+                    <div class="stat-label">Leading Coordinator</div>
+                    <div id="topStaff" class="stat-value text-truncate" style="font-size: 1.3rem; padding-top: 10px;">--</div>
+                    <div class="small fw-700 text-success mt-2"><i class="fas fa-medal me-1"></i> Highest Activity</div>
                 </div>
             </div>
         </div>
@@ -257,30 +387,30 @@
             <div class="col-lg-7">
                 <div class="glass-card">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h6 class="fw-800 m-0"><i class="fas fa-chart-line me-2 text-danger"></i>Visit Distribution</h6>
+                        <h6 class="fw-800 m-0"><i class="fas fa-chart-bar me-2 text-danger"></i>Personnel Visit Distribution</h6>
                     </div>
-                    <div style="height: 400px;"><canvas id="performanceChart"></canvas></div>
+                    <div style="height: 420px;"><canvas id="performanceChart"></canvas></div>
                 </div>
             </div>
             
             <div class="col-lg-5">
                 <div class="glass-card">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h6 class="fw-800 m-0"><i class="fas fa-clock me-2 text-danger"></i>Duration Log History</h6>
+                        <h6 class="fw-800 m-0"><i class="fas fa-history me-2 text-danger"></i>Recent Activity Feed</h6>
                     </div>
                     
                     <div class="search-container">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="tableSearch" class="filter-input search-input" placeholder="Search personnel or store location...">
+                        <input type="text" id="tableSearch" class="filter-input search-input" placeholder="Quick search staff or location...">
                     </div>
 
                     <div class="table-container">
                         <table class="table table-hover align-middle" id="logTable">
                             <thead>
                                 <tr>
-                                    <th>Personnel</th>
-                                    <th>GPS Location / Store</th>
-                                    <th>Duration</th>
+                                    <th>Staff Member</th>
+                                    <th>Deployment Area</th>
+                                    <th>Log Time</th>
                                 </tr>
                             </thead>
                             <tbody id="durationTableBody"></tbody>
@@ -293,10 +423,12 @@
 </div>
 
 <script type="module">
+    // Firebase Modular SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, query, where, onSnapshot, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+    // App Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
@@ -304,69 +436,30 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+    const db = initializeFirestore(app, { 
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) 
+    });
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
     let perfChart, unsubscribe = null;
-    
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+    const TARGET_VISITS_PER_STAFF = 8;
+    const addressCache = {};
 
     const dateInput = document.getElementById('summaryDateFilter');
     const searchInput = document.getElementById('tableSearch');
+    const rememberMe = document.getElementById('rememberMe');
+    
+    // Set Default Date
     dateInput.valueAsDate = new Date();
 
-    // Data Filter Logic for Table
-    searchInput.addEventListener('keyup', function() {
-        const filter = this.value.toUpperCase();
-        const rows = document.querySelector("#durationTableBody").getElementsByTagName("tr");
-        
-        for (let i = 0; i < rows.length; i++) {
-            const nameCol = rows[i].getElementsByTagName("td")[0];
-            const locCol = rows[i].getElementsByTagName("td")[1];
-            if (nameCol || locCol) {
-                const nameText = nameCol.textContent || nameCol.innerText;
-                const locText = locCol.textContent || locCol.innerText;
-                if (nameText.toUpperCase().indexOf(filter) > -1 || locText.toUpperCase().indexOf(filter) > -1) {
-                    rows[i].style.display = "";
-                } else {
-                    rows[i].style.display = "none";
-                }
-            }
-        }
-    });
-
-    const addressCache = {};
-    async function getGPSAddress(lat, lng) {
-        const key = `${lat},${lng}`;
-        if (addressCache[key]) return addressCache[key];
-        try {
-            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
-            const data = await res.json();
-            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "GPS Field Location";
-            addressCache[key] = addr; return addr;
-        } catch { return "Unknown GPS Point"; }
+    // Remember Me Logic - Check LocalStorage
+    if (localStorage.getItem('imerch_admin_remember') === 'true') {
+        rememberMe.checked = true;
     }
 
-    function formatDuration(mins) {
-        if (mins < 60) return `${mins}m`;
-        const hrs = Math.floor(mins / 60);
-        const rem = mins % 60;
-        return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`;
-    }
-
-    function nameFromEmail(input) {
-        if (!input) return "Unknown Staff";
-        if (input.includes('@')) {
-            let namePart = input.split('@')[0];
-            return namePart.split(/[._]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-        }
-        return input;
-    }
-
-    document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
-    window.logout = () => signOut(auth);
-
+    // Auth Change Handler
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('loginContainer').style.display = 'none';
@@ -378,6 +471,45 @@
         }
     });
 
+    // Login Action
+    document.getElementById('loginBtn').onclick = async () => {
+        try {
+            const persistenceMode = rememberMe.checked ? browserLocalPersistence : browserSessionPersistence;
+            await setPersistence(auth, persistenceMode);
+            localStorage.setItem('imerch_admin_remember', rememberMe.checked);
+            await signInWithPopup(auth, provider);
+        } catch (error) {
+            console.error("Auth Error:", error);
+            alert("Login Failed. Please try again.");
+        }
+    };
+
+    window.logout = () => signOut(auth);
+
+    // Dynamic Search Filter
+    searchInput.addEventListener('keyup', function() {
+        const filter = this.value.toUpperCase();
+        const rows = document.querySelector("#durationTableBody").getElementsByTagName("tr");
+        for (let i = 0; i < rows.length; i++) {
+            const textContent = rows[i].textContent || rows[i].innerText;
+            rows[i].style.display = textContent.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    });
+
+    // Address Resolver
+    async function getGPSAddress(lat, lng) {
+        const key = `${lat},${lng}`;
+        if (addressCache[key]) return addressCache[key];
+        try {
+            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
+            const data = await res.json();
+            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "GPS Field Location";
+            addressCache[key] = addr; 
+            return addr;
+        } catch { return "Unknown GPS Point"; }
+    }
+
+    // Core Monitoring Engine
     function initMonitoring() {
         if (unsubscribe) unsubscribe();
         document.getElementById('loadingScreen').style.display = 'flex';
@@ -386,10 +518,15 @@
         const start = new Date(selDate.setHours(0,0,0,0));
         const end = new Date(selDate.setHours(23,59,59,999));
         
-        document.getElementById('dateSubtitle').innerText = `Records for ${selDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+        document.getElementById('dateSubtitle').innerText = `${selDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`;
         document.getElementById('liveIndicator').style.display = (new Date().toDateString() === selDate.toDateString()) ? 'flex' : 'none';
 
-        const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)), orderBy("timestamp", "asc"));
+        const q = query(
+            collection(db, "attendance"), 
+            where("timestamp", ">=", Timestamp.fromDate(start)), 
+            where("timestamp", "<=", Timestamp.fromDate(end)), 
+            orderBy("timestamp", "asc")
+        );
 
         unsubscribe = onSnapshot(q, (snap) => {
             let counts = {}, staffActivity = {}, tableData = [];
@@ -420,20 +557,36 @@
                 }
             });
 
+            // Update Statistics
+            const activeCount = Object.keys(counts).length;
+            const totalLogs = snap.size;
+            const goalTarget = activeCount * TARGET_VISITS_PER_STAFF;
+            const progressPct = goalTarget > 0 ? Math.min(Math.round((totalLogs / goalTarget) * 100), 100) : 0;
+
+            document.getElementById('totalStores').innerText = totalLogs;
+            document.getElementById('liveLogCount').innerText = totalLogs;
+            document.getElementById('activeStaff').innerText = activeCount;
+            
+            // Progress Bar Updates
+            document.getElementById('goalProgressBar').style.width = `${progressPct}%`;
+            document.getElementById('progressText').innerText = `${progressPct}%`;
+            
+            const deployPct = activeCount > 0 ? 100 : 0; // Simplified for dashboard visual
+            document.getElementById('deployProgressBar').style.width = `${deployPct}%`;
+            document.getElementById('deployText').innerText = activeCount > 0 ? 'ACTIVE' : 'IDLE';
+
+            // Render Activity Table
             document.getElementById('durationTableBody').innerHTML = tableData.reverse().map((r, i) => {
-                const mapIcon = r.lat ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-external-link-alt"></i></a>` : "";
+                const mapLink = r.lat ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt"></i></a>` : "";
                 return `<tr>
                     <td class="staff-name-cell">${r.name}</td>
-                    <td id="loc-${i}" class="text-muted small">${r.loc} ${mapIcon}</td>
-                    <td><span class="duration-badge">${formatDuration(r.mins)}</span></td>
+                    <td id="loc-${i}" class="text-muted small">${r.loc} ${mapLink}</td>
+                    <td><span class="duration-badge">${r.mins} MINS</span></td>
                 </tr>`;
             }).join('');
 
-            document.getElementById('totalStores').innerText = snap.size;
-            document.getElementById('liveLogCount').innerText = snap.size;
-            document.getElementById('activeStaff').innerText = Object.keys(counts).length;
-
-            if (Object.keys(counts).length > 0) {
+            // Chart Rendering
+            if (activeCount > 0) {
                 const labels = Object.keys(counts);
                 const values = Object.values(counts);
                 const top = labels.reduce((a, b) => counts[a] > counts[b] ? a : b);
@@ -444,12 +597,14 @@
 
             document.getElementById('loadingScreen').style.display = 'none';
 
+            // Background Reverse Geocoding
             tableData.forEach((r, i) => {
                 if ((r.loc.includes("Resolving") || !r.loc) && r.lat) {
                     getGPSAddress(r.lat, r.lng).then(addr => {
                         const cell = document.getElementById(`loc-${i}`);
                         if (cell) {
-                            cell.innerHTML = `${addr} <a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-external-link-alt"></i></a>`;
+                            const mapLink = `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt"></i></a>`;
+                            cell.innerHTML = `${addr} ${mapLink}`;
                         }
                     });
                 }
@@ -457,9 +612,18 @@
         });
     }
 
+    function nameFromEmail(input) {
+        if (!input) return "Unknown Staff";
+        if (input.includes('@')) {
+            let namePart = input.split('@')[0];
+            return namePart.split(/[._]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+        return input;
+    }
+
     function drawChart(l, v) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
-        const colors = l.map((_, i) => `hsl(${(i * 360) / l.length}, 75%, 55%)`);
+        const colors = l.map((_, i) => `hsl(${(i * 360) / l.length}, 75%, 60%)`);
 
         if (perfChart) {
             perfChart.data.labels = l;
@@ -472,11 +636,11 @@
                 data: { 
                     labels: l, 
                     datasets: [{ 
-                        label: 'Store Visits', 
+                        label: 'Completed Visits', 
                         data: v, 
                         backgroundColor: colors, 
                         borderRadius: 12,
-                        barThickness: 25
+                        barThickness: 28
                     }] 
                 },
                 options: { 
@@ -484,26 +648,16 @@
                     maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
-                        tooltip: { 
-                            backgroundColor: 'rgba(43, 45, 66, 0.9)',
-                            padding: 12,
-                            titleFont: { size: 14, weight: 'bold' }
-                        } 
+                        tooltip: {
+                            backgroundColor: 'rgba(43, 45, 66, 0.95)',
+                            padding: 15,
+                            titleFont: { size: 14, weight: 'bold' },
+                            cornerRadius: 12
+                        }
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { color: '#f0f0f0', drawBorder: false }
-                        },
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: {
-                                color: '#2b2d42',
-                                font: { size: 10, weight: '800' },
-                                maxRotation: 45,
-                                minRotation: 45
-                            }
-                        }
+                        y: { beginAtZero: true, grid: { color: '#f0f0f0', drawBorder: false } },
+                        x: { grid: { display: false }, ticks: { font: { weight: '700', size: 10 } } }
                     }
                 }
             });
