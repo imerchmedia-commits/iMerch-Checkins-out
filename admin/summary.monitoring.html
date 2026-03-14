@@ -14,7 +14,6 @@
         :root { --primary: #d90429; --bg: #f8f9fa; }
         body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
         
-        /* White Navbar with Red Lining */
         .navbar { 
             background: white !important; 
             border-bottom: 3px solid var(--primary); 
@@ -59,6 +58,7 @@
         .table-container { max-height: 450px; overflow-y: auto; }
         .staff-name-cell { font-weight: 700; color: #334155; }
         .geo-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.75rem; }
+        .sync-time { font-size: 0.65rem; color: #94a3b8; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -88,6 +88,7 @@
             <div class="live-badge" id="liveIndicator" style="display: none;">
                 <span class="pulse-live"></span> Live: <span id="liveLogCount" class="ms-1">0</span>
             </div>
+            <div id="lastSync" class="sync-time"></div>
         </div>
         <button class="btn btn-outline-secondary btn-sm border-0" onclick="logout()" title="Logout">
             <i class="fas fa-sign-out-alt"></i>
@@ -97,7 +98,7 @@
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
-                <h4 class="fw-bold m-0">PERFORMANCE INDEX</h4>
+                <h4 class="fw-bold m-0"><i class="fas fa-chart-line me-2" style="color: var(--primary);"></i>PERFORMANCE INDEX</h4>
                 <small class="text-muted" id="dateSubtitle">Monitoring for Today</small>
             </div>
             <div>
@@ -106,9 +107,27 @@
         </div>
 
         <div class="row g-4 mb-2">
-            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Total Store Logs</div><div id="totalStores" class="stat-value">0</div></div></div>
-            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Active Field Staff</div><div id="activeStaff" class="stat-value">0</div></div></div>
-            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Top Performer</div><div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 10px;">--</div></div></div>
+            <div class="col-md-4">
+                <div class="glass-card text-center">
+                    <i class="fas fa-clipboard-list mb-2" style="color: #64748b;"></i>
+                    <div class="stat-label">Total Store Logs</div>
+                    <div id="totalStores" class="stat-value">0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="glass-card text-center">
+                    <i class="fas fa-users mb-2" style="color: #64748b;"></i>
+                    <div class="stat-label">Active Field Staff</div>
+                    <div id="activeStaff" class="stat-value">0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="glass-card text-center">
+                    <i class="fas fa-trophy mb-2" style="color: #f59e0b;"></i>
+                    <div class="stat-label">Top Performer</div>
+                    <div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 10px;">--</div>
+                </div>
+            </div>
         </div>
 
         <div class="row g-4">
@@ -120,7 +139,7 @@
             </div>
             <div class="col-lg-5">
                 <div class="glass-card">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-clock me-2"></i>Live Store Durations</h6>
+                    <h6 class="fw-bold mb-3"><i class="fas fa-history me-2"></i>Live Store Durations</h6>
                     <div class="table-container">
                         <table class="table table-hover align-middle" style="font-size: 0.85rem;">
                             <thead class="table-light">
@@ -155,7 +174,6 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    // Correct Firestore initialization to remove deprecation warning
     const db = initializeFirestore(app, {
         localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
     });
@@ -164,7 +182,6 @@
 
     let perfChart;
     let unsubscribe = null;
-    let currentTotalCount = -1;
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
@@ -221,23 +238,17 @@
         );
 
         unsubscribe = onSnapshot(q, (snap) => {
-            if (snap.size === currentTotalCount && currentTotalCount !== -1) {
-                document.getElementById('loadingScreen').style.display = 'none';
-                return;
-            }
+            document.getElementById('lastSync').innerText = `Last Sync: ${new Date().toLocaleTimeString()}`;
             
-            currentTotalCount = snap.size;
             let counts = {}, staffActivity = {}, tableData = [];
 
             snap.docs.forEach(doc => {
                 const data = doc.data();
-                // Priority Name Logic: Get name before any async delay
                 const name = data.staffName || data.name || data.user || "Unknown Staff";
-                
                 if (adminExclusion.includes(name)) return;
 
                 const type = (data.type || "").toLowerCase();
-                const time = data.timestamp.toDate();
+                const time = data.timestamp ? data.timestamp.toDate() : new Date();
                 const lat = data.latitude || data.geopoint?.latitude;
                 const lng = data.longitude || data.geopoint?.longitude;
 
@@ -256,7 +267,7 @@
                 }
             });
 
-            // Render Table with Lazy Loading Address
+            // TABLE RENDERING
             let rowsHtml = "";
             tableData.reverse().forEach((row, idx) => {
                 const badgeClass = row.mins < 10 ? 'duration-warning' : 'duration-normal';
@@ -266,13 +277,13 @@
                     <tr>
                         <td class="staff-name-cell">${row.name}</td>
                         <td id="addr-${idx}" class="text-muted" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            ${row.loc || 'Fetching location...'} ${mapLink}
+                            ${row.loc || '<i>Auto-fetching...</i>'} ${mapLink}
                         </td>
                         <td><span class="duration-badge ${badgeClass}">${row.mins} mins</span></td>
                     </tr>
                 `;
 
-                if (!row.loc && row.lat) {
+                if (!row.loc && row.lat && row.lng) {
                     getStoreName(row.lat, row.lng).then(addr => {
                         const cell = document.getElementById(`addr-${idx}`);
                         if (cell) cell.innerHTML = `${addr} ${mapLink}`;
@@ -295,7 +306,9 @@
             } else {
                 document.getElementById('topStaff').innerText = "--";
             }
-
+            document.getElementById('loadingScreen').style.display = 'none';
+        }, (err) => {
+            console.error("Firebase Error: ", err);
             document.getElementById('loadingScreen').style.display = 'none';
         });
     }
@@ -303,7 +316,6 @@
     function renderChart(labels, data) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
         const sorted = labels.map((l, i) => ({l, v: data[i]})).sort((a,b) => b.v - a.v);
-        
         if (perfChart) perfChart.destroy();
         perfChart = new Chart(ctx, {
             type: 'bar',
@@ -320,7 +332,7 @@
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false, 
-                animation: false,
+                animation: { duration: 500 },
                 plugins: { legend: { display: false } },
                 scales: {
                     y: { beginAtZero: true, ticks: { stepSize: 1 } },
@@ -331,7 +343,6 @@
     }
 
     dateInput.addEventListener('change', () => {
-        currentTotalCount = -1;
         startSummaryMonitoring();
     });
 </script>
