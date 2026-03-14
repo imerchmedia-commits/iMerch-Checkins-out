@@ -36,6 +36,16 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
+        /* Clean Branding Replacement for Broken Logo */
+        .brand-text {
+            font-weight: 800;
+            font-size: 1.4rem;
+            letter-spacing: -1px;
+            color: var(--dark);
+            text-decoration: none;
+        }
+        .brand-text span { color: var(--primary); }
+
         .pulse-live { 
             width: 10px; height: 10px; 
             background: #22c55e; 
@@ -165,8 +175,8 @@
 
 <div id="loginContainer">
     <div class="login-card">
-        <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="55" class="mb-4">
-        <h4 class="fw-800 mb-2">iMerch Admin</h4>
+        <div class="brand-text mb-4" style="font-size: 2.2rem;">iMERCH<span>MEDIA</span></div>
+        <h4 class="fw-800 mb-2">Admin Dashboard</h4>
         <p class="text-muted small mb-4">Summary & Real-time Performance Tracker</p>
         <button class="btn-google" id="loginBtn">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
@@ -183,7 +193,7 @@
 <div class="main-content" id="dashboardContent">
     <nav class="navbar fixed-top d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-4">
-            <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="40">
+            <div class="brand-text">iMERCH<span>MEDIA</span></div>
             <div class="live-badge" id="liveIndicator" style="display: none;">
                 <span class="pulse-live"></span> <span id="liveLogCount">0</span> LOGS TODAY
             </div>
@@ -277,14 +287,6 @@
 
     let perfChart, unsubscribe = null;
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
-    
-    // Updated Personnel List
-    const authorizedStaff = [
-        "JENNIFER VICTORINO", "PRINCESS MANANSALA", "JOSEPH DELOS SANTOS", "MARCO MOLINA", 
-        "JESSA ABENIR", "ROMEO ACANTILADO", "MANUEL ERIC GONZALES", "ROGEL GETARUELAS", 
-        "ROSALINDA NINO", "ANNA MARIE EDINIEL", "MARK ENDITA", "YBARITTA ELENA", 
-        "Carl Francisco", "Fernand Digamon", "Gervie Espinosa"
-    ];
 
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
@@ -308,7 +310,7 @@
         return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`;
     }
 
-    // New Helper: Clean email to Full Name
+    // New Data Logic: Clean email to Full Name
     function nameFromEmail(input) {
         if (!input) return "Unknown Staff";
         if (input.includes('@')) {
@@ -351,7 +353,7 @@
             snap.docs.forEach(doc => {
                 const d = doc.data();
                 let rawInput = d.staffName || d.name || d.user || d.employeeName || d.email || "";
-                let person = nameFromEmail(rawInput); // Convert email to Name
+                let person = nameFromEmail(rawInput); 
 
                 if (adminExclusion.includes(person) || !person) return;
 
@@ -439,7 +441,7 @@
                         grid: { display: false }, 
                         border: { display: false },
                         ticks: {
-                            color: '#000', // Bold Black
+                            color: '#000', // Bold Black Labels
                             font: { size: 10, weight: '800' }, // Extra Bold
                             maxRotation: 45,
                             minRotation: 45
