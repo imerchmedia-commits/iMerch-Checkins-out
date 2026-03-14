@@ -17,58 +17,113 @@
             --dark: #2b2d42;
             --light: #8d99ae;
             --bg: #f8f9fa; 
-            --gold: #FFD700;
-            --success: #27ae60;
-            --over: #f39c12; /* Orange for exceeding target */
         }
 
         body { 
             background-color: var(--bg); 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            margin: 0; overflow-x: hidden; color: var(--dark);
+            margin: 0; 
+            overflow-x: hidden; 
+            color: var(--dark);
         }
         
         .navbar { 
             background: rgba(255, 255, 255, 0.95) !important; 
             backdrop-filter: blur(10px);
             border-bottom: 3px solid var(--primary); 
-            padding: 0.8rem 2rem; z-index: 1050; 
+            padding: 0.8rem 2rem; 
+            z-index: 1050; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
-        .brand-text { font-weight: 800; font-size: 1.4rem; letter-spacing: -1px; color: var(--dark); text-decoration: none; }
+        /* Clean Branding Replacement for Broken Logo */
+        .brand-text {
+            font-weight: 800;
+            font-size: 1.4rem;
+            letter-spacing: -1px;
+            color: var(--dark);
+            text-decoration: none;
+        }
         .brand-text span { color: var(--primary); }
 
-        /* Goal Progress Bar */
-        .progress-container { background: #e9ecef; border-radius: 50px; height: 12px; width: 100%; margin: 15px 0 5px 0; overflow: hidden; }
-        .progress-fill { 
-            background: var(--primary); 
-            height: 100%; width: 0%; border-radius: 50px; transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .goal-text { font-size: 0.7rem; font-weight: 800; color: var(--light); text-transform: uppercase; margin-top: 5px; }
-
-        @keyframes shuffleUp {
-            0% { transform: translateY(20px); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
+        .pulse-live { 
+            width: 10px; height: 10px; 
+            background: #22c55e; 
+            border-radius: 50%; 
+            display: inline-block; 
+            margin-right: 8px; 
+            box-shadow: 0 0 0 rgba(34, 197, 94, 0.4); 
+            animation: pulse 2s infinite; 
         }
 
-        .top-staff-box { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
-        .crown-icon { color: var(--gold); filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5)); animation: bounce 2s infinite; font-size: 1.5rem; margin-bottom: 5px; }
-
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-
-        .new-entry-glow { animation: rowGlow 3s ease-out; }
-        @keyframes rowGlow {
-            0% { background-color: rgba(217, 4, 41, 0.15); border-left: 5px solid var(--primary); }
-            100% { background-color: transparent; border-left: 0px solid transparent; }
+        @keyframes pulse { 
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
+        }
+        
+        .live-badge { 
+            background: rgba(34, 197, 94, 0.1); 
+            color: #166534; 
+            padding: 6px 16px; 
+            border-radius: 50px; 
+            font-size: 0.75rem; 
+            font-weight: 800; 
+            display: flex; 
+            align-items: center; 
+            letter-spacing: 0.5px;
         }
 
+        #loginContainer { 
+            height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: radial-gradient(circle at top right, #fff5f5, #ffffff);
+        }
+
+        .login-card { 
+            text-align: center; 
+            padding: 3rem; 
+            border-radius: 24px; 
+            background: white;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08); 
+            width: 100%; 
+            max-width: 420px; 
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .btn-google { 
+            background: #4285f4; 
+            color: white; 
+            border-radius: 12px; 
+            padding: 14px; 
+            font-weight: 700; 
+            border: none; 
+            width: 100%; 
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-google:hover { background: #3367d6; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(66, 133, 244, 0.3); }
+        
+        .main-content { width: 100%; padding: 2rem; display: none; margin-top: 85px; }
+        
         .glass-card { 
-            background: white; border-radius: 24px; padding: 1.8rem; 
-            border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 12px 35px rgba(0,0,0,0.02); 
-            margin-bottom: 1.5rem; transition: transform 0.3s ease;
+            background: white; 
+            border-radius: 24px; 
+            padding: 1.8rem; 
+            border: 1px solid rgba(0,0,0,0.04); 
+            box-shadow: 0 12px 35px rgba(0,0,0,0.02); 
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
         }
 
+        .glass-card:hover { transform: translateY(-5px); }
+        
         .stat-value { font-size: 2.5rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
         .stat-label { font-size: 0.8rem; font-weight: 700; color: var(--light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
 
@@ -78,18 +133,42 @@
             justify-content: center; align-items: center; z-index: 9999; 
         }
 
-        .table-container { max-height: 520px; overflow-y: auto; }
-        .staff-name-cell { font-weight: 700; color: #000; text-transform: uppercase; font-size: 0.75rem; }
-        .duration-badge { padding: 5px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; background: #f1f5f9; color: #475569; }
+        .filter-input { 
+            border-radius: 12px; border: 1px solid #eee; 
+            padding: 8px 20px; font-weight: 600; outline: none; 
+            background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
         
-        .geo-link { color: var(--primary); text-decoration: none; font-weight: 700; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; }
-        .filter-input { border-radius: 12px; border: 1px solid #eee; padding: 8px 20px; font-weight: 600; outline: none; background: white; }
+        .duration-badge { 
+            padding: 5px 12px; border-radius: 8px; 
+            font-size: 0.7rem; font-weight: 800; 
+            background: #f1f5f9; color: #475569; 
+            display: inline-block;
+            white-space: nowrap;
+        }
 
-        /* Login Styles */
-        #loginContainer { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); display:flex; justify-content:center; align-items:center; z-index:2000; }
-        .login-card { background:white; padding:3rem; border-radius:30px; text-align:center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-        .btn-google { background:white; border:1px solid #ddd; padding:12px 25px; border-radius:12px; font-weight:700; display:flex; align-items:center; gap:10px; margin: 0 auto; transition:0.3s; }
-        .btn-google:hover { background:#f9f9f9; transform:translateY(-2px); }
+        .table-container { max-height: 520px; overflow-y: auto; padding-right: 5px; }
+        .staff-name-cell { font-weight: 700; color: #000; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.2px; }
+        .geo-link { 
+            color: var(--primary); text-decoration: none; 
+            font-weight: 700; font-size: 0.75rem; 
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        .table thead th {
+            background: #fcfcfc;
+            border-bottom: 2px solid #eee;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--light);
+            padding: 15px;
+        }
     </style>
 </head>
 <body>
@@ -98,6 +177,7 @@
     <div class="login-card">
         <div class="brand-text mb-4" style="font-size: 2.2rem;">iMERCH<span>MEDIA</span></div>
         <h4 class="fw-800 mb-2">Admin Dashboard</h4>
+        <p class="text-muted small mb-4">Summary & Real-time Performance Tracker</p>
         <button class="btn-google" id="loginBtn">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
             Login with Google
@@ -106,20 +186,26 @@
 </div>
 
 <div id="loadingScreen" class="loader">
-    <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
-    <div class="mt-4 fw-800 text-dark">SYNCING LIVE DATA...</div>
+    <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem; border-width: 0.25em;" role="status"></div>
+    <div class="mt-4 fw-800 text-dark" style="letter-spacing: 2px;">SYNCING LIVE DATA...</div>
 </div>
 
-<div class="main-content" id="dashboardContent" style="display:none;">
+<div class="main-content" id="dashboardContent">
     <nav class="navbar fixed-top d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-4">
             <div class="brand-text">iMERCH<span>MEDIA</span></div>
-            <div id="liveIndicator" style="display: none;" class="badge bg-success rounded-pill px-3 py-2 fw-800" style="font-size: 0.7rem;">LIVE UPDATES ACTIVE</div>
+            <div class="live-badge" id="liveIndicator" style="display: none;">
+                <span class="pulse-live"></span> <span id="liveLogCount">0</span> LOGS TODAY
+            </div>
         </div>
-        <button class="btn btn-light btn-sm rounded-circle" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
     </nav>
 
-    <div class="container-fluid" style="margin-top: 100px;">
+    <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
             <div>
                 <h3 class="fw-800 m-0" style="letter-spacing: -1px;">SUMMARY MONITORING</h3>
@@ -136,20 +222,18 @@
                 <div class="glass-card text-center">
                     <div class="stat-label">Total Logs Found</div>
                     <div id="totalStores" class="stat-value">0</div>
-                    <div class="progress-container"><div class="progress-fill" id="goalBar"></div></div>
-                    <div class="goal-text" id="goalStatus">Daily Target: 0/6</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="glass-card text-center">
-                    <div class="stat-label">Active Personnel</div>
+                    <div class="stat-label">Active Field Personnel</div>
                     <div id="activeStaff" class="stat-value">0</div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="glass-card text-center top-staff-box" id="leaderboardCard">
-                    <div class="stat-label">🏆 Top Coordinator</div>
-                    <div id="topStaff" class="stat-value" style="font-size: 1.1rem; padding-top: 5px; color: var(--dark);">--</div>
+                <div class="glass-card text-center">
+                    <div class="stat-label">Top Coordinator</div>
+                    <div id="topStaff" class="stat-value" style="font-size: 1.1rem; padding-top: 15px;">--</div>
                 </div>
             </div>
         </div>
@@ -157,18 +241,24 @@
         <div class="row g-4">
             <div class="col-lg-7">
                 <div class="glass-card">
-                    <h6 class="fw-800 mb-4"><i class="fas fa-chart-line me-2 text-danger"></i>Visit Distribution</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="fw-800 m-0"><i class="fas fa-chart-line me-2 text-danger"></i>Visit Distribution</h6>
+                    </div>
                     <div style="height: 400px;"><canvas id="performanceChart"></canvas></div>
                 </div>
             </div>
             
             <div class="col-lg-5">
                 <div class="glass-card">
-                    <h6 class="fw-800 mb-4"><i class="fas fa-history me-2 text-danger"></i>Duration Log History</h6>
+                    <h6 class="fw-800 mb-4"><i class="fas fa-clock me-2 text-danger"></i>Duration Log History</h6>
                     <div class="table-container">
                         <table class="table table-hover align-middle">
                             <thead>
-                                <tr><th>Personnel</th><th>Location</th><th>Duration</th></tr>
+                                <tr>
+                                    <th>Personnel</th>
+                                    <th>GPS Location / Store</th>
+                                    <th>Duration</th>
+                                </tr>
                             </thead>
                             <tbody id="durationTableBody"></tbody>
                         </table>
@@ -181,7 +271,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { initializeFirestore, collection, query, where, onSnapshot, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, query, where, onSnapshot, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -191,12 +281,11 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = initializeFirestore(app);
+    const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    let perfChart, unsubscribe = null, currentTop = "", lastLogCount = 0;
-    const TARGET_VAL = 6;
+    let perfChart, unsubscribe = null;
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
     const dateInput = document.getElementById('summaryDateFilter');
@@ -221,6 +310,7 @@
         return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`;
     }
 
+    // New Data Logic: Clean email to Full Name
     function nameFromEmail(input) {
         if (!input) return "Unknown Staff";
         if (input.includes('@')) {
@@ -229,6 +319,9 @@
         }
         return input;
     }
+
+    document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
+    window.logout = () => signOut(auth);
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -250,17 +343,18 @@
         const end = new Date(selDate.setHours(23,59,59,999));
         
         document.getElementById('dateSubtitle').innerText = `Records for ${selDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
-        document.getElementById('liveIndicator').style.display = (new Date().toDateString() === selDate.toDateString()) ? 'block' : 'none';
+        document.getElementById('liveIndicator').style.display = (new Date().toDateString() === selDate.toDateString()) ? 'flex' : 'none';
 
         const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)), orderBy("timestamp", "asc"));
 
         unsubscribe = onSnapshot(q, (snap) => {
             let counts = {}, staffActivity = {}, tableData = [];
-            let totalCheckIns = 0;
 
             snap.docs.forEach(doc => {
                 const d = doc.data();
-                let person = nameFromEmail(d.staffName || d.name || d.email || "");
+                let rawInput = d.staffName || d.name || d.user || d.employeeName || d.email || "";
+                let person = nameFromEmail(rawInput); 
+
                 if (adminExclusion.includes(person) || !person) return;
 
                 const type = (d.type || "").toLowerCase();
@@ -269,9 +363,12 @@
                 const lng = d.longitude || d.geopoint?.longitude;
 
                 if (type.includes('in')) {
-                    totalCheckIns++;
                     counts[person] = (counts[person] || 0) + 1;
-                    staffActivity[person] = { inTime: time, loc: d.location || "Resolving GPS...", lat, lng };
+                    staffActivity[person] = { 
+                        inTime: time, 
+                        loc: d.location || d.storeName || d.currentLocation || "Resolving GPS...", 
+                        lat, lng 
+                    };
                 } else if (type.includes('out') && staffActivity[person]) {
                     const diff = Math.floor((time - staffActivity[person].inTime) / 60000);
                     tableData.push({ name: person, mins: diff, ...staffActivity[person] });
@@ -279,68 +376,31 @@
                 }
             });
 
-            // UPDATED GOAL LOGIC: Red -> Green -> Orange
-            const goalBar = document.getElementById('goalBar');
-            const goalStatus = document.getElementById('goalStatus');
-            const percentage = Math.min((totalCheckIns / TARGET_VAL) * 100, 100);
-            
-            goalBar.style.width = `${percentage}%`;
-            
-            if (totalCheckIns === TARGET_VAL) {
-                goalBar.style.background = 'var(--success)'; // Green at exactly 6
-                goalStatus.style.color = 'var(--success)';
-                goalStatus.innerText = `Target Met! (${totalCheckIns}/${TARGET_VAL})`;
-            } else if (totalCheckIns > TARGET_VAL) {
-                goalBar.style.background = 'var(--over)'; // Orange if > 6
-                goalStatus.style.color = 'var(--over)';
-                goalStatus.innerText = `Target Exceeded! (${totalCheckIns}/${TARGET_VAL})`;
-            } else {
-                goalBar.style.background = 'var(--primary)'; // Default Red
-                goalStatus.style.color = 'var(--light)';
-                goalStatus.innerText = `Daily Target: ${totalCheckIns}/${TARGET_VAL}`;
-            }
-
-            // LEADERBOARD
-            const labels = Object.keys(counts);
-            if (labels.length > 0) {
-                const top = labels.reduce((a, b) => counts[a] > counts[b] ? a : b);
-                const topStaffDiv = document.getElementById('topStaff');
-                const leaderboardCard = document.getElementById('leaderboardCard');
-
-                if (top !== currentTop) {
-                    currentTop = top;
-                    topStaffDiv.style.animation = 'none';
-                    topStaffDiv.offsetHeight;
-                    topStaffDiv.style.animation = 'shuffleUp 0.6s ease-out';
-                    topStaffDiv.innerHTML = `<i class="fas fa-crown crown-icon"></i><br>${top.toUpperCase()}<br><span style="font-size:0.8rem; color:var(--primary)">${counts[top]} VISITS</span>`;
-                    leaderboardCard.style.border = "2px solid var(--gold)";
-                } else {
-                    topStaffDiv.innerHTML = `<i class="fas fa-crown crown-icon"></i><br>${top.toUpperCase()}<br><span style="font-size:0.8rem; color:var(--primary)">${counts[top]} VISITS</span>`;
-                }
-                drawChart(labels, Object.values(counts));
-            }
-
-            // TABLE DATA
-            const tableBody = document.getElementById('durationTableBody');
-            const isNewLog = snap.size > lastLogCount && lastLogCount !== 0;
-            
-            tableBody.innerHTML = tableData.reverse().map((r, i) => {
+            document.getElementById('durationTableBody').innerHTML = tableData.reverse().map((r, i) => {
                 const mapIcon = r.lat ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-external-link-alt"></i></a>` : "";
-                return `<tr class="${i === 0 && isNewLog ? 'new-entry-glow' : ''}">
+                return `<tr>
                     <td class="staff-name-cell">${r.name}</td>
                     <td id="loc-${i}" class="text-muted small">${r.loc} ${mapIcon}</td>
                     <td><span class="duration-badge">${formatDuration(r.mins)}</span></td>
                 </tr>`;
             }).join('');
 
-            document.getElementById('totalStores').innerText = totalCheckIns;
+            document.getElementById('totalStores').innerText = snap.size;
+            document.getElementById('liveLogCount').innerText = snap.size;
             document.getElementById('activeStaff').innerText = Object.keys(counts).length;
-            
-            lastLogCount = snap.size;
+
+            if (Object.keys(counts).length > 0) {
+                const labels = Object.keys(counts);
+                const values = Object.values(counts);
+                const top = labels.reduce((a, b) => counts[a] > counts[b] ? a : b);
+                document.getElementById('topStaff').innerText = `${top} (${counts[top]})`;
+                drawChart(labels, values);
+            }
+
             document.getElementById('loadingScreen').style.display = 'none';
 
             tableData.forEach((r, i) => {
-                if (r.loc.includes("Resolving") && r.lat) {
+                if ((r.loc.includes("Resolving") || !r.loc) && r.lat) {
                     getGPSAddress(r.lat, r.lng).then(addr => {
                         const cell = document.getElementById(`loc-${i}`);
                         if (cell) cell.innerHTML = `${addr} <a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-external-link-alt"></i></a>`;
@@ -353,23 +413,46 @@
     function drawChart(l, v) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
         if (perfChart) perfChart.destroy();
+        
+        const colors = l.map((_, i) => `hsl(${(i * 360) / l.length}, 75%, 55%)`);
+
         perfChart = new Chart(ctx, {
             type: 'bar',
-            data: { labels: l, datasets: [{ data: v, backgroundColor: '#d90429', borderRadius: 8 }] },
+            data: { 
+                labels: l, 
+                datasets: [{ 
+                    label: 'Store Visits', 
+                    data: v, 
+                    backgroundColor: colors, 
+                    borderRadius: 12,
+                    barThickness: 25
+                }] 
+            },
             options: { 
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    x: { ticks: { color: '#000', font: { weight: '800', size: 10 } } },
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (ctx) => ` Visits: ${ctx.raw}` } }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' }, border: { display: false } },
+                    x: { 
+                        grid: { display: false }, 
+                        border: { display: false },
+                        ticks: {
+                            color: '#000', // Bold Black Labels
+                            font: { size: 10, weight: '800' }, // Extra Bold
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
                 }
             }
         });
     }
 
     dateInput.onchange = initMonitoring;
-    document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
-    window.logout = () => signOut(auth);
 </script>
 </body>
 </html>
