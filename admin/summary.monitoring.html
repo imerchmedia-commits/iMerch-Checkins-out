@@ -14,6 +14,9 @@
         :root { --primary: #d90429; --bg: #f8f9fa; }
         body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
         
+        /* Navbar Customization based on user preference */
+        .navbar { background: white !important; border-bottom: 3px solid var(--primary); padding: 1rem 2rem; }
+        
         .pulse-live {
             width: 8px; height: 8px; background: #22c55e; border-radius: 50%;
             display: inline-block; margin-right: 5px;
@@ -37,21 +40,21 @@
         .login-card { text-align: center; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         .btn-google { background: #4285f4; color: white; border-radius: 10px; padding: 12px; font-weight: 700; border: none; width: 100%; transition: 0.3s; }
         
-        .main-content { width: 100%; padding: 1rem; display: none; }
-        .glass-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 1.5rem; }
+        .main-content { width: 100%; padding: 2rem; display: none; }
+        .glass-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 1.5rem; transition: 0.3s; }
+        .glass-card:hover { transform: translateY(-5px); }
         .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
         .stat-label { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; }
 
         .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .filter-input { border-radius: 10px; border: 1px solid #ddd; padding: 5px 15px; font-weight: 600; outline: none; }
+        .filter-input { border-radius: 10px; border: 1px solid #ddd; padding: 8px 15px; font-weight: 600; outline: none; }
 
         .duration-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; }
         .duration-normal { background: #f1f5f9; color: #475569; }
         .duration-warning { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-        .table-container { max-height: 350px; overflow-y: auto; }
+        .table-container { max-height: 400px; overflow-y: auto; }
         .staff-name-cell { font-weight: 700; color: #334155; }
-        .geo-link { color: #dc2626; text-decoration: none; font-weight: 600; font-size: 0.75rem; }
-        .geo-link:hover { text-decoration: underline; }
+        .geo-link { color: #dc2626; text-decoration: none; font-weight: 600; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -75,51 +78,58 @@
 </div>
 
 <div class="main-content" id="dashboardContent">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-        <div>
-            <div class="d-flex align-items-center gap-3">
-                <h4 class="fw-bold m-0">PERFORMANCE INDEX</h4>
-                <div class="live-badge" id="liveIndicator" style="display: none;">
-                    <span class="pulse-live"></span> Live: <span id="liveLogCount" class="ms-1">0</span>
-                </div>
-                <button class="btn btn-outline-secondary btn-sm border-0" onclick="logout()" title="Logout">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
-            </div>
-            <small class="text-muted" id="dateSubtitle">Monitoring for Today</small>
+    <nav class="navbar fixed-top d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="35">
+            <h5 class="fw-bold m-0 d-none d-md-block">PERFORMANCE MONITORING</h5>
         </div>
-        <div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="live-badge" id="liveIndicator">
+                <span class="pulse-live"></span> Live: <span id="liveLogCount" class="ms-1">0</span>
+            </div>
+            <button class="btn btn-light btn-sm rounded-circle" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div style="margin-top: 80px;">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <h4 class="fw-extrabold m-0">Today's Summary</h4>
+                <small class="text-muted" id="dateSubtitle">Fetching current data...</small>
+            </div>
             <input type="date" id="summaryDateFilter" class="filter-input shadow-sm">
         </div>
-    </div>
 
-    <div class="row g-4 mb-2">
-        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Total Store Logs</div><div id="totalStores" class="stat-value">0</div></div></div>
-        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Active Field Staff</div><div id="activeStaff" class="stat-value">0</div></div></div>
-        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Top Performer</div><div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 10px;">--</div></div></div>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-lg-7">
-            <div class="glass-card">
-                <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2"></i>Staff Performance (Visits)</h6>
-                <div style="height: 350px;"><canvas id="performanceChart"></canvas></div>
-            </div>
+        <div class="row g-4 mb-4">
+            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label"><i class="fas fa-store me-2"></i>Total Store Logs</div><div id="totalStores" class="stat-value">0</div></div></div>
+            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label"><i class="fas fa-users me-2"></i>Active Field Staff</div><div id="activeStaff" class="stat-value">0</div></div></div>
+            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label"><i class="fas fa-trophy me-2"></i>Top Performer</div><div id="topStaff" class="stat-value" style="font-size: 1.1rem; padding-top: 15px;">--</div></div></div>
         </div>
-        <div class="col-lg-5">
-            <div class="glass-card">
-                <h6 class="fw-bold mb-3"><i class="fas fa-clock me-2"></i>Live Store Durations</h6>
-                <div class="table-container">
-                    <table class="table table-hover align-middle" style="font-size: 0.85rem;">
-                        <thead class="table-light">
-                            <tr style="font-size: 0.7rem; text-transform: uppercase;">
-                                <th>Staff</th>
-                                <th>Location / Store</th>
-                                <th>Time Spent</th>
-                            </tr>
-                        </thead>
-                        <tbody id="durationTableBody"></tbody>
-                    </table>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="glass-card">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-chart-line me-2"></i>Visits Analytics</h6>
+                    <div style="height: 380px;"><canvas id="performanceChart"></canvas></div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="glass-card">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-history me-2"></i>Live Store Durations</h6>
+                    <div class="table-container">
+                        <table class="table table-hover align-middle" style="font-size: 0.85rem;">
+                            <thead class="table-light">
+                                <tr style="font-size: 0.7rem; text-transform: uppercase;">
+                                    <th>Staff Name</th>
+                                    <th>Location</th>
+                                    <th>Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody id="durationTableBody"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -152,32 +162,21 @@
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
 
-    // Store Cache to prevent redundant Geocoding calls
     const addressCache = {};
 
     async function getStoreName(lat, lng) {
         const key = `${lat},${lng}`;
         if (addressCache[key]) return addressCache[key];
-
         try {
-            const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
-            const data = await response.json();
-            if (data.results && data.results[0]) {
-                // Get the first two parts of the address for a cleaner look
-                const addr = data.results[0].formatted_address.split(',').slice(0, 2).join(',');
-                addressCache[key] = addr;
-                return addr;
-            }
-            return "Unknown Location";
-        } catch (e) {
-            return "Location Error";
-        }
+            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
+            const data = await res.json();
+            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "Unknown Store";
+            addressCache[key] = addr;
+            return addr;
+        } catch { return "Geo Error"; }
     }
 
-    document.getElementById('loginBtn').onclick = async () => {
-        try { await signInWithPopup(auth, provider); } catch (e) { alert("Login failed: " + e.message); }
-    };
-
+    document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
 
     onAuthStateChanged(auth, (user) => {
@@ -200,8 +199,6 @@
         const start = new Date(selectedDate.setHours(0,0,0,0));
         const end = new Date(selectedDate.setHours(23,59,59,999));
         
-        const isToday = new Date().toDateString() === selectedDate.toDateString();
-        document.getElementById('liveIndicator').style.display = isToday ? 'flex' : 'none';
         document.getElementById('dateSubtitle').innerText = `Monitoring for ${selectedDate.toDateString()}`;
 
         const q = query(
@@ -219,80 +216,60 @@
             
             currentTotalCount = snap.size;
             let counts = {};
-            let totalLogsCount = 0;
+            let totalLogs = 0;
             let staffActivity = {}; 
-            
-            const tableBody = document.getElementById('durationTableBody');
-            tableBody.innerHTML = '';
+            let rowsHtml = "";
 
-            // Using for...of loop to handle async/await inside onSnapshot
-            for (const doc of snap.docs) {
+            const sortedDocs = snap.docs;
+            
+            for (const doc of sortedDocs) {
                 const data = doc.data();
-                const name = data.name || data.staffName || "Unknown";
+                const name = data.staffName || data.name || data.user || "Unknown";
                 const type = (data.type || "").toLowerCase();
                 
-                let store = data.location || data.storeName || data.address;
-                const lat = data.latitude || (data.geopoint ? data.geopoint.latitude : null);
-                const lng = data.longitude || (data.geopoint ? data.geopoint.longitude : null);
-                
-                // --- AUTOMATIC REVERSE GEOCODING ---
-                if (!store && lat && lng) {
-                    store = await getStoreName(lat, lng);
-                } else if (!store) {
-                    store = "No Location Info";
-                }
+                if (adminExclusion.includes(name)) continue;
 
+                totalLogs++;
                 const time = data.timestamp.toDate();
+                let store = data.location || data.storeName || data.address;
+                const lat = data.latitude || data.geopoint?.latitude;
+                const lng = data.longitude || data.geopoint?.longitude;
 
-                if (!adminExclusion.includes(name)) {
-                    totalLogsCount++; 
-                    if (type.includes('in')) {
-                        counts[name] = (counts[name] || 0) + 1;
-                        staffActivity[name] = { 
-                            inTime: time, 
-                            loc: store, 
-                            coords: (lat && lng) ? `${lat},${lng}` : null 
-                        };
-                    } else if (type.includes('out')) {
-                        const activity = staffActivity[name];
-                        if (activity) {
-                            const diffMins = Math.floor((time - activity.inTime) / 60000);
-                            const badgeClass = diffMins < 10 ? 'duration-warning' : 'duration-normal';
-                            
-                            const mapLink = activity.coords ? `<br><a href="https://www.google.com/maps?q=${activity.coords}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt me-1"></i>View Map</a>` : "";
+                if (!store && lat && lng) store = await getStoreName(lat, lng);
+                if (!store) store = "Updating location...";
 
-                            const row = `
-                                <tr>
-                                    <td class="staff-name-cell">${name}</td>
-                                    <td class="text-muted">
-                                        <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                            ${activity.loc}
-                                        </div>
-                                        ${mapLink}
-                                    </td>
-                                    <td><span class="duration-badge ${badgeClass}">${diffMins} mins</span></td>
-                                </tr>
-                            `;
-                            tableBody.insertAdjacentHTML('afterbegin', row);
-                            delete staffActivity[name];
-                        }
+                if (type.includes('in')) {
+                    counts[name] = (counts[name] || 0) + 1;
+                    staffActivity[name] = { inTime: time, loc: store, coords: lat ? `${lat},${lng}` : null };
+                } else if (type.includes('out')) {
+                    const act = staffActivity[name];
+                    if (act) {
+                        const diff = Math.floor((time - act.inTime) / 60000);
+                        const badge = diff < 15 ? 'duration-warning' : 'duration-normal';
+                        const map = act.coords ? `<br><a href="https://www.google.com/maps?q=${act.coords}" target="_blank" class="geo-link"><i class="fas fa-map-pin me-1"></i>Map</a>` : "";
+                        
+                        rowsHtml = `<tr>
+                            <td class="staff-name-cell">${name}</td>
+                            <td><div class="text-muted small text-truncate" style="max-width:150px;">${act.loc}</div>${map}</td>
+                            <td><span class="duration-badge ${badge}">${diff}m</span></td>
+                        </tr>` + rowsHtml;
+                        delete staffActivity[name];
                     }
                 }
             }
 
+            document.getElementById('durationTableBody').innerHTML = rowsHtml;
+            document.getElementById('totalStores').innerText = totalLogs;
+            document.getElementById('liveLogCount').innerText = totalLogs;
+            
             const labels = Object.keys(counts);
             const values = Object.values(counts);
-
-            document.getElementById('totalStores').innerText = totalLogsCount;
-            document.getElementById('liveLogCount').innerText = totalLogsCount;
             document.getElementById('activeStaff').innerText = labels.length;
             
             if (labels.length > 0) {
-                const maxVal = Math.max(...values);
-                const topPerson = labels.find(key => counts[key] === maxVal);
-                document.getElementById('topStaff').innerText = `${topPerson} (${maxVal})`;
-            } else {
-                document.getElementById('topStaff').innerText = "--";
+                const max = Math.max(...values);
+                const top = labels.find(k => counts[k] === max);
+                document.getElementById('topStaff').innerText = `${top} (${max})`;
             }
 
             renderChart(labels, values);
@@ -302,43 +279,25 @@
 
     function renderChart(labels, data) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
-        const combined = labels.map((l, i) => ({label: l, value: data[i]})).sort((a, b) => b.value - a.value);
+        const sorted = labels.map((l, i) => ({l, v: data[i]})).sort((a, b) => b.v - a.v);
         
         if (perfChart) {
-            perfChart.data.labels = combined.map(x => x.label);
-            perfChart.data.datasets[0].data = combined.map(x => x.value);
-            perfChart.update('none');
+            perfChart.data.labels = sorted.map(x => x.l);
+            perfChart.data.datasets[0].data = sorted.map(x => x.v);
+            perfChart.update();
         } else {
             perfChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: combined.map(x => x.label),
-                    datasets: [{ 
-                        label: 'Visits', 
-                        data: combined.map(x => x.value), 
-                        backgroundColor: '#d90429', 
-                        borderRadius: 8,
-                        barThickness: 20
-                    }]
+                    labels: sorted.map(x => x.l),
+                    datasets: [{ label: 'Visits', data: sorted.map(x => x.v), backgroundColor: '#d90429', borderRadius: 5 }]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    animation: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
-                        x: { grid: { display: false } }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
     }
 
-    dateInput.addEventListener('change', () => {
-        currentTotalCount = -1;
-        startSummaryMonitoring();
-    });
+    dateInput.addEventListener('change', () => { currentTotalCount = -1; startSummaryMonitoring(); });
 </script>
 </body>
 </html>
