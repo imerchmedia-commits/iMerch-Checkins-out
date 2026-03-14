@@ -50,7 +50,7 @@
         .duration-warning { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
         .table-container { max-height: 350px; overflow-y: auto; }
         .staff-name-cell { font-weight: 700; color: #334155; }
-        .geo-link { color: #dc2626; text-decoration: none; font-weight: 600; }
+        .geo-link { color: #dc2626; text-decoration: none; font-weight: 600; font-size: 0.75rem; }
         .geo-link:hover { text-decoration: underline; }
     </style>
 </head>
@@ -208,14 +208,17 @@
                 const name = data.name || data.staffName || "Unknown";
                 const type = (data.type || "").toLowerCase();
                 
-                // Get Location / Store Name / Coordinates
-                let store = data.location || data.storeName || data.address;
-                const coords = data.latitude && data.longitude ? `${data.latitude},${data.longitude}` : (data.geopoint ? `${data.geopoint.latitude},${data.geopoint.longitude}` : null);
+                // --- DETAILED LOCATION PICKER ---
+                let store = data.storeName || data.location || data.address;
                 
-                if (!store && coords) {
-                    store = `<a href="https://www.google.com/maps?q=${coords}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt me-1"></i> View on Map</a>`;
+                // Detect Geopoint object or separate lat/long fields
+                const lat = data.latitude || (data.geopoint ? data.geopoint.latitude : null);
+                const lng = data.longitude || (data.geopoint ? data.geopoint.longitude : null);
+
+                if (!store && lat && lng) {
+                    store = `<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt me-1"></i> View on Map</a>`;
                 } else if (!store) {
-                    store = "No Location Info";
+                    store = '<span class="text-muted opacity-50">Unknown Store</span>';
                 }
 
                 const time = data.timestamp.toDate();
@@ -224,6 +227,7 @@
                     totalLogsCount++; 
                     if (type.includes('in')) {
                         counts[name] = (counts[name] || 0) + 1;
+                        // Storing the IN state
                         staffActivity[name] = { inTime: time, loc: store };
                     } else if (type.includes('out')) {
                         const activity = staffActivity[name];
@@ -234,7 +238,7 @@
                             const row = `
                                 <tr>
                                     <td class="staff-name-cell">${name}</td>
-                                    <td class="text-muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${activity.loc}</td>
+                                    <td class="text-muted" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${activity.loc}</td>
                                     <td><span class="duration-badge ${badgeClass}">${diffMins} mins</span></td>
                                 </tr>
                             `;
