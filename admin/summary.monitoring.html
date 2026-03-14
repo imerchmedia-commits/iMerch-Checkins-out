@@ -11,22 +11,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        :root { --primary: #d90429; --bg: #f8f9fa; --sidebar-bg: #ffffff; }
-        body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; display: flex; }
+        :root { --primary: #d90429; --bg: #f8f9fa; }
+        body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
         
-        /* Sidebar */
-        .sidebar { width: 280px; height: 100vh; background: var(--sidebar-bg); border-right: 2px solid #eee; position: fixed; padding: 2rem 1.5rem; display: flex; flex-direction: column; z-index: 1000; }
-        .brand-section img { width: 130px; margin-bottom: 0.5rem; }
-        .nav-link { color: #666; font-weight: 600; padding: 12px 18px; border-radius: 12px; margin-bottom: 5px; text-decoration: none; display: flex; align-items: center; }
-        .nav-link.active { background: var(--primary); color: white !important; }
+        /* Inalis ang Sidebar styles dahil iframe ito */
 
-        /* Content */
-        .main-content { margin-left: 280px; width: calc(100% - 280px); padding: 2rem 3rem; }
+        .main-content { width: 100%; padding: 1rem; }
         .glass-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 1.5rem; }
         .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
         .stat-label { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; }
 
-        /* Loader */
         .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
     </style>
 </head>
@@ -35,89 +29,133 @@
 <div id="loadingScreen" class="loader">
     <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
     <div class="text-center mt-4">
-        <h5 id="loadText" class="fw-bold text-dark m-0">Syncing iMerch Data...</h5>
-        <p class="text-muted small">Accessing cloud resources</p>
+        <h5 class="fw-bold text-dark m-0">Consolidating Performance Data...</h5>
+        <p class="text-muted small">Please wait</p>
     </div>
-</div>
-
-<div class="sidebar">
-    <div class="brand-section text-center mb-5">
-        <img src="https://i.ibb.co/image-cf8b04.png" alt="iMerch Logo">
-        <h5>CCPI</h5>
-        <p style="color:var(--primary); font-size:0.7rem; font-weight:700;">FIELD COORDINATOR</p>
-    </div>
-    <nav class="flex-grow-1">
-        <a href="#" class="nav-link"><i class="fas fa-chart-line me-3"></i> Realtime Monitoring</a>
-        <a href="#" class="nav-link active"><i class="fas fa-poll me-3"></i> Summary Monitoring</a>
-        <a href="#" class="nav-link"><i class="fas fa-users-cog me-3"></i> MCP CCPI</a>
-    </nav>
 </div>
 
 <div class="main-content">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <div><h4 class="fw-bold m-0">PERFORMANCE INDEX</h4><small class="text-muted">Consolidated summary</small></div>
-        <button class="btn btn-dark btn-sm shadow-sm px-4" onclick="syncPerformance()">Refresh</button>
+        <div><h4 class="fw-bold m-0">PERFORMANCE INDEX</h4><small class="text-muted">Total Stores Visited Today</small></div>
+        <button class="btn btn-dark btn-sm shadow-sm px-4" onclick="syncPerformance()">Refresh Data</button>
     </div>
 
     <div class="row g-4 mb-2">
-        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Total Stores</div><div id="totalStores" class="stat-value">0</div></div></div>
-        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Field Staff</div><div id="activeStaff" class="stat-value">0</div></div></div>
-        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Top Performer</div><div id="topStaff" class="stat-value" style="font-size: 1.5rem;">--</div></div></div>
+        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Total Store Logs</div><div id="totalStores" class="stat-value">0</div></div></div>
+        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Active Field Staff</div><div id="activeStaff" class="stat-value">0</div></div></div>
+        <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Top Performer</div><div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 10px;">--</div></div></div>
     </div>
 
     <div class="glass-card">
-        <div style="height: 450px;"><canvas id="performanceChart"></canvas></div>
+        <div style="height: 400px;"><canvas id="performanceChart"></canvas></div>
     </div>
 </div>
 
 <script type="module">
-    // --- KONFIGURASYON ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
     const firebaseConfig = {
-        apiKey: "PASTE_HERE",
-        authDomain: "PASTE_HERE",
-        projectId: "PASTE_HERE",
-        storageBucket: "PASTE_HERE",
-        messagingSenderId: "PASTE_HERE",
-        appId: "PASTE_HERE"
+        apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
+        authDomain: "imerch-checkins-out.firebaseapp.com",
+        projectId: "imerch-checkins-out",
+        storageBucket: "imerch-checkins-out.firebasestorage.app"
     };
 
-    // Placeholder para sa chart
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
     let perfChart;
 
-    // --- SAFETY TIMEOUT ---
-    // Kung hindi nag-load sa loob ng 10 seconds, itatago ang loader
-    setTimeout(() => {
-        const loader = document.getElementById('loadingScreen');
-        if (loader.style.display !== 'none') {
-            console.warn("Syncing took too long. Showing UI anyway.");
-            loader.style.display = 'none';
-            // Maglagay ng "Sample Data" para makita ang UI
-            renderChart(["Sample Elena", "Sample Carl"], [15, 10]);
-        }
-    }, 10000);
+    const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
     window.syncPerformance = async function() {
-        console.log("Sync started...");
-        // Dito papasok yung real Firebase/Google Sheets logic mo pag nailagay na ang Config
+        document.getElementById('loadingScreen').style.display = 'flex';
+        
+        try {
+            const now = new Date();
+            const start = new Date(now.setHours(0,0,0,0));
+            const end = new Date(now.setHours(23,59,59,999));
+
+            const q = query(
+                collection(db, "attendance"), 
+                where("timestamp", ">=", Timestamp.fromDate(start)), 
+                where("timestamp", "<=", Timestamp.fromDate(end))
+            );
+
+            const snap = await getDocs(q);
+            let counts = {};
+            let totalLogs = 0;
+
+            snap.forEach(doc => {
+                const data = doc.data();
+                const name = data.name || data.staffName || "Unknown";
+                const type = (data.type || "").toLowerCase();
+
+                // Count only 'In' or 'Check-in' as a store visit
+                if (!adminExclusion.includes(name) && type.includes('in')) {
+                    counts[name] = (counts[name] || 0) + 1;
+                    totalLogs++;
+                }
+            });
+
+            const labels = Object.keys(counts);
+            const values = Object.values(counts);
+
+            // Update Stats
+            document.getElementById('totalStores').innerText = totalLogs;
+            document.getElementById('activeStaff').innerText = labels.length;
+            
+            if (labels.length > 0) {
+                const maxVal = Math.max(...values);
+                const topPerson = labels.find(key => counts[key] === maxVal);
+                document.getElementById('topStaff').innerText = `${topPerson} (${maxVal})`;
+            }
+
+            renderChart(labels, values);
+            
+        } catch (error) {
+            console.error("Error syncing data:", error);
+        } finally {
+            document.getElementById('loadingScreen').style.display = 'none';
+        }
     }
 
     function renderChart(labels, data) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
         if (perfChart) perfChart.destroy();
+        
+        // Sort data for better visualization
+        const combined = labels.map((l, i) => ({label: l, value: data[i]}));
+        combined.sort((a, b) => b.value - a.value);
+
         perfChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: labels,
-                datasets: [{ label: 'Stores', data: data, backgroundColor: '#d90429', borderRadius: 8 }]
+                labels: combined.map(x => x.label),
+                datasets: [{ 
+                    label: 'Stores Visited', 
+                    data: combined.map(x => x.value), 
+                    backgroundColor: '#d90429', 
+                    borderRadius: 10,
+                    barThickness: 30
+                }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { display: false } },
+                    x: { grid: { display: false } }
+                }
+            }
         });
     }
 
-    // Auto-run on load
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log("Page ready.");
-    });
+    // Initialize on load
+    syncPerformance();
 </script>
 </body>
 </html>
