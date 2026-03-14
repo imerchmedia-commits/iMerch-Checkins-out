@@ -22,7 +22,7 @@
             animation: pulse 2s infinite;
         }
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            0 { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
             70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
             100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
@@ -45,6 +45,13 @@
 
         .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         .filter-input { border-radius: 10px; border: 1px solid #ddd; padding: 5px 15px; font-weight: 600; outline: none; }
+
+        /* Duration Styles */
+        .duration-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; }
+        .duration-normal { background: #f1f5f9; color: #475569; }
+        .duration-warning { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+        .table-container { max-height: 350px; overflow-y: auto; }
+        .staff-name-cell { font-weight: 700; color: #334155; }
     </style>
 </head>
 <body>
@@ -92,8 +99,31 @@
         <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Top Performer</div><div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 10px;">--</div></div></div>
     </div>
 
-    <div class="glass-card">
-        <div style="height: 400px;"><canvas id="performanceChart"></canvas></div>
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="glass-card">
+                <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2"></i>Staff Performance (Visits)</h6>
+                <div style="height: 350px;"><canvas id="performanceChart"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="glass-card">
+                <h6 class="fw-bold mb-3"><i class="fas fa-clock me-2"></i>Live Store Durations</h6>
+                <div class="table-container">
+                    <table class="table table-hover align-middle" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr style="font-size: 0.7rem; text-transform: uppercase;">
+                                <th>Staff</th>
+                                <th>Store</th>
+                                <th>Time Spent</th>
+                            </tr>
+                        </thead>
+                        <tbody id="durationTableBody">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -114,17 +144,13 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    // Enable Offline Persistence for faster loading
     try {
-        enableIndexedDbPersistence(db).catch((err) => {
-            if (err.code == 'failed-precondition') { console.log("Multiple tabs open, persistence disabled."); }
-            else if (err.code == 'unimplemented') { console.log("Browser doesn't support persistence."); }
-        });
+        enableIndexedDbPersistence(db).catch(() => {});
     } catch(e) {}
 
     let perfChart;
     let unsubscribe = null;
-    let currentTotalCount = -1; // Optimizer for chart rendering
+    let currentTotalCount = -1;
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
@@ -163,12 +189,12 @@
         const q = query(
             collection(db, "attendance"), 
             where("timestamp", ">=", Timestamp.fromDate(start)), 
-            where("timestamp", "<=", Timestamp.fromDate(end))
+            where("timestamp", "<=", Timestamp.fromDate(end)),
+            orderBy("timestamp", "asc") // Required for chronological duration calculation
         );
 
-        unsubscribe = onSnapshot(q, { includeMetadataChanges: false }, (snap) => {
-            // Optimization: If total count hasn't changed, don't re-calculate everything
-            if (snap.size === currentTotalCount) {
+        unsubscribe = onSnapshot(q, (snap) => {
+            if (snap.size === currentTotalCount && currentTotalCount !== -1) {
                 document.getElementById('loadingScreen').style.display = 'none';
                 return;
             }
@@ -176,15 +202,40 @@
             currentTotalCount = snap.size;
             let counts = {};
             let totalLogsCount = 0;
+            let staffStorePairs = {}; // Track IN times per staff per store
+            
+            const tableBody = document.getElementById('durationTableBody');
+            tableBody.innerHTML = '';
 
             snap.forEach(doc => {
                 const data = doc.data();
                 const name = data.name || data.staffName || (data.email ? data.email.split('@')[0] : "Unknown");
                 const type = (data.type || "").toLowerCase();
+                const store = data.storeName || "Unknown Store";
+                const time = data.timestamp.toDate();
 
                 if (!adminExclusion.includes(name)) {
                     totalLogsCount++; 
-                    if (type.includes('in')) counts[name] = (counts[name] || 0) + 1;
+                    if (type.includes('in')) {
+                        counts[name] = (counts[name] || 0) + 1;
+                        staffStorePairs[`${name}_${store}`] = time; // Log the entry time
+                    } else if (type.includes('out')) {
+                        const inTime = staffStorePairs[`${name}_${store}`];
+                        if (inTime) {
+                            const diffMins = Math.floor((time - inTime) / 60000);
+                            const badgeClass = diffMins < 10 ? 'duration-warning' : 'duration-normal';
+                            
+                            const row = `
+                                <tr>
+                                    <td class="staff-name-cell">${name}</td>
+                                    <td class="text-muted">${store}</td>
+                                    <td><span class="duration-badge ${badgeClass}">${diffMins} mins</span></td>
+                                </tr>
+                            `;
+                            tableBody.insertAdjacentHTML('afterbegin', row);
+                            delete staffStorePairs[`${name}_${store}`]; // Clear pair
+                        }
+                    }
                 }
             });
 
@@ -216,27 +267,26 @@
         const combined = labels.map((l, i) => ({label: l, value: data[i]})).sort((a, b) => b.value - a.value);
         
         if (perfChart) {
-            // Smoothly update existing chart instead of destroying it
             perfChart.data.labels = combined.map(x => x.label);
             perfChart.data.datasets[0].data = combined.map(x => x.value);
-            perfChart.update('none'); // Use 'none' for instant update without animation lag
+            perfChart.update('none');
         } else {
             perfChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: combined.map(x => x.label),
                     datasets: [{ 
-                        label: 'Store Visits', 
+                        label: 'Check-ins', 
                         data: combined.map(x => x.value), 
                         backgroundColor: '#d90429', 
                         borderRadius: 8,
-                        barThickness: 25
+                        barThickness: 20
                     }]
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false,
-                    animation: false, // Disable animation for maximum speed
+                    animation: false,
                     plugins: { legend: { display: false } },
                     scales: {
                         y: { beginAtZero: true, ticks: { stepSize: 1 } },
@@ -248,7 +298,7 @@
     }
 
     dateInput.addEventListener('change', () => {
-        currentTotalCount = -1; // Reset optimizer on date change
+        currentTotalCount = -1;
         startSummaryMonitoring();
     });
 </script>
