@@ -14,7 +14,6 @@
         :root { --primary: #d90429; --bg: #f8f9fa; }
         body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
         
-        /* White Navbar with Red Lining */
         .navbar { 
             background: white !important; 
             border-bottom: 3px solid var(--primary); 
@@ -175,12 +174,14 @@
         const key = `${lat},${lng}`;
         if (addressCache[key]) return addressCache[key];
         try {
-            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
+            // Gamit ang OpenStreetMap para LIBRE
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
             const data = await res.json();
-            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "Unknown Store";
-            addressCache[key] = addr;
-            return addr;
-        } catch { return "Location Info N/A"; }
+            const addr = data.address;
+            const short = [addr.road || addr.suburb || addr.neighbourhood, addr.city || addr.municipality].filter(Boolean).join(', ') || "Unknown Area";
+            addressCache[key] = short; 
+            return short;
+        } catch { return "Unknown Store"; }
     }
 
     document.getElementById('loginBtn').onclick = async () => {
@@ -222,12 +223,12 @@
 
         unsubscribe = onSnapshot(q, (snap) => {
             document.getElementById('syncStatus').innerText = `Last Sync: ${new Date().toLocaleTimeString()}`;
-            
             let counts = {}, staffActivity = {}, tableData = [];
 
             snap.docs.forEach(doc => {
                 const data = doc.data();
-                const name = data.staffName || data.name || data.user || "Unknown Staff";
+                // Check multiple fields para iwas "Unknown Staff"
+                const name = data.staffName || data.name || data.user || data.employee || "Unknown Staff";
                 if (adminExclusion.includes(name)) return;
 
                 const type = (data.type || "").toLowerCase();
@@ -250,7 +251,6 @@
                 }
             });
 
-            // RENDERING TABLE
             let rowsHtml = "";
             tableData.reverse().forEach((row, idx) => {
                 const badgeClass = row.mins < 10 ? 'duration-warning' : 'duration-normal';
@@ -260,7 +260,7 @@
                     <tr>
                         <td class="staff-name-cell">${row.name}</td>
                         <td id="addr-${idx}" class="text-muted" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            ${row.loc || '<i>Auto-fetching address...</i>'} ${mapLink}
+                            ${row.loc || '<i>Auto-fetching...</i>'} ${mapLink}
                         </td>
                         <td><span class="duration-badge ${badgeClass}">${row.mins} mins</span></td>
                     </tr>
