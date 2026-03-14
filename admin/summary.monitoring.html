@@ -14,7 +14,7 @@
         :root { --primary: #d90429; --bg: #f8f9fa; }
         body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
         
-        /* Navbar: White with Red Lining */
+        /* White Navbar with Red Lining */
         .navbar { 
             background: white !important; 
             border-bottom: 3px solid var(--primary); 
@@ -37,15 +37,14 @@
         .live-badge {
             background: rgba(34, 197, 94, 0.1); color: #166534;
             padding: 4px 12px; border-radius: 50px; font-size: 0.7rem;
-            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
-            display: flex; align-items: center;
+            font-weight: 800; text-transform: uppercase; display: flex; align-items: center;
         }
 
         #loginContainer { height: 100vh; display: flex; align-items: center; justify-content: center; background: #fff; }
         .login-card { text-align: center; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         .btn-google { background: #4285f4; color: white; border-radius: 10px; padding: 12px; font-weight: 700; border: none; width: 100%; transition: 0.3s; }
         
-        .main-content { width: 100%; padding: 1rem; display: none; margin-top: 70px; }
+        .main-content { width: 100%; padding: 1rem; display: none; margin-top: 80px; }
         .glass-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 1.5rem; }
         .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
         .stat-label { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; }
@@ -58,7 +57,7 @@
         .duration-warning { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
         .table-container { max-height: 450px; overflow-y: auto; }
         .staff-name-cell { font-weight: 700; color: #334155; }
-        .geo-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.75rem; }
+        .geo-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.7rem; display: block; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -67,9 +66,7 @@
     <div class="login-card">
         <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="50" class="mb-4">
         <h5 class="fw-bold mb-4">Admin Dashboard</h5>
-        <button class="btn-google" id="loginBtn">
-            <i class="fab fa-google me-2"></i> Sign in with Google
-        </button>
+        <button class="btn-google" id="loginBtn"><i class="fab fa-google me-2"></i> Sign in with Google</button>
     </div>
 </div>
 
@@ -83,15 +80,13 @@
         <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="35">
         <div class="d-flex align-items-center gap-3">
             <div class="live-badge" id="liveIndicator" style="display: none;">
-                <span class="pulse-live"></span> Live Updates
+                <span class="pulse-live"></span> Live Mode
             </div>
-            <button class="btn btn-outline-secondary btn-sm border-0" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
+            <button class="btn btn-outline-secondary btn-sm border-0" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </nav>
 
-    <div class="container-fluid pt-3">
+    <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
                 <h4 class="fw-bold m-0">PERFORMANCE INDEX</h4>
@@ -118,9 +113,7 @@
                     <h6 class="fw-bold mb-3">Live Durations</h6>
                     <div class="table-container">
                         <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr style="font-size: 0.7rem;"><th>STAFF</th><th>LOCATION</th><th>TIME</th></tr>
-                            </thead>
+                            <thead class="table-light"><tr style="font-size: 0.7rem;"><th>STAFF</th><th>LOCATION</th><th>TIME</th></tr></thead>
                             <tbody id="durationTableBody"></tbody>
                         </table>
                     </div>
@@ -133,9 +126,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
-        initializeFirestore, 
-        persistentLocalCache, 
-        persistentMultipleTabManager,
+        initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
         collection, query, where, onSnapshot, Timestamp, orderBy 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -148,7 +139,7 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    // 1. UPDATED CACHE SETTINGS (No more warnings)
+    // FIXED: Use initializeFirestore to solve deprecation warning
     const db = initializeFirestore(app, {
         localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
     });
@@ -162,17 +153,11 @@
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
 
-    const addressCache = {};
-
     async function getStoreName(lat, lng) {
-        const key = `${lat},${lng}`;
-        if (addressCache[key]) return addressCache[key];
         try {
             const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
             const data = await res.json();
-            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "Unknown Store";
-            addressCache[key] = addr;
-            return addr;
+            return data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "Unknown Store";
         } catch { return "Geo Error"; }
     }
 
@@ -210,10 +195,10 @@
             currentTotalCount = snap.size;
             let counts = {}, staffActivity = {}, tableData = [];
 
-            // 2. SYNC PROCESSING (Freeze names immediately)
+            // FIXED: Immediate name assignment to prevent "Unknown"
             snap.docs.forEach(doc => {
                 const data = doc.data();
-                const name = data.staffName || data.name || data.user || "Unknown";
+                const name = data.staffName || data.name || data.user || "Unknown Staff";
                 if (adminExclusion.includes(name)) return;
 
                 const type = (data.type || "").toLowerCase();
@@ -227,26 +212,27 @@
                 } else if (type.includes('out') && staffActivity[name]) {
                     const act = staffActivity[name];
                     const diff = Math.floor((time - act.inTime) / 60000);
-                    tableData.push({ name, mins: diff, ...act });
+                    tableData.push({ name: name, mins: diff, ...act });
                     delete staffActivity[name];
                 }
             });
 
-            // 3. LAZY LOADING RENDER (Instant display)
+            // FIXED: Lazy Loading Address Fetching
             let rowsHtml = "";
             tableData.reverse().forEach((row, idx) => {
                 const badge = row.mins < 15 ? 'duration-warning' : 'duration-normal';
+                const mapLink = row.lat ? `<a href="https://www.google.com/maps?q=${row.lat},${row.lng}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt"></i> View Map</a>` : "";
+                
                 rowsHtml += `<tr>
                     <td class="staff-name-cell">${row.name}</td>
-                    <td id="addr-${idx}" class="text-muted small">${row.loc || 'Fetching location...'}</td>
+                    <td id="addr-${idx}" class="text-muted small">${row.loc || 'Fetching Location...'} ${mapLink}</td>
                     <td><span class="duration-badge ${badge}">${row.mins}m</span></td>
                 </tr>`;
 
-                // Fetch address in background if missing
                 if (!row.loc && row.lat) {
                     getStoreName(row.lat, row.lng).then(addr => {
                         const cell = document.getElementById(`addr-${idx}`);
-                        if (cell) cell.innerText = addr;
+                        if (cell) cell.innerHTML = `${addr} ${mapLink}`;
                     });
                 }
             });
@@ -263,7 +249,6 @@
                 document.getElementById('topStaff').innerText = `${top} (${max})`;
                 renderChart(labels, values);
             }
-
             document.getElementById('loadingScreen').style.display = 'none';
         });
     }
