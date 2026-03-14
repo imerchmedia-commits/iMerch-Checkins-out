@@ -77,13 +77,13 @@
     const db = getFirestore(app);
     let perfChart;
     let unsubscribe = null;
-    let lastExportData = []; // Store data for Excel
+    let lastExportData = []; 
 
+    // Listahan ng mga hindi kasama sa Performance Index
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
 
-    // LIVE MONITORING FUNCTION
     function startSummaryMonitoring() {
         if (unsubscribe) unsubscribe();
         
@@ -94,6 +94,7 @@
         
         document.getElementById('dateSubtitle').innerText = `Monitoring for ${selectedDate.toDateString()}`;
 
+        // REAL-TIME SYNC: Awtomatikong hihigop ng data mula sa 'attendance' collection
         const q = query(
             collection(db, "attendance"), 
             where("timestamp", ">=", Timestamp.fromDate(start)), 
@@ -103,25 +104,31 @@
 
         unsubscribe = onSnapshot(q, (snap) => {
             let counts = {};
-            let totalLogs = 0;
+            let totalLogsCount = 0;
             let rawDataForExcel = [];
 
             snap.forEach(doc => {
                 const data = doc.data();
-                const name = data.name || data.staffName || "Unknown";
+                // Kunin ang name kahit name, staffName, o email ang field sa Firebase
+                const name = data.name || data.staffName || (data.email ? data.email.split('@')[0] : "Unknown");
                 const type = (data.type || "").toLowerCase();
-                const time = data.timestamp ? data.timestamp.toDate().toLocaleString() : 'N/A';
+                const time = data.timestamp ? data.timestamp.toDate().toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
 
-                if (!adminExclusion.includes(name) && type.includes('in')) {
-                    counts[name] = (counts[name] || 0) + 1;
-                    totalLogs++;
+                // I-filter ang mga admin para staff lang ang lumabas
+                if (!adminExclusion.includes(name)) {
+                    totalLogsCount++; 
                     
-                    // Add to Excel data array
+                    if (type.includes('in')) {
+                        counts[name] = (counts[name] || 0) + 1;
+                    }
+                    
+                    // I-save ang data para sa Excel Export
                     rawDataForExcel.push({
-                        "Date/Time": time,
+                        "Time": time,
                         "Staff Name": name,
-                        "Action": data.type,
-                        "Branch/Store": data.locationName || data.branch || "N/A"
+                        "Action": data.type || "Check-in",
+                        "Branch/Store": data.locationName || data.branch || "---",
+                        "Location Detail": data.address || "N/A"
                     });
                 }
             });
@@ -130,7 +137,8 @@
             const labels = Object.keys(counts);
             const values = Object.values(counts);
 
-            document.getElementById('totalStores').innerText = totalLogs;
+            // Update UI Cards
+            document.getElementById('totalStores').innerText = totalLogsCount;
             document.getElementById('activeStaff').innerText = labels.length;
             
             if (labels.length > 0) {
@@ -144,7 +152,7 @@
             renderChart(labels, values);
             document.getElementById('loadingScreen').style.display = 'none';
         }, (error) => {
-            console.error("Snapshot error:", error);
+            console.error("Firebase Snapshot Error:", error);
             document.getElementById('loadingScreen').style.display = 'none';
         });
     }
@@ -161,11 +169,11 @@
             data: {
                 labels: combined.map(x => x.label),
                 datasets: [{ 
-                    label: 'Stores Visited', 
+                    label: 'Store Visits', 
                     data: combined.map(x => x.value), 
                     backgroundColor: '#d90429', 
-                    borderRadius: 10,
-                    barThickness: 30
+                    borderRadius: 8,
+                    barThickness: 25
                 }]
             },
             options: { 
@@ -173,29 +181,25 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, grid: { display: false } },
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } },
                     x: { grid: { display: false } }
                 }
             }
         });
     }
 
-    // EXCEL EXPORT FUNCTION
     window.exportToExcel = function() {
         if (lastExportData.length === 0) {
-            alert("No data available to export for this date.");
+            alert("Walang data para sa petsang ito.");
             return;
         }
         const ws = XLSX.utils.json_to_sheet(lastExportData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Performance_Summary");
+        XLSX.utils.book_append_sheet(wb, ws, "iMerch_Performance");
         XLSX.writeFile(wb, `iMerch_Summary_${dateInput.value}.xlsx`);
     }
 
-    // Event Listeners
     dateInput.addEventListener('change', startSummaryMonitoring);
-
-    // Initial load
     startSummaryMonitoring();
 </script>
 </body>
