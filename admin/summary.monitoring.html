@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* COLOR SYSTEM CONSTANTS */
         :root { 
             --primary: #d90429; 
             --secondary: #ef233c;
@@ -20,13 +19,9 @@
             --bg: #f8f9fa; 
             --white: #ffffff;
             --success: #22c55e;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --soft-red: rgba(217, 4, 41, 0.05);
-            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
-        /* BASE LAYOUT STYLES */
+        /* Base Body & Typography */
         body { 
             background-color: var(--bg); 
             font-family: 'Plus Jakarta Sans', sans-serif; 
@@ -34,22 +29,19 @@
             overflow-x: hidden; 
             color: var(--dark);
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* NAVIGATION BAR - WHITE WITH RED LINING */
+        /* -------------------------------------------------------------------------
+           NAVIGATION BAR (Updated: White with Red Lining)
+        -------------------------------------------------------------------------- */
         .navbar { 
             background: rgba(255, 255, 255, 0.98) !important; 
             backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
             border-bottom: 3px solid var(--primary); 
             padding: 0.8rem 2.5rem; 
             z-index: 1050; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.06);
             height: 75px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .brand-text {
@@ -60,14 +52,12 @@
             text-decoration: none;
             display: flex;
             align-items: center;
-            user-select: none;
         }
         .brand-text span { color: var(--primary); }
 
-        /* LIVE STATUS ANIMATIONS */
+        /* Live Indicator Animation */
         .pulse-live { 
-            width: 11px; 
-            height: 11px; 
+            width: 11px; height: 11px; 
             background: var(--success); 
             border-radius: 50%; 
             display: inline-block; 
@@ -95,7 +85,9 @@
             border: 1px solid rgba(34, 197, 94, 0.1);
         }
 
-        /* LOGIN SCREEN DESIGN */
+        /* -------------------------------------------------------------------------
+           LOGIN SCREEN
+        -------------------------------------------------------------------------- */
         #loginContainer { 
             height: 100vh; 
             display: flex; 
@@ -103,7 +95,6 @@
             justify-content: center; 
             background: radial-gradient(circle at top right, #fff5f5, #ffffff);
             position: relative;
-            z-index: 100;
         }
 
         .login-card { 
@@ -126,7 +117,7 @@
             font-weight: 700; 
             border: none; 
             width: 100%; 
-            transition: var(--transition);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -140,36 +131,32 @@
             box-shadow: 0 10px 20px rgba(66, 133, 244, 0.3); 
         }
 
-        /* REMEMBER ME WRAPPER */
+        /* Added Remember Me Feature Styling */
         .remember-login-wrap {
-            margin-top: 25px;
+            margin-top: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             color: var(--light);
             font-size: 0.85rem;
             font-weight: 600;
         }
         .remember-login-wrap input {
             cursor: pointer;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             accent-color: var(--primary);
         }
 
-        /* DASHBOARD CONTENT CONTAINERS */
+        /* -------------------------------------------------------------------------
+           DASHBOARD CONTENT & CARDS
+        -------------------------------------------------------------------------- */
         .main-content { 
             width: 100%; 
             padding: 2.5rem; 
             display: none; 
             margin-top: 90px; 
-            animation: fadeIn 0.6s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
         }
         
         .glass-card { 
@@ -179,15 +166,12 @@
             border: 1px solid rgba(0,0,0,0.04); 
             box-shadow: 0 15px 45px rgba(0,0,0,0.03); 
             margin-bottom: 1.8rem;
-            transition: var(--transition);
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
 
-        .glass-card:hover { 
-            transform: translateY(-8px); 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.06); 
-        }
+        .glass-card:hover { transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.06); }
         
         .stat-value { 
             font-size: 2.8rem; 
@@ -206,7 +190,7 @@
             margin-bottom: 8px; 
         }
 
-        /* PROGRESS MONITORING SYSTEM */
+        /* Progress Bar Styles */
         .progress-meter {
             height: 8px;
             background: #f0f0f0;
@@ -221,34 +205,23 @@
             transition: width 1.5s cubic-bezier(0.1, 0, 0.3, 1);
         }
 
+        /* -------------------------------------------------------------------------
+           LOADER & SEARCH
+        -------------------------------------------------------------------------- */
         .loader { 
-            position: fixed; 
-            top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--white); 
-            display: none; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 9999; 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--white); display: none; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 9999; 
         }
 
-        /* INPUT COMPONENTS */
         .filter-input { 
-            border-radius: 14px; 
-            border: 1.5px solid #eee; 
-            padding: 10px 24px; 
-            font-weight: 600; 
-            outline: none; 
-            background: var(--white); 
-            box-shadow: 0 6px 15px rgba(0,0,0,0.03);
+            border-radius: 14px; border: 1.5px solid #eee; 
+            padding: 10px 24px; font-weight: 600; outline: none; 
+            background: var(--white); box-shadow: 0 6px 15px rgba(0,0,0,0.03);
             transition: 0.3s;
         }
-        .filter-input:focus { 
-            border-color: var(--primary); 
-            box-shadow: 0 0 0 4px rgba(217, 4, 41, 0.1); 
-        }
+        .filter-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(217, 4, 41, 0.1); }
 
-        /* SEARCH BAR COMPONENTS */
         .search-container {
             position: relative;
             margin-bottom: 18px;
@@ -262,38 +235,19 @@
         }
         .search-input { width: 100%; padding-left: 48px !important; }
         
-        /* DATA TABLE ARCHITECTURE */
+        /* -------------------------------------------------------------------------
+           TABLE & DATA ROWS
+        -------------------------------------------------------------------------- */
         .table-container { 
             max-height: 550px; 
             overflow-y: auto; 
             padding-right: 8px; 
         }
 
-        .table thead th {
-            background: #fcfcfc;
-            position: sticky; 
-            top: 0; 
-            z-index: 10;
-            border-bottom: 2px solid #f1f1f1;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: var(--light);
-            padding: 18px;
-        }
-
-        .table td { 
-            padding: 15px 18px; 
-            border-bottom: 1px solid #f9f9f9; 
-        }
-
         .duration-badge { 
-            padding: 6px 14px; 
-            border-radius: 10px; 
-            font-size: 0.7rem; 
-            font-weight: 800; 
-            background: #f1f5f9; 
-            color: #475569; 
+            padding: 6px 14px; border-radius: 10px; 
+            font-size: 0.7rem; font-weight: 800; 
+            background: #f1f5f9; color: #475569; 
             display: inline-block;
             white-space: nowrap;
             border: 1px solid rgba(0,0,0,0.02);
@@ -307,54 +261,37 @@
             letter-spacing: 0.3px; 
         }
 
-        /* TARGET 6 STATUS TAG SYSTEM */
-        .target-tag {
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.6rem;
-            font-weight: 900;
-            text-transform: uppercase;
-            margin-left: 10px;
-            display: inline-block;
-        }
-        .tag-below { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-        .tag-reached { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
-        .tag-excess { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
-
         .geo-link { 
-            color: var(--primary); 
-            text-decoration: none; 
-            font-weight: 700; 
-            font-size: 0.75rem; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 5px;
+            color: var(--primary); text-decoration: none; 
+            font-weight: 700; font-size: 0.75rem; 
+            display: inline-flex; align-items: center; gap: 5px;
             transition: 0.2s;
         }
         .geo-link:hover { opacity: 0.7; transform: scale(1.05); }
         
-        /* CUSTOM SCROLLBAR DESIGN */
+        /* Scrollbar Styling */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f8f9fa; }
         ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
-        /* RESPONSIVE BREAKPOINTS */
-        @media (max-width: 1200px) {
-            .stat-value { font-size: 2.4rem; }
+        .table thead th {
+            background: #fcfcfc;
+            position: sticky; top: 0; z-index: 10;
+            border-bottom: 2px solid #f1f1f1;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--light);
+            padding: 18px;
         }
 
-        @media (max-width: 992px) {
-            .navbar { padding: 0.8rem 1.5rem; }
-            .main-content { padding: 1.5rem; }
-        }
+        .table td { padding: 15px 18px; border-bottom: 1px solid #f9f9f9; }
 
         @media (max-width: 768px) {
-            .navbar { padding: 0.8rem 1rem; height: 65px; }
-            .brand-text { font-size: 1.2rem; }
+            .navbar { padding: 0.8rem 1rem; }
             .stat-value { font-size: 2.2rem; }
-            .main-content { padding: 1rem; margin-top: 80px; }
-            .glass-card { padding: 1.5rem; }
+            .main-content { padding: 1rem; }
         }
     </style>
 </head>
@@ -363,28 +300,28 @@
 <div id="loginContainer">
     <div class="login-card">
         <div class="brand-text mb-4" style="font-size: 2.5rem; justify-content: center;">iMERCH<span>MEDIA</span></div>
-        <h4 class="fw-800 mb-2">Admin Control Panel</h4>
-        <p class="text-muted small mb-5">Field Performance & Real-time Tracking</p>
+        <h4 class="fw-800 mb-2" style="letter-spacing: -0.5px;">Admin Control Panel</h4>
+        <p class="text-muted small mb-5">Summary & Field Performance Insight</p>
         
         <button class="btn-google" id="loginBtn">
             <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="22">
-            Sign in with Google Account
+            Sign in with Google
         </button>
 
         <div class="remember-login-wrap">
             <input type="checkbox" id="rememberMe">
-            <label for="rememberMe">Stay logged in for this session</label>
+            <label for="rememberMe">Stay logged in</label>
         </div>
     </div>
 </div>
 
 <div id="loadingScreen" class="loader">
     <div class="spinner-border text-danger" style="width: 4rem; height: 4rem; border-width: 0.3em;" role="status"></div>
-    <div class="mt-4 fw-800 text-dark" style="letter-spacing: 3px; font-size: 0.8rem;">RECONSTRUCTING DASHBOARD...</div>
+    <div class="mt-4 fw-800 text-dark" style="letter-spacing: 3px; font-size: 0.8rem;">INITIALIZING SECURE DATA SYNC...</div>
 </div>
 
 <div class="main-content" id="dashboardContent">
-    <nav class="navbar fixed-top">
+    <nav class="navbar fixed-top d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-4">
             <div class="brand-text">iMERCH<span>MEDIA</span></div>
             <div class="live-badge" id="liveIndicator" style="display: none;">
@@ -405,7 +342,7 @@
                 <p class="text-muted m-0 fw-600" id="dateSubtitle" style="font-size: 0.95rem;"></p>
             </div>
             <div class="d-flex gap-3 align-items-center bg-white p-2 rounded-4 shadow-sm px-3">
-                <span class="small fw-800 text-muted text-uppercase" style="font-size: 0.65rem;">Timeline Filter:</span>
+                <span class="small fw-800 text-muted text-uppercase" style="font-size: 0.65rem;">Timeline Select:</span>
                 <input type="date" id="summaryDateFilter" class="filter-input border-0 p-0" style="box-shadow: none;">
             </div>
         </div>
@@ -413,10 +350,10 @@
         <div class="row g-4 mb-5">
             <div class="col-md-4">
                 <div class="glass-card">
-                    <div class="stat-label">Total Logs Found</div>
+                    <div class="stat-label">System-wide Logs</div>
                     <div id="totalStores" class="stat-value">0</div>
                     <div class="mt-3 d-flex justify-content-between small fw-700">
-                        <span class="text-muted">Target Completion</span>
+                        <span class="text-muted">Goal Alignment</span>
                         <span id="progressText">0%</span>
                     </div>
                     <div class="progress-meter">
@@ -426,10 +363,10 @@
             </div>
             <div class="col-md-4">
                 <div class="glass-card">
-                    <div class="stat-label">Active Field Staff</div>
+                    <div class="stat-label">Active Field Personnel</div>
                     <div id="activeStaff" class="stat-value">0</div>
                     <div class="mt-3 d-flex justify-content-between small fw-700">
-                        <span class="text-muted">Deployment Ratio</span>
+                        <span class="text-muted">Deployment Rate</span>
                         <span id="deployText">0%</span>
                     </div>
                     <div class="progress-meter">
@@ -439,9 +376,9 @@
             </div>
             <div class="col-md-4">
                 <div class="glass-card text-center d-flex flex-column justify-content-center" style="min-height: 180px;">
-                    <div class="stat-label">Top Coordinator</div>
+                    <div class="stat-label">Leading Coordinator</div>
                     <div id="topStaff" class="stat-value text-truncate" style="font-size: 1.3rem; padding-top: 10px;">--</div>
-                    <div class="small fw-700 text-success mt-2"><i class="fas fa-medal me-1"></i> Highest Efficiency</div>
+                    <div class="small fw-700 text-success mt-2"><i class="fas fa-medal me-1"></i> Highest Activity</div>
                 </div>
             </div>
         </div>
@@ -450,7 +387,7 @@
             <div class="col-lg-7">
                 <div class="glass-card">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h6 class="fw-800 m-0"><i class="fas fa-chart-line me-2 text-danger"></i>Performance Metrics</h6>
+                        <h6 class="fw-800 m-0"><i class="fas fa-chart-bar me-2 text-danger"></i>Personnel Visit Distribution</h6>
                     </div>
                     <div style="height: 420px;"><canvas id="performanceChart"></canvas></div>
                 </div>
@@ -459,21 +396,21 @@
             <div class="col-lg-5">
                 <div class="glass-card">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h6 class="fw-800 m-0"><i class="fas fa-history me-2 text-danger"></i>Live Activity Feed</h6>
+                        <h6 class="fw-800 m-0"><i class="fas fa-history me-2 text-danger"></i>Recent Activity Feed</h6>
                     </div>
                     
                     <div class="search-container">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="tableSearch" class="filter-input search-input" placeholder="Search staff or store name...">
+                        <input type="text" id="tableSearch" class="filter-input search-input" placeholder="Quick search staff or location...">
                     </div>
 
                     <div class="table-container">
                         <table class="table table-hover align-middle" id="logTable">
                             <thead>
                                 <tr>
-                                    <th>Personnel</th>
-                                    <th>Recent Area</th>
-                                    <th>Duration</th>
+                                    <th>Staff Member</th>
+                                    <th>Deployment Area</th>
+                                    <th>Log Time</th>
                                 </tr>
                             </thead>
                             <tbody id="durationTableBody"></tbody>
@@ -486,37 +423,43 @@
 </div>
 
 <script type="module">
+    // Firebase Modular SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, query, where, onSnapshot, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    /* FIREBASE CLOUD CONFIGURATION */
+    // App Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
         projectId: "imerch-checkins-out"
     };
 
-    /* INITIALIZATION CORE */
     const app = initializeApp(firebaseConfig);
-    const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+    const db = initializeFirestore(app, { 
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) 
+    });
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    /* MONITORING GLOBALS */
     let perfChart, unsubscribe = null;
-    const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales", "Ron Sanity"];
-    const TARGET_6 = 6;
+    const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+    const TARGET_VISITS_PER_STAFF = 8;
     const addressCache = {};
 
-    /* DOM REFERENCE NODES */
     const dateInput = document.getElementById('summaryDateFilter');
     const searchInput = document.getElementById('tableSearch');
     const rememberMe = document.getElementById('rememberMe');
     
+    // Set Default Date
     dateInput.valueAsDate = new Date();
 
-    /* AUTHENTICATION STATE OBSERVER */
+    // Remember Me Logic - Check LocalStorage
+    if (localStorage.getItem('imerch_admin_remember') === 'true') {
+        rememberMe.checked = true;
+    }
+
+    // Auth Change Handler
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('loginContainer').style.display = 'none';
@@ -528,35 +471,45 @@
         }
     });
 
-    /* LOGIN HANDLER WITH PERSISTENCE */
+    // Login Action
     document.getElementById('loginBtn').onclick = async () => {
         try {
-            const mode = rememberMe.checked ? browserLocalPersistence : browserSessionPersistence;
-            await setPersistence(auth, mode);
+            const persistenceMode = rememberMe.checked ? browserLocalPersistence : browserSessionPersistence;
+            await setPersistence(auth, persistenceMode);
+            localStorage.setItem('imerch_admin_remember', rememberMe.checked);
             await signInWithPopup(auth, provider);
-        } catch (error) { 
-            console.error("Auth Exception:", error); 
+        } catch (error) {
+            console.error("Auth Error:", error);
+            alert("Login Failed. Please try again.");
         }
     };
 
     window.logout = () => signOut(auth);
 
-    /* REVERSE GEOCODING SERVICE */
+    // Dynamic Search Filter
+    searchInput.addEventListener('keyup', function() {
+        const filter = this.value.toUpperCase();
+        const rows = document.querySelector("#durationTableBody").getElementsByTagName("tr");
+        for (let i = 0; i < rows.length; i++) {
+            const textContent = rows[i].textContent || rows[i].innerText;
+            rows[i].style.display = textContent.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    });
+
+    // Address Resolver
     async function getGPSAddress(lat, lng) {
         const key = `${lat},${lng}`;
         if (addressCache[key]) return addressCache[key];
         try {
             const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
             const data = await res.json();
-            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "Field Area Identified";
+            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "GPS Field Location";
             addressCache[key] = addr; 
             return addr;
-        } catch { 
-            return "GPS Location Resolved"; 
-        }
+        } catch { return "Unknown GPS Point"; }
     }
 
-    /* REAL-TIME MONITORING ENGINE */
+    // Core Monitoring Engine
     function initMonitoring() {
         if (unsubscribe) unsubscribe();
         document.getElementById('loadingScreen').style.display = 'flex';
@@ -565,12 +518,8 @@
         const start = new Date(selDate.setHours(0,0,0,0));
         const end = new Date(selDate.setHours(23,59,59,999));
         
-        document.getElementById('dateSubtitle').innerText = selDate.toLocaleDateString('en-US', { 
-            weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
-        });
-        
-        const isToday = new Date().toDateString() === selDate.toDateString();
-        document.getElementById('liveIndicator').style.display = isToday ? 'flex' : 'none';
+        document.getElementById('dateSubtitle').innerText = `${selDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}`;
+        document.getElementById('liveIndicator').style.display = (new Date().toDateString() === selDate.toDateString()) ? 'flex' : 'none';
 
         const q = query(
             collection(db, "attendance"), 
@@ -584,26 +533,22 @@
 
             snap.docs.forEach(doc => {
                 const d = doc.data();
-                let person = d.staffName || d.name || d.user || d.email || ""; 
-                
-                // USERNAME CLEANING LOGIC
-                if (person.includes('@')) {
-                    person = person.split('@')[0].replace(/[._]/g, ' ')
-                        .split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                }
-                
+                let rawInput = d.staffName || d.name || d.user || d.employeeName || d.email || "";
+                let person = nameFromEmail(rawInput); 
+
                 if (adminExclusion.includes(person) || !person) return;
 
                 const type = (d.type || "").toLowerCase();
                 const time = d.timestamp?.toDate() || new Date();
+                const lat = d.latitude || d.geopoint?.latitude;
+                const lng = d.longitude || d.geopoint?.longitude;
 
                 if (type.includes('in')) {
                     counts[person] = (counts[person] || 0) + 1;
                     staffActivity[person] = { 
                         inTime: time, 
-                        loc: d.location || "Fetching GPS Data...", 
-                        lat: d.latitude, 
-                        lng: d.longitude 
+                        loc: d.location || d.storeName || d.currentLocation || "Resolving GPS...", 
+                        lat, lng 
                     };
                 } else if (type.includes('out') && staffActivity[person]) {
                     const diff = Math.floor((time - staffActivity[person].inTime) / 60000);
@@ -612,47 +557,54 @@
                 }
             });
 
-            // UPDATE UI DATA TILES
-            document.getElementById('totalStores').innerText = snap.size;
-            document.getElementById('liveLogCount').innerText = snap.size;
-            document.getElementById('activeStaff').innerText = Object.keys(counts).length;
+            // Update Statistics
+            const activeCount = Object.keys(counts).length;
+            const totalLogs = snap.size;
+            const goalTarget = activeCount * TARGET_VISITS_PER_STAFF;
+            const progressPct = goalTarget > 0 ? Math.min(Math.round((totalLogs / goalTarget) * 100), 100) : 0;
 
-            // PERFORMANCE TAG LOGIC & TABLE RENDER
+            document.getElementById('totalStores').innerText = totalLogs;
+            document.getElementById('liveLogCount').innerText = totalLogs;
+            document.getElementById('activeStaff').innerText = activeCount;
+            
+            // Progress Bar Updates
+            document.getElementById('goalProgressBar').style.width = `${progressPct}%`;
+            document.getElementById('progressText').innerText = `${progressPct}%`;
+            
+            const deployPct = activeCount > 0 ? 100 : 0; // Simplified for dashboard visual
+            document.getElementById('deployProgressBar').style.width = `${deployPct}%`;
+            document.getElementById('deployText').innerText = activeCount > 0 ? 'ACTIVE' : 'IDLE';
+
+            // Render Activity Table
             document.getElementById('durationTableBody').innerHTML = tableData.reverse().map((r, i) => {
-                const visitCount = counts[r.name] || 0;
-                let tClass = 'tag-below', tLabel = `${visitCount}/6 BELOW`;
-                
-                if (visitCount === 6) { tClass = 'tag-reached'; tLabel = 'TARGET HIT'; }
-                else if (visitCount > 6) { tClass = 'tag-excess'; tLabel = `${visitCount} OVER`; }
-
-                const mapBtn = r.lat ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-location-dot"></i></a>` : "";
-
+                const mapLink = r.lat ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt"></i></a>` : "";
                 return `<tr>
-                    <td class="staff-name-cell">${r.name} <span class="target-tag ${tClass}">${tLabel}</span></td>
-                    <td id="loc-${i}" class="text-muted small">${r.loc} ${mapBtn}</td>
+                    <td class="staff-name-cell">${r.name}</td>
+                    <td id="loc-${i}" class="text-muted small">${r.loc} ${mapLink}</td>
                     <td><span class="duration-badge">${r.mins} MINS</span></td>
                 </tr>`;
             }).join('');
 
-            // CHART REFRESH CYCLE
-            if (Object.keys(counts).length > 0) {
+            // Chart Rendering
+            if (activeCount > 0) {
                 const labels = Object.keys(counts);
                 const values = Object.values(counts);
                 const top = labels.reduce((a, b) => counts[a] > counts[b] ? a : b);
+                
                 document.getElementById('topStaff').innerText = `${top} (${counts[top]})`;
                 drawChart(labels, values);
             }
-            
+
             document.getElementById('loadingScreen').style.display = 'none';
 
-            // ASYNC ADDRESS RE-RESOLUTION
+            // Background Reverse Geocoding
             tableData.forEach((r, i) => {
-                if ((r.loc.includes("Fetching") || !r.loc) && r.lat) {
+                if ((r.loc.includes("Resolving") || !r.loc) && r.lat) {
                     getGPSAddress(r.lat, r.lng).then(addr => {
                         const cell = document.getElementById(`loc-${i}`);
                         if (cell) {
-                            const mapUrl = `https://www.google.com/maps?q=${r.lat},${r.lng}`;
-                            cell.innerHTML = `${addr} <a href="${mapUrl}" target="_blank" class="geo-link"><i class="fas fa-location-dot"></i></a>`;
+                            const mapLink = `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-map-marker-alt"></i></a>`;
+                            cell.innerHTML = `${addr} ${mapLink}`;
                         }
                     });
                 }
@@ -660,12 +612,23 @@
         });
     }
 
-    /* CHART.JS DATA VISUALIZATION */
+    function nameFromEmail(input) {
+        if (!input) return "Unknown Staff";
+        if (input.includes('@')) {
+            let namePart = input.split('@')[0];
+            return namePart.split(/[._]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+        return input;
+    }
+
     function drawChart(l, v) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
+        const colors = l.map((_, i) => `hsl(${(i * 360) / l.length}, 75%, 60%)`);
+
         if (perfChart) {
-            perfChart.data.labels = l; 
-            perfChart.data.datasets[0].data = v; 
+            perfChart.data.labels = l;
+            perfChart.data.datasets[0].data = v;
+            perfChart.data.datasets[0].backgroundColor = colors;
             perfChart.update();
         } else {
             perfChart = new Chart(ctx, {
@@ -673,33 +636,33 @@
                 data: { 
                     labels: l, 
                     datasets: [{ 
-                        label: 'Total Visits', 
+                        label: 'Completed Visits', 
                         data: v, 
-                        backgroundColor: '#d90429', 
-                        borderRadius: 12, 
-                        barThickness: 25 
+                        backgroundColor: colors, 
+                        borderRadius: 12,
+                        barThickness: 28
                     }] 
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { 
-                        y: { beginAtZero: true, grid: { display: false } }, 
-                        x: { grid: { display: false } } 
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(43, 45, 66, 0.95)',
+                            padding: 15,
+                            titleFont: { size: 14, weight: 'bold' },
+                            cornerRadius: 12
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f0f0f0', drawBorder: false } },
+                        x: { grid: { display: false }, ticks: { font: { weight: '700', size: 10 } } }
                     }
                 }
             });
         }
     }
-
-    /* LIVE TABLE FILTER SEARCH */
-    searchInput.onkeyup = function() {
-        const val = this.value.toLowerCase();
-        document.querySelectorAll("#durationTableBody tr").forEach(tr => {
-            tr.style.display = tr.innerText.toLowerCase().includes(val) ? "" : "none";
-        });
-    };
 
     dateInput.onchange = initMonitoring;
 </script>
