@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Summary Monitoring</title>
+    <title>iMerch | Summary Monitoring Dashboard</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,128 +11,246 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        :root { --primary: #d90429; --bg: #f8f9fa; }
-        body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
+        :root { 
+            --primary: #d90429; 
+            --secondary: #ef233c;
+            --dark: #2b2d42;
+            --light: #8d99ae;
+            --bg: #f8f9fa; 
+        }
+
+        body { 
+            background-color: var(--bg); 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            margin: 0; 
+            overflow-x: hidden; 
+            color: var(--dark);
+        }
         
-        /* Navbar Styling */
+        /* Glassmorphism Header */
         .navbar { 
-            background: white !important; 
+            background: rgba(255, 255, 255, 0.95) !important; 
+            backdrop-filter: blur(10px);
             border-bottom: 3px solid var(--primary); 
-            padding: 0.8rem 2rem;
-            z-index: 1050;
+            padding: 0.8rem 2rem; 
+            z-index: 1050; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
-        .pulse-live {
-            width: 8px; height: 8px; background: #22c55e; border-radius: 50%;
-            display: inline-block; margin-right: 5px;
-            box-shadow: 0 0 0 rgba(34, 197, 94, 0.4);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        .pulse-live { 
+            width: 10px; height: 10px; 
+            background: #22c55e; 
+            border-radius: 50%; 
+            display: inline-block; 
+            margin-right: 8px; 
+            box-shadow: 0 0 0 rgba(34, 197, 94, 0.4); 
+            animation: pulse 2s infinite; 
         }
 
-        .live-badge {
-            background: rgba(34, 197, 94, 0.1); color: #166534;
-            padding: 4px 12px; border-radius: 50px; font-size: 0.7rem;
-            font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
-            display: flex; align-items: center;
+        @keyframes pulse { 
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } 
         }
-
-        #loginContainer { height: 100vh; display: flex; align-items: center; justify-content: center; background: #fff; }
-        .login-card { text-align: center; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        .btn-google { background: #4285f4; color: white; border-radius: 10px; padding: 12px; font-weight: 700; border: none; width: 100%; transition: 0.3s; }
         
-        .main-content { width: 100%; padding: 1rem; display: none; margin-top: 80px; }
-        .glass-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 1.5rem; }
-        .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
-        .stat-label { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; }
+        .live-badge { 
+            background: rgba(34, 197, 94, 0.1); 
+            color: #166534; 
+            padding: 6px 16px; 
+            border-radius: 50px; 
+            font-size: 0.75rem; 
+            font-weight: 800; 
+            display: flex; 
+            align-items: center; 
+            letter-spacing: 0.5px;
+        }
 
-        .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-        .filter-input { border-radius: 10px; border: 1px solid #ddd; padding: 5px 15px; font-weight: 600; outline: none; }
+        /* Login Screen */
+        #loginContainer { 
+            height: 100vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background: radial-gradient(circle at top right, #fff5f5, #ffffff);
+        }
 
-        .duration-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; }
-        .duration-normal { background: #f1f5f9; color: #475569; }
-        .duration-warning { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
-        .table-container { max-height: 450px; overflow-y: auto; }
-        .staff-name-cell { font-weight: 700; color: #334155; }
-        .geo-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.75rem; }
+        .login-card { 
+            text-align: center; 
+            padding: 3rem; 
+            border-radius: 24px; 
+            background: white;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08); 
+            width: 100%; 
+            max-width: 420px; 
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .btn-google { 
+            background: #4285f4; 
+            color: white; 
+            border-radius: 12px; 
+            padding: 14px; 
+            font-weight: 700; 
+            border: none; 
+            width: 100%; 
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-google:hover { background: #3367d6; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(66, 133, 244, 0.3); }
         
-        /* Custom Scrollbar for better UI */
+        /* Main Dashboard UI */
+        .main-content { width: 100%; padding: 2rem; display: none; margin-top: 85px; }
+        
+        .glass-card { 
+            background: white; 
+            border-radius: 24px; 
+            padding: 1.8rem; 
+            border: 1px solid rgba(0,0,0,0.04); 
+            box-shadow: 0 12px 35px rgba(0,0,0,0.02); 
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .glass-card:hover { transform: translateY(-5px); }
+        
+        .stat-value { font-size: 2.5rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
+        .stat-label { font-size: 0.8rem; font-weight: 700; color: var(--light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+
+        .loader { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: white; display: none; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 9999; 
+        }
+
+        .filter-input { 
+            border-radius: 12px; border: 1px solid #eee; 
+            padding: 8px 20px; font-weight: 600; outline: none; 
+            background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        
+        .duration-badge { 
+            padding: 5px 12px; border-radius: 8px; 
+            font-size: 0.75rem; font-weight: 800; 
+            background: #f1f5f9; color: #475569; 
+            display: inline-block;
+        }
+
+        .table-container { max-height: 520px; overflow-y: auto; padding-right: 5px; }
+        .staff-name-cell { font-weight: 700; color: var(--dark); text-transform: uppercase; font-size: 0.85rem; }
+        .geo-link { 
+            color: var(--primary); text-decoration: none; 
+            font-weight: 700; font-size: 0.75rem; 
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+        .table thead th {
+            background: #fcfcfc;
+            border-bottom: 2px solid #eee;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--light);
+            padding: 15px;
+        }
     </style>
 </head>
 <body>
 
 <div id="loginContainer">
     <div class="login-card">
-        <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="50" class="mb-4">
-        <h5 class="fw-bold mb-4">Admin Dashboard</h5>
+        <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="55" class="mb-4">
+        <h4 class="fw-800 mb-2">iMerch Admin</h4>
+        <p class="text-muted small mb-4">Summary & Real-time Performance Tracker</p>
         <button class="btn-google" id="loginBtn">
-            <i class="fab fa-google me-2"></i> Sign in with Google
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
+            Login with Google
         </button>
-        <p class="text-muted small mt-3">Only authorized iMerch accounts can access.</p>
     </div>
 </div>
 
 <div id="loadingScreen" class="loader">
-    <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
-    <div class="mt-4 text-center">
-        <h5 class="fw-bold text-dark m-0">Fast-Syncing Data...</h5>
-    </div>
+    <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem; border-width: 0.25em;" role="status"></div>
+    <div class="mt-4 fw-800 text-dark" style="letter-spacing: 2px;">SYNCING LIVE DATA...</div>
 </div>
 
 <div class="main-content" id="dashboardContent">
     <nav class="navbar fixed-top d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center gap-3">
-            <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="35">
+        <div class="d-flex align-items-center gap-4">
+            <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="40">
             <div class="live-badge" id="liveIndicator" style="display: none;">
-                <span class="pulse-live"></span> Live: <span id="liveLogCount" class="ms-1">0</span>
+                <span class="pulse-live"></span> <span id="liveLogCount">0</span> LOGS TODAY
             </div>
         </div>
-        <button class="btn btn-outline-secondary btn-sm border-0" onclick="logout()" title="Logout">
-            <i class="fas fa-sign-out-alt"></i>
-        </button>
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
     </nav>
 
     <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
             <div>
-                <h4 class="fw-bold m-0">PERFORMANCE INDEX</h4>
-                <small class="text-muted" id="dateSubtitle">Monitoring for Today</small>
+                <h3 class="fw-800 m-0" style="letter-spacing: -1px;">SUMMARY MONITORING</h3>
+                <p class="text-muted m-0" id="dateSubtitle" style="font-size: 0.9rem;"></p>
             </div>
-            <div>
-                <input type="date" id="summaryDateFilter" class="filter-input shadow-sm">
+            <div class="d-flex gap-2 align-items-center">
+                <span class="small fw-700 text-muted uppercase">Select Date:</span>
+                <input type="date" id="summaryDateFilter" class="filter-input">
             </div>
         </div>
 
-        <div class="row g-4 mb-2">
-            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Total Store Logs</div><div id="totalStores" class="stat-value">0</div></div></div>
-            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Active Field Staff</div><div id="activeStaff" class="stat-value">0</div></div></div>
-            <div class="col-md-4"><div class="glass-card text-center"><div class="stat-label">Top Performer</div><div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 10px;">--</div></div></div>
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="glass-card text-center">
+                    <div class="stat-label">Total Logs Found</div>
+                    <div id="totalStores" class="stat-value">0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="glass-card text-center">
+                    <div class="stat-label">Active Field Personnel</div>
+                    <div id="activeStaff" class="stat-value">0</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="glass-card text-center">
+                    <div class="stat-label">Top Coordinator</div>
+                    <div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 15px;">--</div>
+                </div>
+            </div>
         </div>
 
         <div class="row g-4">
             <div class="col-lg-7">
                 <div class="glass-card">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2"></i>Staff Performance (Visits)</h6>
-                    <div style="height: 350px;"><canvas id="performanceChart"></canvas></div>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="fw-800 m-0"><i class="fas fa-chart-line me-2 text-danger"></i>Visit Distribution</h6>
+                    </div>
+                    <div style="height: 400px;"><canvas id="performanceChart"></canvas></div>
                 </div>
             </div>
+            
             <div class="col-lg-5">
                 <div class="glass-card">
-                    <h6 class="fw-bold mb-3"><i class="fas fa-clock me-2"></i>Live Store Durations</h6>
+                    <h6 class="fw-800 mb-4"><i class="fas fa-clock me-2 text-danger"></i>Duration Log History</h6>
                     <div class="table-container">
-                        <table class="table table-hover align-middle" style="font-size: 0.85rem;">
-                            <thead class="table-light">
-                                <tr style="font-size: 0.7rem; text-transform: uppercase;">
-                                    <th>Staff</th>
-                                    <th>Location / Store</th>
-                                    <th>Time Spent</th>
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Personnel</th>
+                                    <th>GPS Location / Store</th>
+                                    <th>Mins</th>
                                 </tr>
                             </thead>
                             <tbody id="durationTableBody"></tbody>
@@ -146,199 +264,168 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { 
-        initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-        collection, query, where, onSnapshot, Timestamp, orderBy 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, query, where, onSnapshot, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
-        projectId: "imerch-checkins-out",
-        storageBucket: "imerch-checkins-out.firebasestorage.app"
+        projectId: "imerch-checkins-out"
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = initializeFirestore(app, {
-        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-    });
+    const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    let perfChart;
-    let unsubscribe = null;
-    let currentTotalCount = -1;
+    let perfChart, unsubscribe = null;
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+    
+    // FULL AUTHORIZED LIST FOR EXACT MATCHING
+    const authorizedStaff = [
+        "VICTORINO JENNIFER", "MANANSALA PRINCESS", "DELOS SANTOS JOSEPH", "MOLINA MARCO", 
+        "ABENIR JESSA", "ACANTILADO ROMEO", "GONZALES MANUEL ERIC", "GETARUELAS ROGEL", 
+        "NINO ROSALINDA", "EDINIEL ANNA MARIE", "ENDITA MARK", "ELENA YBARITTA", 
+        "Carl Francisco", "Fernand Digamon", "Gervie Espinosa"
+    ];
+
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
 
     const addressCache = {};
-
-    async function getStoreName(lat, lng) {
+    async function getGPSAddress(lat, lng) {
         const key = `${lat},${lng}`;
         if (addressCache[key]) return addressCache[key];
         try {
             const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
             const data = await res.json();
-            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "Unknown Store";
-            addressCache[key] = addr;
-            return addr;
-        } catch { return "Location Info N/A"; }
+            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "GPS Field Location";
+            addressCache[key] = addr; return addr;
+        } catch { return "Unknown GPS Point"; }
     }
 
-    document.getElementById('loginBtn').onclick = async () => {
-        try { await signInWithPopup(auth, provider); } catch (e) { alert("Login failed: " + e.message); }
-    };
-
+    document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
     window.logout = () => signOut(auth);
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('loginContainer').style.display = 'none';
             document.getElementById('dashboardContent').style.display = 'block';
-            startSummaryMonitoring();
+            initMonitoring();
         } else {
             document.getElementById('loginContainer').style.display = 'flex';
             document.getElementById('dashboardContent').style.display = 'none';
-            if (unsubscribe) unsubscribe();
         }
     });
 
-    function startSummaryMonitoring() {
+    function initMonitoring() {
         if (unsubscribe) unsubscribe();
         document.getElementById('loadingScreen').style.display = 'flex';
         
-        const selectedDate = new Date(dateInput.value);
-        const start = new Date(selectedDate.setHours(0,0,0,0));
-        const end = new Date(selectedDate.setHours(23,59,59,999));
+        const selDate = new Date(dateInput.value);
+        const start = new Date(selDate.setHours(0,0,0,0));
+        const end = new Date(selDate.setHours(23,59,59,999));
         
-        const isToday = new Date().toDateString() === selectedDate.toDateString();
-        document.getElementById('liveIndicator').style.display = isToday ? 'flex' : 'none';
-        document.getElementById('dateSubtitle').innerText = `Monitoring for ${selectedDate.toDateString()}`;
+        document.getElementById('dateSubtitle').innerText = `Displaying records for ${selDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+        document.getElementById('liveIndicator').style.display = (new Date().toDateString() === selDate.toDateString()) ? 'flex' : 'none';
 
-        const q = query(
-            collection(db, "attendance"), 
-            where("timestamp", ">=", Timestamp.fromDate(start)), 
-            where("timestamp", "<=", Timestamp.fromDate(end)),
-            orderBy("timestamp", "asc")
-        );
+        const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)), orderBy("timestamp", "asc"));
 
         unsubscribe = onSnapshot(q, (snap) => {
-            if (snap.size === currentTotalCount && currentTotalCount !== -1) {
-                document.getElementById('loadingScreen').style.display = 'none';
-                return;
-            }
-            
-            currentTotalCount = snap.size;
             let counts = {}, staffActivity = {}, tableData = [];
 
             snap.docs.forEach(doc => {
-                const data = doc.data();
-                // FIX: Better naming fallback to catch Jessa and Rosalinda
-                const name = data.staffName || data.name || data.user || data.employeeName || "Unknown Staff";
+                const d = doc.data();
+                let raw = d.staffName || d.name || d.user || d.employeeName || d.email || "Unknown Staff";
                 
-                if (adminExclusion.includes(name)) return;
+                // CRITICAL FIX: Match against your list
+                let person = authorizedStaff.find(s => s.toLowerCase() === raw.toLowerCase()) || raw;
 
-                const type = (data.type || "").toLowerCase();
-                const time = data.timestamp ? data.timestamp.toDate() : new Date();
-                const lat = data.latitude || data.geopoint?.latitude;
-                const lng = data.longitude || data.geopoint?.longitude;
+                if (adminExclusion.includes(person)) return;
+
+                const type = (d.type || "").toLowerCase();
+                const time = d.timestamp?.toDate() || new Date();
+                const lat = d.latitude || d.geopoint?.latitude;
+                const lng = d.longitude || d.geopoint?.longitude;
 
                 if (type.includes('in')) {
-                    counts[name] = (counts[name] || 0) + 1;
-                    staffActivity[name] = { 
+                    counts[person] = (counts[person] || 0) + 1;
+                    staffActivity[person] = { 
                         inTime: time, 
-                        loc: data.location || data.storeName || data.address,
+                        loc: d.location || d.storeName || d.currentLocation || "Resolving GPS...", 
                         lat, lng 
                     };
-                } else if (type.includes('out') && staffActivity[name]) {
-                    const act = staffActivity[name];
-                    const diff = Math.floor((time - act.inTime) / 60000);
-                    tableData.push({ name, mins: diff, ...act });
-                    delete staffActivity[name];
+                } else if (type.includes('out') && staffActivity[person]) {
+                    const diff = Math.floor((time - staffActivity[person].inTime) / 60000);
+                    tableData.push({ name: person, mins: diff, ...staffActivity[person] });
+                    delete staffActivity[person];
                 }
             });
 
-            // Table Rendering Logic
-            let rowsHtml = "";
-            tableData.reverse().forEach((row, idx) => {
-                const badgeClass = row.mins < 10 ? 'duration-warning' : 'duration-normal';
-                const mapLink = row.lat ? `<a href="https://www.google.com/maps?q=${row.lat},${row.lng}" target="_blank" class="geo-link ms-2"><i class="fas fa-map-marker-alt"></i></a>` : "";
+            // Populate Table
+            document.getElementById('durationTableBody').innerHTML = tableData.reverse().map((r, i) => {
+                const mapIcon = r.lat ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-external-link-alt"></i></a>` : "";
+                return `<tr>
+                    <td class="staff-name-cell">${r.name}</td>
+                    <td id="loc-${i}" class="text-muted small">${r.loc} ${mapIcon}</td>
+                    <td><span class="duration-badge">${r.mins}m</span></td>
+                </tr>`;
+            }).join('');
 
-                rowsHtml += `
-                    <tr>
-                        <td class="staff-name-cell">${row.name}</td>
-                        <td id="addr-${idx}" class="text-muted" style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            ${row.loc || 'Fetching location...'} ${mapLink}
-                        </td>
-                        <td><span class="duration-badge ${badgeClass}">${row.mins} mins</span></td>
-                    </tr>
-                `;
-
-                // Lazy load address if missing
-                if (!row.loc && row.lat) {
-                    getStoreName(row.lat, row.lng).then(addr => {
-                        const cell = document.getElementById(`addr-${idx}`);
-                        if (cell) cell.innerHTML = `${addr} ${mapLink}`;
-                    });
-                }
-            });
-
-            document.getElementById('durationTableBody').innerHTML = rowsHtml;
             document.getElementById('totalStores').innerText = snap.size;
             document.getElementById('liveLogCount').innerText = snap.size;
             document.getElementById('activeStaff').innerText = Object.keys(counts).length;
-            
+
             if (Object.keys(counts).length > 0) {
                 const labels = Object.keys(counts);
                 const values = Object.values(counts);
-                const maxVal = Math.max(...values);
-                const topPerson = labels.find(key => counts[key] === maxVal);
-                document.getElementById('topStaff').innerText = `${topPerson} (${maxVal})`;
-                renderChart(labels, values);
-            } else {
-                document.getElementById('topStaff').innerText = "--";
+                const top = labels.reduce((a, b) => counts[a] > counts[b] ? a : b);
+                document.getElementById('topStaff').innerText = `${top} (${counts[top]})`;
+                drawChart(labels, values);
             }
 
             document.getElementById('loadingScreen').style.display = 'none';
+
+            // Geocode empty/GPS-only locations
+            tableData.forEach((r, i) => {
+                if ((r.loc.includes("Resolving") || !r.loc) && r.lat) {
+                    getGPSAddress(r.lat, r.lng).then(addr => {
+                        const cell = document.getElementById(`loc-${i}`);
+                        if (cell) cell.innerHTML = `${addr} <a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-external-link-alt"></i></a>`;
+                    });
+                }
+            });
         });
     }
 
-    function renderChart(labels, data) {
+    function drawChart(l, v) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
-        const sorted = labels.map((l, i) => ({l, v: data[i]})).sort((a,b) => b.v - a.v);
-        
         if (perfChart) perfChart.destroy();
         perfChart = new Chart(ctx, {
             type: 'bar',
-            data: {
-                labels: sorted.map(x => x.l),
+            data: { 
+                labels: l, 
                 datasets: [{ 
-                    label: 'Visits', 
-                    data: sorted.map(x => x.v), 
+                    label: 'Store Visits', 
+                    data: v, 
                     backgroundColor: '#d90429', 
-                    borderRadius: 8, 
-                    barThickness: 20 
-                }]
+                    borderRadius: 12,
+                    barThickness: 25
+                }] 
             },
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false, 
-                animation: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } },
-                    x: { grid: { display: false } }
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' }, border: { display: false } },
+                    x: { grid: { display: false }, border: { display: false } }
                 }
             }
         });
     }
 
-    dateInput.addEventListener('change', () => {
-        currentTotalCount = -1;
-        startSummaryMonitoring();
-    });
+    dateInput.onchange = initMonitoring;
 </script>
 </body>
 </html>
