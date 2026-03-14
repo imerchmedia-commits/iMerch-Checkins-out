@@ -27,7 +27,6 @@
             color: var(--dark);
         }
         
-        /* Glassmorphism Header */
         .navbar { 
             background: rgba(255, 255, 255, 0.95) !important; 
             backdrop-filter: blur(10px);
@@ -65,7 +64,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Login Screen */
         #loginContainer { 
             height: 100vh; 
             display: flex; 
@@ -102,7 +100,6 @@
 
         .btn-google:hover { background: #3367d6; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(66, 133, 244, 0.3); }
         
-        /* Main Dashboard UI */
         .main-content { width: 100%; padding: 2rem; display: none; margin-top: 85px; }
         
         .glass-card { 
@@ -134,20 +131,20 @@
         
         .duration-badge { 
             padding: 5px 12px; border-radius: 8px; 
-            font-size: 0.75rem; font-weight: 800; 
+            font-size: 0.7rem; font-weight: 800; 
             background: #f1f5f9; color: #475569; 
             display: inline-block;
+            white-space: nowrap;
         }
 
         .table-container { max-height: 520px; overflow-y: auto; padding-right: 5px; }
-        .staff-name-cell { font-weight: 700; color: var(--dark); text-transform: uppercase; font-size: 0.85rem; }
+        .staff-name-cell { font-weight: 700; color: var(--dark); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.2px; }
         .geo-link { 
             color: var(--primary); text-decoration: none; 
             font-weight: 700; font-size: 0.75rem; 
             display: inline-flex; align-items: center; gap: 4px;
         }
         
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
@@ -226,7 +223,7 @@
             <div class="col-md-4">
                 <div class="glass-card text-center">
                     <div class="stat-label">Top Coordinator</div>
-                    <div id="topStaff" class="stat-value" style="font-size: 1.2rem; padding-top: 15px;">--</div>
+                    <div id="topStaff" class="stat-value" style="font-size: 1.1rem; padding-top: 15px;">--</div>
                 </div>
             </div>
         </div>
@@ -250,7 +247,7 @@
                                 <tr>
                                     <th>Personnel</th>
                                     <th>GPS Location / Store</th>
-                                    <th>Mins</th>
+                                    <th>Duration</th>
                                 </tr>
                             </thead>
                             <tbody id="durationTableBody"></tbody>
@@ -281,7 +278,6 @@
     let perfChart, unsubscribe = null;
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
     
-    // FULL AUTHORIZED LIST FOR EXACT MATCHING
     const authorizedStaff = [
         "VICTORINO JENNIFER", "MANANSALA PRINCESS", "DELOS SANTOS JOSEPH", "MOLINA MARCO", 
         "ABENIR JESSA", "ACANTILADO ROMEO", "GONZALES MANUEL ERIC", "GETARUELAS ROGEL", 
@@ -302,6 +298,14 @@
             const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "GPS Field Location";
             addressCache[key] = addr; return addr;
         } catch { return "Unknown GPS Point"; }
+    }
+
+    // Helper: Smart Duration (mins to h/m)
+    function formatDuration(mins) {
+        if (mins < 60) return `${mins}m`;
+        const hrs = Math.floor(mins / 60);
+        const rem = mins % 60;
+        return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`;
     }
 
     document.getElementById('loginBtn').onclick = () => signInWithPopup(auth, provider);
@@ -326,7 +330,7 @@
         const start = new Date(selDate.setHours(0,0,0,0));
         const end = new Date(selDate.setHours(23,59,59,999));
         
-        document.getElementById('dateSubtitle').innerText = `Displaying records for ${selDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+        document.getElementById('dateSubtitle').innerText = `Records for ${selDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
         document.getElementById('liveIndicator').style.display = (new Date().toDateString() === selDate.toDateString()) ? 'flex' : 'none';
 
         const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)), orderBy("timestamp", "asc"));
@@ -337,8 +341,6 @@
             snap.docs.forEach(doc => {
                 const d = doc.data();
                 let raw = d.staffName || d.name || d.user || d.employeeName || d.email || "Unknown Staff";
-                
-                // CRITICAL FIX: Match against your list
                 let person = authorizedStaff.find(s => s.toLowerCase() === raw.toLowerCase()) || raw;
 
                 if (adminExclusion.includes(person)) return;
@@ -362,13 +364,12 @@
                 }
             });
 
-            // Populate Table
             document.getElementById('durationTableBody').innerHTML = tableData.reverse().map((r, i) => {
                 const mapIcon = r.lat ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-external-link-alt"></i></a>` : "";
                 return `<tr>
                     <td class="staff-name-cell">${r.name}</td>
                     <td id="loc-${i}" class="text-muted small">${r.loc} ${mapIcon}</td>
-                    <td><span class="duration-badge">${r.mins}m</span></td>
+                    <td><span class="duration-badge">${formatDuration(r.mins)}</span></td>
                 </tr>`;
             }).join('');
 
@@ -386,7 +387,6 @@
 
             document.getElementById('loadingScreen').style.display = 'none';
 
-            // Geocode empty/GPS-only locations
             tableData.forEach((r, i) => {
                 if ((r.loc.includes("Resolving") || !r.loc) && r.lat) {
                     getGPSAddress(r.lat, r.lng).then(addr => {
@@ -401,6 +401,10 @@
     function drawChart(l, v) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
         if (perfChart) perfChart.destroy();
+        
+        // Dynamic Colors for each personnel
+        const colors = l.map((_, i) => `hsl(${(i * 360) / l.length}, 70%, 50%)`);
+
         perfChart = new Chart(ctx, {
             type: 'bar',
             data: { 
@@ -408,7 +412,7 @@
                 datasets: [{ 
                     label: 'Store Visits', 
                     data: v, 
-                    backgroundColor: '#d90429', 
+                    backgroundColor: colors, 
                     borderRadius: 12,
                     barThickness: 25
                 }] 
@@ -416,10 +420,24 @@
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false, 
-                plugins: { legend: { display: false } },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ` Visits: ${ctx.raw}`
+                        }
+                    }
+                },
                 scales: {
                     y: { beginAtZero: true, grid: { color: '#f0f0f0' }, border: { display: false } },
-                    x: { grid: { display: false }, border: { display: false } }
+                    x: { 
+                        grid: { display: false }, 
+                        border: { display: false },
+                        ticks: {
+                            font: { size: 10, weight: '700' },
+                            color: '#475569'
+                        }
+                    }
                 }
             }
         });
