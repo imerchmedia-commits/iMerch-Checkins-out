@@ -19,7 +19,7 @@
             --bg: #f8f9fa; 
             --gold: #FFD700;
             --success: #27ae60;
-            --over: #f39c12;
+            --over: #f39c12; /* Orange for exceeding target */
         }
 
         body { 
@@ -28,31 +28,12 @@
             margin: 0; overflow-x: hidden; color: var(--dark);
         }
         
-        /* FIX: Login Container Stack Issue */
-        #loginContainer { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #f4f7f6; display: flex; justify-content: center; 
-            align-items: center; z-index: 2000; 
-        }
-
-        .login-card { 
-            background: white; padding: 3.5rem 2.5rem; border-radius: 32px; 
-            text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); 
-            max-width: 400px; width: 90%;
-        }
-
-        .btn-google { 
-            background: white; border: 1px solid #e2e8f0; padding: 12px 24px; 
-            border-radius: 14px; font-weight: 700; display: inline-flex; 
-            align-items: center; gap: 12px; margin-top: 20px; transition: 0.3s;
-            cursor: pointer; color: var(--dark); font-size: 0.95rem;
-        }
-        .btn-google:hover { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-2px); }
-
         .navbar { 
             background: rgba(255, 255, 255, 0.95) !important; 
-            backdrop-filter: blur(10px); border-bottom: 3px solid var(--primary); 
-            padding: 0.8rem 2rem; z-index: 1050; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 3px solid var(--primary); 
+            padding: 0.8rem 2rem; z-index: 1050; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         .brand-text { font-weight: 800; font-size: 1.4rem; letter-spacing: -1px; color: var(--dark); text-decoration: none; }
@@ -60,17 +41,36 @@
 
         /* Goal Progress Bar */
         .progress-container { background: #e9ecef; border-radius: 50px; height: 12px; width: 100%; margin: 15px 0 5px 0; overflow: hidden; }
-        .progress-fill { background: var(--primary); height: 100%; width: 0%; border-radius: 50px; transition: all 0.8s ease; }
+        .progress-fill { 
+            background: var(--primary); 
+            height: 100%; width: 0%; border-radius: 50px; transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
         .goal-text { font-size: 0.7rem; font-weight: 800; color: var(--light); text-transform: uppercase; margin-top: 5px; }
+
+        @keyframes shuffleUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .top-staff-box { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+        .crown-icon { color: var(--gold); filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5)); animation: bounce 2s infinite; font-size: 1.5rem; margin-bottom: 5px; }
+
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        .new-entry-glow { animation: rowGlow 3s ease-out; }
+        @keyframes rowGlow {
+            0% { background-color: rgba(217, 4, 41, 0.15); border-left: 5px solid var(--primary); }
+            100% { background-color: transparent; border-left: 0px solid transparent; }
+        }
 
         .glass-card { 
             background: white; border-radius: 24px; padding: 1.8rem; 
             border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 12px 35px rgba(0,0,0,0.02); 
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.5rem; transition: transform 0.3s ease;
         }
 
         .stat-value { font-size: 2.5rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
-        .stat-label { font-size: 0.8rem; font-weight: 700; color: var(--light); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-label { font-size: 0.8rem; font-weight: 700; color: var(--light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
 
         .loader { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
@@ -84,16 +84,22 @@
         
         .geo-link { color: var(--primary); text-decoration: none; font-weight: 700; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 4px; }
         .filter-input { border-radius: 12px; border: 1px solid #eee; padding: 8px 20px; font-weight: 600; outline: none; background: white; }
+
+        /* Login Styles */
+        #loginContainer { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg); display:flex; justify-content:center; align-items:center; z-index:2000; }
+        .login-card { background:white; padding:3rem; border-radius:30px; text-align:center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .btn-google { background:white; border:1px solid #ddd; padding:12px 25px; border-radius:12px; font-weight:700; display:flex; align-items:center; gap:10px; margin: 0 auto; transition:0.3s; }
+        .btn-google:hover { background:#f9f9f9; transform:translateY(-2px); }
     </style>
 </head>
 <body>
 
 <div id="loginContainer">
     <div class="login-card">
-        <div class="brand-text mb-2" style="font-size: 2rem;">iMERCH<span>MEDIA</span></div>
-        <div class="text-muted fw-600 mb-4" style="font-size: 1.1rem;">Admin Dashboard</div>
+        <div class="brand-text mb-4" style="font-size: 2.2rem;">iMERCH<span>MEDIA</span></div>
+        <h4 class="fw-800 mb-2">Admin Dashboard</h4>
         <button class="btn-google" id="loginBtn">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="18">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
             Login with Google
         </button>
     </div>
@@ -141,7 +147,7 @@
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="glass-card text-center" id="leaderboardCard">
+                <div class="glass-card text-center top-staff-box" id="leaderboardCard">
                     <div class="stat-label">🏆 Top Coordinator</div>
                     <div id="topStaff" class="stat-value" style="font-size: 1.1rem; padding-top: 5px; color: var(--dark);">--</div>
                 </div>
@@ -149,12 +155,21 @@
         </div>
 
         <div class="row g-4">
-            <div class="col-lg-7"><div class="glass-card"><canvas id="performanceChart" style="height: 400px;"></canvas></div></div>
+            <div class="col-lg-7">
+                <div class="glass-card">
+                    <h6 class="fw-800 mb-4"><i class="fas fa-chart-line me-2 text-danger"></i>Visit Distribution</h6>
+                    <div style="height: 400px;"><canvas id="performanceChart"></canvas></div>
+                </div>
+            </div>
+            
             <div class="col-lg-5">
                 <div class="glass-card">
+                    <h6 class="fw-800 mb-4"><i class="fas fa-history me-2 text-danger"></i>Duration Log History</h6>
                     <div class="table-container">
                         <table class="table table-hover align-middle">
-                            <thead><tr><th>Personnel</th><th>Location</th><th>Duration</th></tr></thead>
+                            <thead>
+                                <tr><th>Personnel</th><th>Location</th><th>Duration</th></tr>
+                            </thead>
                             <tbody id="durationTableBody"></tbody>
                         </table>
                     </div>
@@ -180,12 +195,40 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    let perfChart, unsubscribe = null;
+    let perfChart, unsubscribe = null, currentTop = "", lastLogCount = 0;
     const TARGET_VAL = 6;
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
+
+    const addressCache = {};
+    async function getGPSAddress(lat, lng) {
+        const key = `${lat},${lng}`;
+        if (addressCache[key]) return addressCache[key];
+        try {
+            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${firebaseConfig.apiKey}`);
+            const data = await res.json();
+            const addr = data.results?.[0]?.formatted_address.split(',').slice(0, 2).join(',') || "GPS Field Location";
+            addressCache[key] = addr; return addr;
+        } catch { return "Unknown GPS Point"; }
+    }
+
+    function formatDuration(mins) {
+        if (mins < 60) return `${mins}m`;
+        const hrs = Math.floor(mins / 60);
+        const rem = mins % 60;
+        return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`;
+    }
+
+    function nameFromEmail(input) {
+        if (!input) return "Unknown Staff";
+        if (input.includes('@')) {
+            let namePart = input.split('@')[0];
+            return namePart.split(/[._]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+        return input;
+    }
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -206,60 +249,104 @@
         const start = new Date(selDate.setHours(0,0,0,0));
         const end = new Date(selDate.setHours(23,59,59,999));
         
-        document.getElementById('dateSubtitle').innerText = `Records for ${selDate.toLocaleDateString()}`;
+        document.getElementById('dateSubtitle').innerText = `Records for ${selDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+        document.getElementById('liveIndicator').style.display = (new Date().toDateString() === selDate.toDateString()) ? 'block' : 'none';
 
         const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(start)), where("timestamp", "<=", Timestamp.fromDate(end)), orderBy("timestamp", "asc"));
 
         unsubscribe = onSnapshot(q, (snap) => {
             let counts = {}, staffActivity = {}, tableData = [];
-            let checkIns = 0;
+            let totalCheckIns = 0;
 
             snap.docs.forEach(doc => {
                 const d = doc.data();
-                let person = d.staffName || d.name || d.email || "";
+                let person = nameFromEmail(d.staffName || d.name || d.email || "");
                 if (adminExclusion.includes(person) || !person) return;
 
                 const type = (d.type || "").toLowerCase();
                 const time = d.timestamp?.toDate() || new Date();
+                const lat = d.latitude || d.geopoint?.latitude;
+                const lng = d.longitude || d.geopoint?.longitude;
 
                 if (type.includes('in')) {
-                    checkIns++;
+                    totalCheckIns++;
                     counts[person] = (counts[person] || 0) + 1;
-                    staffActivity[person] = { inTime: time, loc: d.location || "GPS Location" };
+                    staffActivity[person] = { inTime: time, loc: d.location || "Resolving GPS...", lat, lng };
                 } else if (type.includes('out') && staffActivity[person]) {
                     const diff = Math.floor((time - staffActivity[person].inTime) / 60000);
-                    tableData.push({ name: person, mins: diff, loc: staffActivity[person].loc });
+                    tableData.push({ name: person, mins: diff, ...staffActivity[person] });
                     delete staffActivity[person];
                 }
             });
 
-            // Update UI
-            document.getElementById('totalStores').innerText = checkIns;
-            document.getElementById('activeStaff').innerText = Object.keys(counts).length;
-
+            // UPDATED GOAL LOGIC: Red -> Green -> Orange
             const goalBar = document.getElementById('goalBar');
             const goalStatus = document.getElementById('goalStatus');
-            const perc = Math.min((checkIns / TARGET_VAL) * 100, 100);
-            goalBar.style.width = `${perc}%`;
+            const percentage = Math.min((totalCheckIns / TARGET_VAL) * 100, 100);
+            
+            goalBar.style.width = `${percentage}%`;
+            
+            if (totalCheckIns === TARGET_VAL) {
+                goalBar.style.background = 'var(--success)'; // Green at exactly 6
+                goalStatus.style.color = 'var(--success)';
+                goalStatus.innerText = `Target Met! (${totalCheckIns}/${TARGET_VAL})`;
+            } else if (totalCheckIns > TARGET_VAL) {
+                goalBar.style.background = 'var(--over)'; // Orange if > 6
+                goalStatus.style.color = 'var(--over)';
+                goalStatus.innerText = `Target Exceeded! (${totalCheckIns}/${TARGET_VAL})`;
+            } else {
+                goalBar.style.background = 'var(--primary)'; // Default Red
+                goalStatus.style.color = 'var(--light)';
+                goalStatus.innerText = `Daily Target: ${totalCheckIns}/${TARGET_VAL}`;
+            }
 
-            if (checkIns === TARGET_VAL) { goalBar.style.background = 'var(--success)'; goalStatus.style.color = 'var(--success)'; goalStatus.innerText = "Target Met!"; }
-            else if (checkIns > TARGET_VAL) { goalBar.style.background = 'var(--over)'; goalStatus.style.color = 'var(--over)'; goalStatus.innerText = "Target Exceeded!"; }
-            else { goalBar.style.background = 'var(--primary)'; goalStatus.style.color = 'var(--light)'; goalStatus.innerText = `Daily Target: ${checkIns}/${TARGET_VAL}`; }
-
-            // Table
-            document.getElementById('durationTableBody').innerHTML = tableData.reverse().map(r => `
-                <tr><td class="staff-name-cell">${r.name}</td><td class="small text-muted">${r.loc}</td><td><span class="duration-badge">${r.mins}m</span></td></tr>
-            `).join('');
-
-            // Leaderboard & Chart
+            // LEADERBOARD
             const labels = Object.keys(counts);
             if (labels.length > 0) {
                 const top = labels.reduce((a, b) => counts[a] > counts[b] ? a : b);
-                document.getElementById('topStaff').innerHTML = `🏆 ${top.toUpperCase()}<br><small>${counts[top]} Visits</small>`;
+                const topStaffDiv = document.getElementById('topStaff');
+                const leaderboardCard = document.getElementById('leaderboardCard');
+
+                if (top !== currentTop) {
+                    currentTop = top;
+                    topStaffDiv.style.animation = 'none';
+                    topStaffDiv.offsetHeight;
+                    topStaffDiv.style.animation = 'shuffleUp 0.6s ease-out';
+                    topStaffDiv.innerHTML = `<i class="fas fa-crown crown-icon"></i><br>${top.toUpperCase()}<br><span style="font-size:0.8rem; color:var(--primary)">${counts[top]} VISITS</span>`;
+                    leaderboardCard.style.border = "2px solid var(--gold)";
+                } else {
+                    topStaffDiv.innerHTML = `<i class="fas fa-crown crown-icon"></i><br>${top.toUpperCase()}<br><span style="font-size:0.8rem; color:var(--primary)">${counts[top]} VISITS</span>`;
+                }
                 drawChart(labels, Object.values(counts));
             }
 
+            // TABLE DATA
+            const tableBody = document.getElementById('durationTableBody');
+            const isNewLog = snap.size > lastLogCount && lastLogCount !== 0;
+            
+            tableBody.innerHTML = tableData.reverse().map((r, i) => {
+                const mapIcon = r.lat ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-external-link-alt"></i></a>` : "";
+                return `<tr class="${i === 0 && isNewLog ? 'new-entry-glow' : ''}">
+                    <td class="staff-name-cell">${r.name}</td>
+                    <td id="loc-${i}" class="text-muted small">${r.loc} ${mapIcon}</td>
+                    <td><span class="duration-badge">${formatDuration(r.mins)}</span></td>
+                </tr>`;
+            }).join('');
+
+            document.getElementById('totalStores').innerText = totalCheckIns;
+            document.getElementById('activeStaff').innerText = Object.keys(counts).length;
+            
+            lastLogCount = snap.size;
             document.getElementById('loadingScreen').style.display = 'none';
+
+            tableData.forEach((r, i) => {
+                if (r.loc.includes("Resolving") && r.lat) {
+                    getGPSAddress(r.lat, r.lng).then(addr => {
+                        const cell = document.getElementById(`loc-${i}`);
+                        if (cell) cell.innerHTML = `${addr} <a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="geo-link"><i class="fas fa-external-link-alt"></i></a>`;
+                    });
+                }
+            });
         });
     }
 
@@ -269,7 +356,14 @@
         perfChart = new Chart(ctx, {
             type: 'bar',
             data: { labels: l, datasets: [{ data: v, backgroundColor: '#d90429', borderRadius: 8 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    x: { ticks: { color: '#000', font: { weight: '800', size: 10 } } },
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
         });
     }
 
