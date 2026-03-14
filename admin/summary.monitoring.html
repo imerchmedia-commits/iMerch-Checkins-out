@@ -15,19 +15,34 @@
         :root { --primary: #d90429; --bg: #f8f9fa; }
         body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
         
-        .main-content { width: 100%; padding: 1rem; }
+        /* Login Styles */
+        #loginContainer { height: 100vh; display: flex; align-items: center; justify-content: center; background: #fff; }
+        .login-card { text-align: center; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        .btn-google { background: #4285f4; color: white; border-radius: 10px; padding: 12px; font-weight: 700; border: none; width: 100%; transition: 0.3s; }
+        
+        .main-content { width: 100%; padding: 1rem; display: none; }
         .glass-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.03); margin-bottom: 1.5rem; }
         .stat-value { font-size: 2.2rem; font-weight: 800; color: var(--primary); }
         .stat-label { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; }
 
-        .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
         
         .filter-input { border-radius: 10px; border: 1px solid #ddd; padding: 5px 15px; font-weight: 600; }
         .btn-export { background: #1a7f37; color: white; border-radius: 10px; font-weight: 700; border: none; transition: 0.3s; }
-        .btn-export:hover { background: #145a26; color: white; }
     </style>
 </head>
 <body>
+
+<div id="loginContainer">
+    <div class="login-card">
+        <img src="https://imerchmedia.net/wp-content/uploads/2023/12/imerch-logo.png" height="50" class="mb-4">
+        <h5 class="fw-bold mb-4">Admin Dashboard</h5>
+        <button class="btn-google" id="loginBtn">
+            <i class="fab fa-google me-2"></i> Sign in with Google
+        </button>
+        <p class="text-muted small mt-3">Only authorized iMerch accounts can access.</p>
+    </div>
+</div>
 
 <div id="loadingScreen" class="loader">
     <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
@@ -37,10 +52,15 @@
     </div>
 </div>
 
-<div class="main-content">
+<div class="main-content" id="dashboardContent">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-            <h4 class="fw-bold m-0">PERFORMANCE INDEX</h4>
+            <div class="d-flex align-items-center gap-2">
+                <h4 class="fw-bold m-0">PERFORMANCE INDEX</h4>
+                <button class="btn btn-outline-secondary btn-sm border-0" onclick="logout()" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
             <small class="text-muted" id="dateSubtitle">Monitoring for Today</small>
         </div>
         <div class="d-flex gap-2">
@@ -65,6 +85,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, query, where, onSnapshot, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -75,26 +96,45 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
     let perfChart;
     let unsubscribe = null;
     let lastExportData = []; 
-
-    // Listahan ng mga hindi kasama sa Performance Index
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
     const dateInput = document.getElementById('summaryDateFilter');
     dateInput.valueAsDate = new Date();
 
+    // AUTH LOGIC
+    document.getElementById('loginBtn').onclick = async () => {
+        try { await signInWithPopup(auth, provider); } 
+        catch (e) { alert("Login failed: " + e.message); }
+    };
+
+    window.logout = () => signOut(auth);
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('dashboardContent').style.display = 'block';
+            startSummaryMonitoring();
+        } else {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('dashboardContent').style.display = 'none';
+            if (unsubscribe) unsubscribe();
+        }
+    });
+
     function startSummaryMonitoring() {
         if (unsubscribe) unsubscribe();
-        
         document.getElementById('loadingScreen').style.display = 'flex';
+        
         const selectedDate = new Date(dateInput.value);
         const start = new Date(selectedDate.setHours(0,0,0,0));
         const end = new Date(selectedDate.setHours(23,59,59,999));
-        
         document.getElementById('dateSubtitle').innerText = `Monitoring for ${selectedDate.toDateString()}`;
 
-        // REAL-TIME SYNC: Awtomatikong hihigop ng data mula sa 'attendance' collection
         const q = query(
             collection(db, "attendance"), 
             where("timestamp", ">=", Timestamp.fromDate(start)), 
@@ -109,20 +149,14 @@
 
             snap.forEach(doc => {
                 const data = doc.data();
-                // Kunin ang name kahit name, staffName, o email ang field sa Firebase
                 const name = data.name || data.staffName || (data.email ? data.email.split('@')[0] : "Unknown");
                 const type = (data.type || "").toLowerCase();
                 const time = data.timestamp ? data.timestamp.toDate().toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A';
 
-                // I-filter ang mga admin para staff lang ang lumabas
                 if (!adminExclusion.includes(name)) {
                     totalLogsCount++; 
+                    if (type.includes('in')) counts[name] = (counts[name] || 0) + 1;
                     
-                    if (type.includes('in')) {
-                        counts[name] = (counts[name] || 0) + 1;
-                    }
-                    
-                    // I-save ang data para sa Excel Export
                     rawDataForExcel.push({
                         "Time": time,
                         "Staff Name": name,
@@ -137,7 +171,6 @@
             const labels = Object.keys(counts);
             const values = Object.values(counts);
 
-            // Update UI Cards
             document.getElementById('totalStores').innerText = totalLogsCount;
             document.getElementById('activeStaff').innerText = labels.length;
             
@@ -153,6 +186,7 @@
             document.getElementById('loadingScreen').style.display = 'none';
         }, (error) => {
             console.error("Firebase Snapshot Error:", error);
+            alert("Permission Denied: Make sure your email is registered as Admin.");
             document.getElementById('loadingScreen').style.display = 'none';
         });
     }
@@ -160,10 +194,7 @@
     function renderChart(labels, data) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
         if (perfChart) perfChart.destroy();
-        
-        const combined = labels.map((l, i) => ({label: l, value: data[i]}));
-        combined.sort((a, b) => b.value - a.value);
-
+        const combined = labels.map((l, i) => ({label: l, value: data[i]})).sort((a, b) => b.value - a.value);
         perfChart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -189,19 +220,14 @@
     }
 
     window.exportToExcel = function() {
-        if (lastExportData.length === 0) {
-            alert("Walang data para sa petsang ito.");
-            return;
-        }
+        if (lastExportData.length === 0) { alert("Walang data."); return; }
         const ws = XLSX.utils.json_to_sheet(lastExportData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "iMerch_Performance");
+        XLSX.utils.book_append_sheet(wb, ws, "Performance");
         XLSX.writeFile(wb, `iMerch_Summary_${dateInput.value}.xlsx`);
     }
 
     dateInput.addEventListener('change', startSummaryMonitoring);
-    startSummaryMonitoring();
 </script>
-
 </body>
 </html>
