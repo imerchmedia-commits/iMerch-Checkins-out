@@ -33,7 +33,6 @@
             background-color: var(--bg); 
             color: var(--text-main); 
             font-family: 'Plus Jakarta Sans', sans-serif;
-            /* BINAGO: Inalis ang transition sa body para instant ang pagpalit */
             background-image: radial-gradient(circle at 10% 20%, rgba(217, 4, 41, 0.03) 0%, transparent 40%);
             min-height: 100vh;
             margin: 0;
@@ -75,7 +74,7 @@
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
             color: var(--text-main);
-            transition: transform 0.2s ease; /* Icon rotation lang ang may transition */
+            transition: transform 0.2s ease;
         }
         .theme-toggle:active { transform: scale(0.9); }
 
@@ -171,10 +170,11 @@
                 <div class="mb-3">
                     <label class="small fw-extrabold text-muted mb-2 text-uppercase">Operational Year</label>
                     <select id="mcpYear" class="form-select" onchange="syncWithCloud()">
+                        <option value="2025">2025</option>
                         <option value="2026">2026</option>
                         <option value="2027">2027</option>
-                        <option value="2027">2028</option>
-                        <option value="2027">2029</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
                     </select>
                 </div>
 
@@ -182,7 +182,7 @@
                     <label class="small fw-extrabold text-muted mb-2 text-uppercase">Deployment Month</label>
                     <select id="mcpMonth" class="form-select" onchange="syncWithCloud()">
                         <option value="01">January</option><option value="02">February</option>
-                        <option value="03" selected>March</option><option value="04">April</option>
+                        <option value="03">March</option><option value="04">April</option>
                         <option value="05">May</option><option value="06">June</option>
                         <option value="07">July</option><option value="08">August</option>
                         <option value="09">September</option><option value="10">October</option>
@@ -241,31 +241,33 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // PINABILIS NA THEME TOGGLE
     function toggleTheme() {
         const body = document.body;
         const icon = document.getElementById('theme-icon');
         const isDark = body.getAttribute('data-theme') === 'dark';
-        
-        // Remove transitions temporarily to avoid stutter
         body.style.transition = 'none';
-        
         body.setAttribute('data-theme', isDark ? 'light' : 'dark');
         icon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
-        
-        // Force a repaint and then restore (optional, but keeping it empty makes it instant)
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
+
+        // Automatic set current year and month in dropdowns
+        document.getElementById('mcpYear').value = currentYear;
+        document.getElementById('mcpMonth').value = currentMonth;
+
         const calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
-            initialDate: '2026-03-01',
+            initialDate: `${currentYear}-${currentMonth}-01`,
             height: 'auto',
             headerToolbar: { left: 'today', center: 'title', right: '' },
             dayMaxEvents: false, 
             eventDisplay: 'block',
-            lazyFetching: true, // Performance boost
+            lazyFetching: true,
         });
         calendar.render();
     });
