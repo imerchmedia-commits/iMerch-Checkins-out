@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iMerch - Admin Monitoring</title>
+    <title>iMerch - Realtime CCPI Monitoring</title>
     
     <link rel="icon" type="image/png" href="im.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -22,114 +22,85 @@
             --secondary-text: #57606a; --glass: rgba(255, 255, 255, 0.8);
         }
         
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; transition: 0.3s; display: flex; min-height: 100vh; overflow-x: hidden; }
+        /* Optimized transitions to prevent lag */
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; display: flex; min-height: 100vh; overflow-x: hidden; transition: background-color 0.2s; }
 
-        /* --- SIDEBAR STYLE --- */
         #sidebar {
             width: var(--sidebar-width);
             background: #ffffff;
             border-right: 5px solid var(--primary-red);
             height: 100vh;
             position: fixed;
-            left: 0;
-            top: 0;
-            display: flex;
-            flex-direction: column;
+            left: 0; top: 0;
+            display: flex; flex-direction: column;
             z-index: 1000;
-            color: #1a1a1a;
         }
 
-        .sidebar-header {
-            padding: 30px 20px;
-            text-align: center;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .side-logo { width: 60px; margin-bottom: 10px; }
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+        .side-logo { width: 140px; margin-bottom: 10px; } /* Updated size for logo1.png */
 
         .nav-menu { padding: 20px 15px; flex-grow: 1; }
-
         .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            color: #333;
-            text-decoration: none;
-            border-radius: 10px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            transition: 0.2s;
-            cursor: pointer;
+            display: flex; align-items: center; padding: 12px 15px; color: #333;
+            text-decoration: none; border-radius: 10px; font-weight: 700;
+            margin-bottom: 10px; cursor: pointer; transition: 0.15s;
         }
-
         .nav-link:hover { background: rgba(217, 4, 41, 0.05); color: var(--primary-red); }
-
         .nav-link.active { background: var(--primary-red); color: #fff; }
-
         .nav-link i { margin-right: 12px; width: 20px; text-align: center; }
 
-        /* --- MAIN CONTENT AREA --- */
         #content-wrapper {
             margin-left: var(--sidebar-width);
-            flex-grow: 1;
-            padding: 25px;
+            flex-grow: 1; padding: 25px;
             width: calc(100% - var(--sidebar-width));
+            will-change: transform; /* Performance boost */
         }
 
         .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.3s ease; }
+        .view-section.active { display: block; animation: fadeIn 0.2s ease-out; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .glass-panel { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3); }
-
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; margin-bottom: 25px; position: relative; }
-        .center-logo { height: 45px; }
+        .glass-panel { background: var(--glass); backdrop-filter: blur(8px); border: 1px solid var(--border); border-radius: 16px; }
+        
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; margin-bottom: 25px; }
+        .center-logo { height: 50px; }
 
         .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .stat-box { padding: 25px; text-align: center; }
         .stat-val { font-size: 2.5rem; font-weight: 900; display: block; }
-        .stat-label { font-size: 0.7rem; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 2px; }
+        .stat-label { font-size: 0.7rem; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 1px; }
 
         .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 30px; }
         @media (min-width: 1024px) { .dashboard-grid { grid-template-columns: 1.5fr 1fr; } }
 
-        .info-card { padding: 20px; }
-        .card-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 15px; color: var(--accent); display: flex; justify-content: space-between; align-items: center; }
-        
-        .map-container { width: 100%; height: 350px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #000; position: relative; }
+        .map-container { width: 100%; height: 350px; border-radius: 12px; overflow: hidden; background: #000; position: relative; }
         #main-map { width: 100%; height: 100%; border: 0; display: none; }
 
         .table-container { overflow-x: auto; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: rgba(88, 166, 255, 0.1); color: var(--accent); font-size: 0.75rem; padding: 15px; text-align: center; border-bottom: 2px solid var(--border); text-transform: uppercase; }
+        th { background: rgba(88, 166, 255, 0.1); color: var(--accent); font-size: 0.75rem; padding: 15px; border-bottom: 2px solid var(--border); }
         td { padding: 15px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.9rem; }
         
         .status-tag { padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; }
-        .in { background: rgba(63, 185, 80, 0.15); color: #4ade80; border: 1px solid #238636; }
-        .out { background: rgba(248, 81, 73, 0.15); color: #f87171; border: 1px solid #f85149; }
+        .in { background: rgba(63, 185, 80, 0.15); color: #4ade80; }
+        .out { background: rgba(248, 81, 80, 0.15); color: #f87171; }
 
-        .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 10px; cursor: pointer; transition: 0.3s; }
-        
         #loading-screen { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:2000; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* MCP Iframe Styling */
-        .mcp-frame { width: 100%; height: 85vh; border: none; border-radius: 16px; background: var(--card); }
+        .mcp-frame { width: 100%; height: 85vh; border: none; border-radius: 16px; }
     </style>
 </head>
 <body data-theme="dark">
 
     <div id="loading-screen">
-        <div style="width:40px; height:40px; border:4px solid var(--border); border-top:4px solid var(--accent); border-radius:50%; animation:spin 1s linear infinite;"></div>
-        <p style="margin-top:15px; color:var(--secondary-text); font-size: 0.8rem; letter-spacing:2px;">LOADING SECURE DATA...</p>
+        <div style="width:40px; height:40px; border:4px solid var(--border); border-top:4px solid var(--accent); border-radius:50%; animation: spin 0.8s linear infinite;"></div>
     </div>
 
     <aside id="sidebar">
         <div class="sidebar-header">
-            <img src="im.png" class="side-logo" alt="iMerch">
-            <div style="font-weight: 900; font-size: 1.2rem;">iMerch Media</div>
-            <div style="font-size: 0.65rem; color: var(--primary-red); font-weight: 800; letter-spacing: 1px;">ADMINISTRATION</div>
+            <img src="logo1.png" class="side-logo" alt="iMerch Media">
+            <div style="font-weight: 900; font-size: 1.1rem; color: #1a1a1a;">Realtime Monitoring</div>
+            <div style="font-size: 0.65rem; color: var(--primary-red); font-weight: 800; letter-spacing: 1px;">CCPI ADMINISTRATION</div>
         </div>
         <nav class="nav-menu">
             <div class="nav-link active" onclick="switchView('monitoring', this)">
@@ -151,26 +122,24 @@
             
             <div class="navbar glass-panel">
                 <div style="font-weight: 900; color: var(--accent);">
-                    <span id="current-view-title">DASHBOARD</span> <br>
-                    <span style="font-size: 0.6rem; color: var(--secondary-text);">FIELD STAFF REAL-TIME</span>
+                    <span id="current-view-title">REALTIME CCPI MONITORING</span> <br>
+                    <span style="font-size: 0.6rem; color: var(--secondary-text);">FIELD STAFF ACTIVITY</span>
                 </div>
-                <div class="center-brand"><img src="../logo1.png" class="center-logo"></div>
+                <div class="center-brand"><img src="logo1.png" class="center-logo"></div>
                 <div class="controls">
-                    <button class="icon-btn" id="themeToggle">🌓</button>
+                    <button class="icon-btn" id="themeToggle" style="background:none; border:none; cursor:pointer; font-size:1.2rem;">🌓</button>
                 </div>
             </div>
 
             <section id="monitoring-view" class="view-section active">
                 <div class="stats-row">
                     <div class="stat-box glass-panel">
-                        <span class="stat-label">Field Staff Active</span>
+                        <span class="stat-label">Active Staff</span>
                         <span class="stat-val" id="presentCount" style="color: var(--green);">0</span>
                     </div>
                     <div class="stat-box glass-panel">
-                        <div class="card-title" style="margin-bottom:5px; justify-content:center;">📈 TOTAL LOGS (24H)</div>
-                        <div style="height: 60px;">
-                            <canvas id="comparisonChart"></canvas>
-                        </div>
+                        <div style="height: 60px;"><canvas id="comparisonChart"></canvas></div>
+                        <span class="stat-label">24H Activity</span>
                     </div>
                     <div class="stat-box glass-panel">
                         <span class="stat-label">Total Logs Today</span>
@@ -179,28 +148,26 @@
                 </div>
 
                 <div style="display:flex; gap:15px; margin-bottom:25px;">
-                    <input type="date" id="dateFilter" class="icon-btn" style="color-scheme: dark;">
-                    <input type="text" id="logSearch" class="icon-btn" style="flex-grow:1; text-align:left; padding-left:20px;" placeholder="Search staff or branch...">
+                    <input type="date" id="dateFilter" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:10px; border-radius:10px;">
+                    <input type="text" id="logSearch" style="flex-grow:1; background:var(--card); color:var(--text); border:1px solid var(--border); padding:10px 20px; border-radius:10px;" placeholder="Search staff or branch...">
                 </div>
 
                 <div class="dashboard-grid">
-                    <div class="info-card glass-panel">
-                        <div class="card-title">
-                            <span id="mapTitle">📍 LIVE GEOLOCATION</span>
-                            <a id="externalMapLink" target="_blank" style="display:none; font-size:0.7rem; background:var(--green); color:white; padding:4px 10px; border-radius:5px; text-decoration:none;">GOOGLE MAPS 📲</a>
+                    <div class="info-card glass-panel" style="padding:20px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                            <span id="mapTitle" style="font-weight:800; font-size:0.8rem;">📍 LIVE LOCATION</span>
+                            <a id="externalMapLink" target="_blank" style="display:none; font-size:0.6rem; background:var(--green); color:white; padding:4px 8px; border-radius:4px; text-decoration:none;">VIEW ON MAP</a>
                         </div>
                         <div class="map-container">
-                            <div class="map-placeholder" id="mapText">Select a staff location (📍) to view on map</div>
-                            <iframe id="main-map" src=""></iframe>
+                            <div id="mapText" style="color:var(--secondary-text); text-align:center; padding-top:150px; font-size:0.8rem;">Select 📍 below to view location</div>
+                            <iframe id="main-map"></iframe>
                         </div>
                     </div>
 
-                    <div class="info-card glass-panel">
-                        <div class="card-title">📊 PERFORMANCE INDEX</div>
-                        <div style="height: 180px; margin-bottom: 20px;">
-                            <canvas id="performanceChart"></canvas>
-                        </div>
-                        <div id="userSummaryList" style="max-height: 200px; overflow-y: auto;"></div>
+                    <div class="info-card glass-panel" style="padding:20px;">
+                        <div style="font-weight:800; font-size:0.8rem; margin-bottom:15px;">📊 PERFORMANCE</div>
+                        <div style="height: 150px; margin-bottom: 15px;"><canvas id="performanceChart"></canvas></div>
+                        <div id="userSummaryList" style="max-height: 180px; overflow-y: auto;"></div>
                     </div>
                 </div>
 
@@ -208,11 +175,11 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Time (12H)</th>
+                                <th>Time</th>
                                 <th>Staff Member</th>
                                 <th>Action</th>
-                                <th>Branch / Store</th>
-                                <th>Location</th>
+                                <th>Branch</th>
+                                <th>Map</th>
                             </tr>
                         </thead>
                         <tbody id="logsBody"></tbody>
@@ -234,19 +201,21 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Global function to switch views
+        // Performance-focused View Switcher
         window.switchView = function(view, element) {
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            const sections = document.querySelectorAll('.view-section');
+            const links = document.querySelectorAll('.nav-link');
             
-            document.getElementById(view + '-view').classList.add('active');
+            sections.forEach(s => s.style.display = 'none');
+            links.forEach(l => l.classList.remove('active'));
+            
+            const activeSection = document.getElementById(view + '-view');
+            activeSection.style.display = 'block';
+            activeSection.classList.add('active');
             element.classList.add('active');
             
-            document.getElementById('current-view-title').innerText = view === 'mcp' ? 'MCP CCPI' : 'DASHBOARD';
+            document.getElementById('current-view-title').innerText = view === 'mcp' ? 'MCP CCPI' : 'REALTIME CCPI MONITORING';
         }
-
-        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
-        const DAILY_TARGET = 6;
 
         const firebaseConfig = {
             apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -272,20 +241,22 @@
             const extLink = document.getElementById('externalMapLink');
             extLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
             extLink.style.display = 'inline-block';
-            document.getElementById('mapTitle').innerText = `📍 LOCATION: ${name.split(' ')[0].toUpperCase()}`;
+            document.getElementById('mapTitle').innerText = `📍 ${name.toUpperCase()}`;
         };
 
         function initCharts() {
-            perfChart = new Chart(document.getElementById('performanceChart').getContext('2d'), {
+            const ctxPerf = document.getElementById('performanceChart').getContext('2d');
+            perfChart = new Chart(ctxPerf, {
                 type: 'bar',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: '#58a6ff', borderRadius: 5 }] },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
+                data: { labels: [], datasets: [{ data: [], backgroundColor: '#58a6ff' }] },
+                options: { maintainAspectRatio: false, responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
 
-            compChart = new Chart(document.getElementById('comparisonChart').getContext('2d'), {
+            const ctxComp = document.getElementById('comparisonChart').getContext('2d');
+            compChart = new Chart(ctxComp, {
                 type: 'doughnut',
                 data: { labels: ['Today', 'Yesterday'], datasets: [{ data: [0, 0], backgroundColor: ['#58a6ff', '#30363d'], borderWidth: 0 }] },
-                options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
+                options: { maintainAspectRatio: false, cutout: '80%', plugins: { legend: { display: false } } }
             });
         }
 
@@ -294,28 +265,17 @@
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
                 initCharts();
-                loadStaffAndMonitor();
+                loadData();
             } else { window.location.href = "../index.html"; }
         });
 
-        async function loadStaffAndMonitor() {
+        async function loadData() {
             const staffSnap = await getDocs(collection(db, "staff_members"));
             staffSnap.forEach(doc => {
                 const d = doc.data();
-                const email = (d.email || "").toLowerCase();
-                if(email) staffRegistry[email] = d.name || d.staffName;
+                staffRegistry[d.email?.toLowerCase()] = d.name || d.staffName;
             });
             startMonitoring();
-            updateYesterdayStats();
-        }
-
-        async function updateYesterdayStats() {
-            const y = new Date(); y.setDate(y.getDate() - 1);
-            const s = new Date(y.setHours(0,0,0,0)), e = new Date(y.setHours(23,59,59,999));
-            const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(s)), where("timestamp", "<=", Timestamp.fromDate(e)));
-            const snap = await getDocs(q);
-            compChart.data.datasets[0].data[1] = snap.size;
-            compChart.update();
         }
 
         function startMonitoring() {
@@ -326,9 +286,6 @@
             onSnapshot(q, (snap) => {
                 currentLogs = snap.docs.map(doc => doc.data());
                 renderData();
-                compChart.data.datasets[0].data[0] = currentLogs.length;
-                compChart.update();
-                document.getElementById('totalLogsToday').innerText = currentLogs.length;
             });
         }
 
@@ -336,56 +293,42 @@
             const search = document.getElementById('logSearch').value.toLowerCase();
             const body = document.getElementById('logsBody');
             const summary = document.getElementById('userSummaryList');
-            let tableHTML = "", counts = {}, chartColors = [];
+            let tableHTML = "", counts = {};
 
             currentLogs.forEach(log => {
-                const email = (log.email || log.staffEmail || "").toLowerCase();
-                const name = log.name || log.staffName || staffRegistry[email] || email.split('@')[0] || "Unknown";
-                const branch = log.locationName || log.branch || "---";
-                const type = log.type || "Check-in";
+                const name = log.name || log.staffName || staffRegistry[log.email?.toLowerCase()] || "Staff";
+                const branch = log.locationName || "Field";
+                const type = log.type || "In";
 
-                if (adminExclusion.includes(name)) return;
                 if (name.toLowerCase().includes(search) || branch.toLowerCase().includes(search)) {
-                    const time = log.timestamp ? log.timestamp.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '--:--';
+                    const time = log.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '--:--';
                     tableHTML += `<tr>
                         <td style="color:var(--accent); font-weight:bold;">${time}</td>
-                        <td><div style="font-weight:bold;">${name}</div><div style="font-size:0.7rem; color:var(--secondary-text);">${email}</div></td>
+                        <td>${name}</td>
                         <td><span class="status-tag ${type.toLowerCase().includes('in') ? 'in' : 'out'}">${type}</span></td>
                         <td>${branch}</td>
-                        <td><button onclick="loadStaffMap(${log.latitude}, ${log.longitude}, '${name}')" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:8px; cursor:pointer;">📍</button></td>
+                        <td><button onclick="loadStaffMap(${log.latitude}, ${log.longitude}, '${name}')" style="cursor:pointer; border:none; background:none;">📍</button></td>
                     </tr>`;
                 }
                 if(type.toLowerCase().includes('in')) counts[name] = (counts[name] || 0) + 1;
             });
 
             body.innerHTML = tableHTML;
-            let summaryHTML = "";
-            const names = Object.keys(counts);
-            names.forEach(name => {
-                const val = counts[name], per = Math.min((val/DAILY_TARGET)*100, 100);
-                let col = "var(--orange)"; if(val === 6) col = "var(--green)"; if(val > 6) col = "var(--red)";
-                chartColors.push(col);
-                summaryHTML += `<div style="margin-bottom:12px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:4px;">
-                        <span>${name}</span><span style="color:${col}">${val}/${DAILY_TARGET}</span>
-                    </div>
-                    <div style="height:6px; background:var(--border); border-radius:10px;">
-                        <div style="width:${per}%; height:100%; background:${col}; border-radius:10px;"></div>
-                    </div>
-                </div>`;
-            });
-            perfChart.data.labels = names.map(n => n.split(' ')[0]);
-            perfChart.data.datasets[0].data = names.map(n => counts[n]);
-            perfChart.data.datasets[0].backgroundColor = chartColors;
+            document.getElementById('presentCount').innerText = Object.keys(counts).length;
+            document.getElementById('totalLogsToday').innerText = currentLogs.length;
+
+            // Update Performance Chart
+            perfChart.data.labels = Object.keys(counts).map(n => n.split(' ')[0]);
+            perfChart.data.datasets[0].data = Object.values(counts);
             perfChart.update();
-            document.getElementById('presentCount').innerText = names.length;
-            summary.innerHTML = summaryHTML;
         }
 
         document.getElementById('themeToggle').addEventListener('click', () => {
-            const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+            const b = document.body;
+            b.setAttribute('data-theme', b.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         });
-        document.getElementById('logoutBtnSide').addEventListener('click', () => signOut(auth).then(() => window.location.href = "../index.html"));
+        
+        document.getElementById('logoutBtnSide').addEventListener('click', () => signOut(auth));
         dateInput.addEventListener('change', startMonitoring);
         document.getElementById('logSearch').addEventListener('input', renderData);
     </script>
