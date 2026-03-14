@@ -3,99 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch MCP Cloud System</title>
+    <title>iMerch | Cloud Management Portal</title>
     
-    <link rel="icon" type="image/png" href="https://imerchmedia.net/images/favicon.png">
-
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/all.min.css">
     
     <style>
         :root { 
-            --imerch-red: #ff0000;
-            --bg: #f4f6f9;
-            --card: #ffffff;
-            --txt: #333;
-            --nav-bg: #ffffff;
+            --primary: #d90429;
+            --accent: #ef233c;
+            --bg: #f4f7f6;
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --text-main: #2b2d42;
+            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
         }
 
-        [data-bs-theme="dark"] {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --txt: #e0e0e0;
-            --nav-bg: #1e1e1e;
+        [data-theme="dark"] {
+            --bg: #0d1117;
+            --glass-bg: rgba(22, 27, 34, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --text-main: #f0f6fc;
+            --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
         }
 
-        body { background-color: var(--bg); color: var(--txt); font-family: 'Segoe UI', sans-serif; transition: 0.3s; }
-        
+        body { 
+            background-color: var(--bg); 
+            color: var(--text-main); 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            /* BINAGO: Inalis ang transition sa body para instant ang pagpalit */
+            background-image: radial-gradient(circle at 10% 20%, rgba(217, 4, 41, 0.03) 0%, transparent 40%);
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--card-shadow);
+        }
+
         .navbar { 
-            background-color: var(--nav-bg) !important; 
-            border-bottom: 3px solid var(--imerch-red) !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: var(--glass-bg) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid var(--primary) !important;
+            padding: 0.8rem 2rem;
         }
 
-        .card { background-color: var(--card); border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        
-        .btn-sync { 
-            background-color: var(--imerch-red); 
-            color: white; 
-            font-weight: bold; 
-            border: none; 
-            padding: 12px; 
-            border-radius: 8px; 
-            transition: 0.3s; 
-        }
-        .btn-sync:hover { background-color: #cc0000; transform: translateY(-2px); color: white; }
-        
-        #calendar { background: var(--card); padding: 15px; border-radius: 12px; min-height: 750px; }
-        
-        /* Event Styling */
-        .fc-daygrid-event { 
-            white-space: normal !important; 
-            font-size: 0.72rem; 
-            padding: 2px 5px; 
-            border: none; 
-            border-radius: 4px; 
-            margin-bottom: 2px; 
+        .navbar-brand b { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.5px; }
+
+        .real-time-box {
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 6px 15px;
+            border-radius: 10px;
+            background: rgba(217, 4, 41, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(217, 4, 41, 0.2);
         }
 
-        #liveClock { font-weight: 600; font-size: 0.9rem; }
-        .theme-switch { cursor: pointer; font-size: 1.2rem; margin-left: 15px; }
-        .sidebar-label { font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: var(--imerch-red); margin-bottom: 5px; display: block; }
+        .theme-toggle {
+            cursor: pointer;
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            transition: transform 0.2s ease; /* Icon rotation lang ang may transition */
+        }
+        .theme-toggle:active { transform: scale(0.9); }
+
+        .control-card { padding: 2rem; position: sticky; top: 100px; }
+
+        .calendar-scroll-container { padding: 1.5rem; overflow-x: auto; }
+        #calendar { min-width: 1100px; }
+
+        .fc .fc-daygrid-day-top { justify-content: center !important; padding-top: 10px; }
+        .fc .fc-daygrid-day-number {
+            font-weight: 800 !important;
+            font-size: 1.25rem !important;
+            color: var(--text-main);
+            text-decoration: none !important;
+        }
+
+        .fc-daygrid-event {
+            border-radius: 4px !important;
+            padding: 2px 6px !important;
+            font-weight: 700 !important;
+            font-size: 0.68rem !important;
+            border: none !important;
+            margin: 1px 4px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .fc .fc-daygrid-day-frame { min-height: 180px !important; }
+
+        .fc .fc-col-header-cell {
+            padding: 15px 0;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .fc-theme-standard td, .fc-theme-standard th { border: 1px solid var(--glass-border) !important; }
+
+        .form-select {
+            background-color: var(--glass-bg);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 10px;
+            font-weight: 600;
+        }
+
+        .sync-indicator {
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 10px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.03);
+            margin-top: 15px;
+        }
     </style>
 </head>
-<body data-bs-theme="light">
+<body data-theme="light">
 
-<nav class="navbar navbar-expand-lg px-4 mb-4 sticky-top">
+<nav class="navbar navbar-expand-lg sticky-top">
     <div class="container-fluid">
-        <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
-            <img src="https://imerchmedia.net/images/favicon.png" width="30" height="30" class="me-2">
-            <span style="color:red">iMerch</span>&nbsp;MCP CLOUD
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <div style="background: var(--primary); width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 12px; box-shadow: 0 4px 12px rgba(217, 4, 41, 0.3);">
+                <i class="fas fa-cloud"></i>
+            </div>
+            <b>iMerch</b><span style="color:var(--primary)">.Cloud</span>
         </a>
-        <div class="ms-auto d-flex align-items-center">
-            <div id="liveClock" class="me-3 d-none d-md-block"></div>
-            <i class="fas fa-moon theme-switch" id="themeToggle"></i>
+        
+        <div class="d-flex align-items-center gap-3">
+            <div id="realTimeClock" class="real-time-box d-none d-md-block">
+                <i class="far fa-clock me-2"></i> Loading...
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Switch Theme">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
         </div>
     </div>
 </nav>
 
-<div class="container-fluid">
-    <div class="row px-2">
-        <div class="col-lg-3 col-md-4">
-            <div class="card p-4 mb-3 shadow-sm">
-                <h6 class="fw-bold mb-4" style="color:red"><i class="fas fa-database"></i> DATA CONTROL</h6>
+<div class="container-fluid py-4 px-lg-5">
+    <div class="row g-4">
+        <div class="col-xl-3">
+            <div class="glass-card control-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold m-0">System Matrix</h5>
+                    <span class="badge bg-danger rounded-pill">LIVE</span>
+                </div>
                 
                 <div class="mb-3">
-                    <span class="sidebar-label">Select Year</span>
+                    <label class="small fw-extrabold text-muted mb-2 text-uppercase">Operational Year</label>
                     <select id="mcpYear" class="form-select" onchange="syncWithCloud()">
-                        <option value="2026" selected>2026</option>
-                        <option value="2027">2027</option>
+                        <option value="2026">2026</option>
                     </select>
                 </div>
 
-                <div class="mb-3">
-                    <span class="sidebar-label">Select Month</span>
+                <div class="mb-4">
+                    <label class="small fw-extrabold text-muted mb-2 text-uppercase">Deployment Month</label>
                     <select id="mcpMonth" class="form-select" onchange="syncWithCloud()">
                         <option value="01">January</option><option value="02">February</option>
                         <option value="03" selected>March</option><option value="04">April</option>
@@ -107,39 +188,36 @@
                 </div>
 
                 <div class="mb-4">
-                    <span class="sidebar-label">Coordinator</span>
+                    <label class="small fw-extrabold text-muted mb-2 text-uppercase">Coordinator</label>
                     <select id="userSelect" class="form-select" onchange="syncWithCloud()">
-                        <option value="" disabled selected>Select Coordinator...</option>
+                        <option value="" disabled selected>Identify Personnel...</option>
                         <option value="ELENA">ELENA</option>
-                        <option value="ROLDAN">ROLDAN</option>
-                        <option value="ANNA MAE">ANNA MAE</option>
-                        <option value="ROSALINDA">ROSALINDA</option>
-                        <option value="ROGEL">ROGEL</option>
-                        <option value="MANUEL">MANUEL</option>
-                        <option value="ROMEO">ROMEO</option>
-                        <option value="JESSA">JESSA</option>
-                        <option value="MARCO">MARCO</option>
-                        <option value="JOSEPH">JOSEPH</option>
-                        <option value="PRINCESS">PRINCESS</option>
-                        <option value="JENNIFER">JENNIFER</option>
-                        <option value="GERVIE">GERVIE</option>
-                        <option value="FERNAND">FERNAND</option>
                         <option value="CARL">CARL</option>
+                        <option value="FERNAND">FERNAND</option>
+                        <option value="GERVIE">GERVIE</option>
+                        <option value="JENNIFER">JENNIFER</option>
+                        <option value="PRINCESS">PRINCESS</option>
+                        <option value="JOSEPH">JOSEPH</option>
+                        <option value="MARCO">MARCO</option>
+                        <option value="JESSA">JESSA</option>
+                        <option value="ROMEO">ROMEO</option>
+                        <option value="MANUEL">MANUEL</option>
+                        <option value="ERIC">ERIC</option>
+                        <option value="ROGEL">ROGEL</option>
+                        <option value="ROSALINDA">ROSALINDA</option>
+                        <option value="ANNA MARIE">ANNA MARIE</option>
+                        <option value="MARK">MARK</option>
                     </select>
                 </div>
 
-                <button onclick="syncWithCloud()" class="btn btn-sync w-100 shadow-sm mb-3">
-                    <i class="fas fa-sync-alt"></i> MANUAL REFRESH
-                </button>
-
-                <div id="statusAlert" class="alert alert-secondary py-2 mb-0" style="font-size: 0.75rem;">
-                    <i class="fas fa-info-circle"></i> <span id="syncStatus">Ready.</span>
+                <div id="syncStatus" class="sync-indicator text-center text-muted">
+                    <i class="fas fa-info-circle me-1"></i> Ready for sync.
                 </div>
             </div>
         </div>
-        
-        <div class="col-lg-9 col-md-8">
-            <div class="card p-2 shadow-sm">
+
+        <div class="col-xl-9">
+            <div class="glass-card calendar-scroll-container">
                 <div id="calendar"></div>
             </div>
         </div>
@@ -147,110 +225,94 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
     let calendar;
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFekw4GYStT6tXFaYw9iGNGs8X_z8n4sAaoQZILGs1peeuexaxTV5SRc8pyCreZyW2gg/exec"; 
 
-    // Live Clock
     function updateClock() {
         const now = new Date();
-        document.getElementById('liveClock').innerText = now.toLocaleString('en-PH', { 
-            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', 
-            hour: '2-digit', minute: '2-digit', second: '2-digit' 
-        });
+        const options = { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+        document.getElementById('realTimeClock').innerHTML = `<i class="far fa-calendar-alt me-2"></i> ${now.toLocaleDateString('en-US', options)}`;
     }
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Theme Toggle
-    const themeToggle = document.getElementById('themeToggle');
-    themeToggle.addEventListener('click', () => {
-        const isDark = document.body.getAttribute('data-bs-theme') === 'dark';
-        document.body.setAttribute('data-bs-theme', isDark ? 'light' : 'dark');
-        themeToggle.className = isDark ? 'fas fa-moon theme-switch' : 'fas fa-sun theme-switch';
-    });
+    // PINABILIS NA THEME TOGGLE
+    function toggleTheme() {
+        const body = document.body;
+        const icon = document.getElementById('theme-icon');
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        
+        // Remove transitions temporarily to avoid stutter
+        body.style.transition = 'none';
+        
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        icon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+        
+        // Force a repaint and then restore (optional, but keeping it empty makes it instant)
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
         const calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             initialDate: '2026-03-01',
-            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
-            height: 'auto'
+            height: 'auto',
+            headerToolbar: { left: 'today', center: 'title', right: '' },
+            dayMaxEvents: false, 
+            eventDisplay: 'block',
+            lazyFetching: true, // Performance boost
         });
         calendar.render();
-
-        // Load Cache
-        const savedData = localStorage.getItem("imerch_mcp_cache");
-        const savedUser = localStorage.getItem("imerch_mcp_user");
-        if(savedData) {
-            calendar.addEventSource(JSON.parse(savedData));
-            document.getElementById('syncStatus').innerText = "Cached: " + savedUser;
-            if(savedUser) document.getElementById('userSelect').value = savedUser;
-        }
     });
 
     async function syncWithCloud() {
-        const coordinator = document.getElementById('userSelect').value;
+        const user = document.getElementById('userSelect').value;
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
+        if(!user) return;
 
-        if(!coordinator) return;
-
-        // Jump to selected date
         calendar.gotoDate(`${year}-${month}-01`);
-
-        Swal.fire({
-            title: 'Cloud Syncing...',
-            text: `Updating schedule for ${coordinator}`,
-            allowOutsideClick: false,
-            timer: 2000,
-            didOpen: () => Swal.showLoading()
-        });
+        document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle-notch fa-spin me-2 text-primary"></i> Syncing...`;
 
         try {
-            const response = await fetch(`${SCRIPT_URL}?sheet=${coordinator}`, {
-                method: "GET",
-                redirect: "follow"
-            });
+            const response = await fetch(`${SCRIPT_URL}?sheet=${user}`, { method: "GET", redirect: "follow" });
             const data = await response.json();
-            
-            if(data.error) throw new Error(data.error);
-            
-            renderData(data, coordinator);
-        } catch (error) {
-            console.error(error);
-            Swal.fire("Sync Error", "Could not connect to database.", "error");
+            processData(data);
+        } catch (e) {
+            document.getElementById('syncStatus').innerHTML = `<i class="fas fa-exclamation-triangle text-danger"></i> Failed.`;
         }
     }
 
-    function renderData(rows, user) {
+    function processData(rows) {
         calendar.removeAllEvents();
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
         let events = [];
+        const areaHeaders = ["PARANAQUE", "MUNTINLUPA", "LAS-PINAS", "LAS PINAS", "MAKATI", "TAGUIG", "PASAY", "PAMPANGA", "CAVITE", "MANILA", "CALOOCAN", "QUEZON CITY", "REGION", "AREA"];
 
         rows.forEach((row, i) => {
             row.forEach((cell, colIndex) => {
-                // Find date cells (1-31)
                 if (cell && !isNaN(cell) && cell >= 1 && cell <= 31) {
                     let dateStr = `${year}-${month}-${cell.toString().padStart(2, '0')}`;
-                    
-                    // Look for store names in the 10 rows below the date
-                    for (let n = 1; n <= 10; n++) {
-                        if (rows[i + n] && rows[i + n][colIndex]) {
-                            let store = rows[i + n][colIndex].toString().trim();
-                            if (store && !store.includes("WEEK") && isNaN(store)) {
-                                let isOff = store.includes("REST") || store.includes("ADMIN");
-                                events.push({
-                                    title: store,
-                                    start: dateStr,
-                                    backgroundColor: isOff ? "#6c757d" : "#ff0000",
-                                    borderColor: "transparent",
-                                    allDay: true
-                                });
+                    for (let n = 1; n <= 10; n++) { 
+                        if (rows[i + n]) {
+                            let content = rows[i + n][colIndex];
+                            if (content) {
+                                let storeName = content.toString().trim();
+                                if (rows[i + n][0] && rows[i + n][0].toString().includes("WEEK")) break;
+                                if (storeName !== "" && !areaHeaders.includes(storeName.toUpperCase()) && storeName !== cell.toString() && isNaN(storeName)) {
+                                    let isOff = storeName.toUpperCase().includes("REST DAY") || storeName.toUpperCase().includes("OFF");
+                                    let isSpecial = storeName.toUpperCase().includes("IMERCH") || storeName.toUpperCase().includes("OFFICE") || storeName.toUpperCase().includes("MEETING");
+                                    events.push({
+                                        title: storeName,
+                                        start: dateStr,
+                                        backgroundColor: isOff ? "#8d99ae" : (isSpecial ? "#fb8500" : "#d90429"),
+                                        textColor: '#ffffff',
+                                        allDay: true
+                                    });
+                                }
                             }
                         }
                     }
@@ -259,9 +321,7 @@
         });
 
         calendar.addEventSource(events);
-        localStorage.setItem("imerch_mcp_cache", JSON.stringify(events));
-        localStorage.setItem("imerch_mcp_user", user);
-        document.getElementById('syncStatus').innerText = "Last Sync: " + user;
+        document.getElementById('syncStatus').innerHTML = `<i class="fas fa-check-circle text-success me-2"></i> ${events.length} Stores Loaded`;
     }
 </script>
 </body>
