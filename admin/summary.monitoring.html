@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +14,7 @@
         :root { --primary: #d90429; --bg: #f8f9fa; }
         body { background-color: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; overflow-x: hidden; }
         
-        /* White Navbar with Red Lining */
+        /* Navbar Styling */
         .navbar { 
             background: white !important; 
             border-bottom: 3px solid var(--primary); 
@@ -60,6 +59,11 @@
         .table-container { max-height: 450px; overflow-y: auto; }
         .staff-name-cell { font-weight: 700; color: #334155; }
         .geo-link { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 0.75rem; }
+        
+        /* Custom Scrollbar for better UI */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -156,7 +160,6 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    // Correct Firestore initialization to remove deprecation warning
     const db = initializeFirestore(app, {
         localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
     });
@@ -232,13 +235,13 @@
 
             snap.docs.forEach(doc => {
                 const data = doc.data();
-                // Priority Name Logic: Get name before any async delay
-                const name = data.staffName || data.name || data.user || "Unknown Staff";
+                // FIX: Better naming fallback to catch Jessa and Rosalinda
+                const name = data.staffName || data.name || data.user || data.employeeName || "Unknown Staff";
                 
                 if (adminExclusion.includes(name)) return;
 
                 const type = (data.type || "").toLowerCase();
-                const time = data.timestamp.toDate();
+                const time = data.timestamp ? data.timestamp.toDate() : new Date();
                 const lat = data.latitude || data.geopoint?.latitude;
                 const lng = data.longitude || data.geopoint?.longitude;
 
@@ -257,7 +260,7 @@
                 }
             });
 
-            // Render Table with Lazy Loading Address
+            // Table Rendering Logic
             let rowsHtml = "";
             tableData.reverse().forEach((row, idx) => {
                 const badgeClass = row.mins < 10 ? 'duration-warning' : 'duration-normal';
@@ -273,6 +276,7 @@
                     </tr>
                 `;
 
+                // Lazy load address if missing
                 if (!row.loc && row.lat) {
                     getStoreName(row.lat, row.lng).then(addr => {
                         const cell = document.getElementById(`addr-${idx}`);
