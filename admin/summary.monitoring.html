@@ -10,13 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
     <style>
-        /* ========================================================================
-           GLOBAL THEME VARIABLES & ADVANCED UI CONFIG
-           ========================================================================
-        */
         :root { 
             --primary-red: #d90429; 
             --secondary-red: #ef233c;
@@ -33,10 +27,6 @@
             --transition-speed: 0.3s ease-in-out;
         }
 
-        /* ========================================================================
-           BASE STYLES & LAYOUT RESET
-           ========================================================================
-        */
         body { 
             background-color: var(--light-bg); 
             font-family: 'Plus Jakarta Sans', sans-serif; 
@@ -47,10 +37,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* ========================================================================
-           NAVIGATION BAR (WHITE WITH RED LINING)
-           ========================================================================
-        */
         .navbar { 
             background: rgba(255, 255, 255, 0.98) !important; 
             backdrop-filter: blur(15px);
@@ -115,10 +101,6 @@
             100% { transform: scale(3); opacity: 0; }
         }
 
-        /* ========================================================================
-           DASHBOARD CARDS & DATA VISUALIZATION CONTAINERS
-           ========================================================================
-        */
         .main-container { 
             padding: 3rem; 
             display: none; 
@@ -157,10 +139,6 @@
             margin-bottom: 15px;
         }
 
-        /* ========================================================================
-           BRANCH / STORE ANALYTICS (MODERN GRID)
-           ========================================================================
-        */
         .branch-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -199,10 +177,6 @@
             color: var(--primary-red);
         }
 
-        /* ========================================================================
-           TABLES & RECENT ACTIVITY FEED
-           ========================================================================
-        */
         .table-wrap { 
             max-height: 550px; 
             overflow-y: auto; 
@@ -229,13 +203,6 @@
             text-transform: uppercase;
         }
 
-        .store-sub-text {
-            font-size: 0.65rem;
-            font-weight: 600;
-            color: var(--cool-gray);
-            display: block;
-        }
-
         .duration-pill { 
             padding: 8px 16px; 
             border-radius: 12px; 
@@ -254,12 +221,6 @@
             font-weight: 700;
         }
 
-        .map-link:hover { text-decoration: underline; }
-
-        /* ========================================================================
-           MEDALS & PERFORMANCE RANKING
-           ========================================================================
-        */
         .rank-item {
             background: #fff;
             border-radius: 20px;
@@ -275,10 +236,6 @@
         .medal-silver { color: var(--silver); font-size: 1.4rem; }
         .medal-bronze { color: var(--bronze); font-size: 1.4rem; }
 
-        /* ========================================================================
-           LOADER & UTILITY SCREENS
-           ========================================================================
-        */
         .loader-screen { 
             position: fixed; 
             inset: 0; 
@@ -300,23 +257,6 @@
             justify-content: center;
         }
 
-        .excel-btn {
-            background: #1d6f42;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 15px;
-            font-weight: 800;
-            font-size: 0.75rem;
-            transition: 0.3s;
-        }
-
-        .excel-btn:hover {
-            background: #145a35;
-            transform: scale(1.05);
-        }
-
-        /* Custom scrollbar config */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -375,10 +315,7 @@
                     <i class="fas fa-calendar-day text-danger"></i>
                     <input type="date" id="calendarFilter" class="border-0 fw-800" style="outline: none; cursor: pointer;">
                 </div>
-                <button class="excel-btn" onclick="downloadReport()">
-                    <i class="fas fa-download me-2"></i>EXCEL
-                </button>
-            </div>
+                </div>
         </div>
 
         <div class="row g-4 mb-5">
@@ -418,7 +355,7 @@
                 <div class="stat-card">
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h5 class="fw-800 m-0"><i class="fas fa-map-marked-alt me-2 text-danger"></i>Store & Branch Analysis</h5>
-                        <span class="badge bg-light text-dark fw-800 px-3 py-2 border">TOP VISITED BRANCHES</span>
+                        <span id="uniqueStoreBadge" class="badge bg-dark text-white fw-800 px-3 py-2">0 UNIQUE SITES</span>
                     </div>
                     <div class="branch-grid" id="branchDataContainer">
                     </div>
@@ -471,14 +408,12 @@
     import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, query, where, onSnapshot, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // Firebase Core Configuration
     const fbSettings = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
         projectId: "imerch-checkins-out"
     };
 
-    // Initialize Services with Multi-Tab Persistence
     const app = initializeApp(fbSettings);
     const db = initializeFirestore(app, { 
         localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) 
@@ -486,21 +421,13 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    // Application Global State
     let chartInstance = null;
     let liveUnsub = null;
     const datePicker = document.getElementById('calendarFilter');
-    
-    // Admin Filter - Users in this list won't appear in the performance ranks
     const adminBlacklist = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales", "Ron Sanity"];
 
-    // Default Date Setup
     datePicker.valueAsDate = new Date();
 
-    /**
-     * Firebase Authentication Observer
-     * Monitors user status and switches UI between Login and Dashboard
-     */
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('loginScreen').style.display = 'none';
@@ -512,9 +439,6 @@
         }
     });
 
-    /**
-     * Handle Login Authentication
-     */
     document.getElementById('authBtn').onclick = async () => {
         const mode = document.getElementById('keepIn').checked ? browserLocalPersistence : browserSessionPersistence;
         try {
@@ -526,31 +450,20 @@
         }
     };
 
-    /**
-     * Handle User Logout
-     */
     window.exitAuth = () => signOut(auth);
 
-    /**
-     * CORE SYNC ENGINE: Retrieves real-time data from Firestore and processes analytics
-     */
     function startDataSync() {
-        // Stop any previous active listeners to prevent memory leaks
         if (liveUnsub) liveUnsub();
-        
         document.getElementById('loadingOverlay').style.display = 'flex';
 
-        // Calculation of UTC+8 bounds for the selected date
         const selected = new Date(datePicker.value);
         const startOfDay = new Date(selected.setHours(0,0,0,0));
         const endOfDay = new Date(selected.setHours(23,59,59,999));
 
-        // Update Header
         document.getElementById('dateInfo').innerText = startOfDay.toLocaleDateString('en-US', { 
             weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
         });
 
-        // Construct Primary Firestore Query
         const mainQuery = query(
             collection(db, "attendance"), 
             where("timestamp", ">=", Timestamp.fromDate(startOfDay)), 
@@ -558,10 +471,8 @@
             orderBy("timestamp", "asc")
         );
 
-        // Real-time listener activation
         liveUnsub = onSnapshot(mainQuery, (snapshot) => {
             let staffMetrics = {};
-            let branchMetrics = {};
             let sessionsInProgress = {};
             let activityLog = [];
             let cumulativeMinutes = 0;
@@ -571,128 +482,88 @@
                 const rawName = item.staffName || item.name || item.user || item.email || "Unknown User";
                 let name = processDisplayName(rawName);
 
-                // Exclude system administrators and non-field staff
                 if (adminBlacklist.includes(name) || !name) return;
 
                 const logType = (item.type || "").toLowerCase();
-                
-                // --- SMART BRANCH DETECTION LOGIC (FIX FOR UNKNOWN BRANCH) ---
-                // We attempt to find a valid name in multiple possible fields
-                let store = item.location || item.storeName || item.branch || item.address;
-                let lat = item.latitude || 0;
-                let lng = item.longitude || 0;
-
-                // Fallback to coordinates if no text is found
-                if (!store || store.toLowerCase() === "unknown branch") {
-                    if (lat && lng) {
-                        store = `Site @ ${lat.toFixed(3)}, ${lng.toFixed(3)}`;
-                    } else {
-                        store = "Unknown Branch";
-                    }
-                }
-
                 const logTime = item.timestamp?.toDate() || new Date();
+                let store = item.location || item.storeName || item.branch || item.address || "Unknown Branch";
 
-                // Logic for "Check-in" events
                 if (logType.includes('in')) {
                     staffMetrics[name] = (staffMetrics[name] || 0) + 1;
-                    branchMetrics[store] = (branchMetrics[store] || 0) + 1;
-                    
-                    // Track open sessions to calculate duration later
-                    sessionsInProgress[name] = { 
-                        inTime: logTime, 
-                        branch: store, 
-                        lat: lat, 
-                        lng: lng 
-                    };
+                    sessionsInProgress[name] = { inTime: logTime, branch: store, lat: item.latitude, lng: item.longitude };
                 } 
-                // Logic for "Check-out" events
                 else if (logType.includes('out') && sessionsInProgress[name]) {
                     const elapsedMins = Math.floor((logTime - sessionsInProgress[name].inTime) / 60000);
-                    const finalMins = elapsedMins > 0 ? elapsedMins : 1; // Default to 1 min for instant checkouts
-                    
-                    cumulativeMinutes += finalMins;
-                    
+                    cumulativeMinutes += (elapsedMins > 0 ? elapsedMins : 1);
                     activityLog.push({ 
                         name: name, 
                         branch: sessionsInProgress[name].branch, 
-                        mins: finalMins,
+                        mins: elapsedMins > 0 ? elapsedMins : 1,
                         lat: sessionsInProgress[name].lat,
                         lng: sessionsInProgress[name].lng
                     });
-                    
-                    // Close the session
                     delete sessionsInProgress[name];
                 }
             });
 
-            // Refresh KPI Widgets
+            // KPI UPDATES
             document.getElementById('kpiTotalLogs').innerText = snapshot.size;
             document.getElementById('totalRawLogs').innerText = snapshot.size;
             document.getElementById('kpiStaffCount').innerText = Object.keys(staffMetrics).length;
             document.getElementById('kpiHours').innerText = (cumulativeMinutes / 60).toFixed(1) + " HRS";
 
-            // Refresh UI components
-            updateBranchDisplay(branchMetrics);
+            // CALL NEW BRANCH ANALYSIS
+            updateBranchAnalysis(snapshot);
+            
             updateRankDisplay(staffMetrics);
             updateFeedDisplay(activityLog);
-            
-            // Sync Chart Data
             renderPerformanceChart(Object.keys(staffMetrics), Object.values(staffMetrics));
 
-            // Kill Loader
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }, (error) => {
-            console.error("Subscription Error:", error);
             document.getElementById('loadingOverlay').style.display = 'none';
         });
     }
 
-    /**
-     * UI Renderer: Branch Frequency Grid
-     * Displays a clean grid of top stores visited
-     */
-    function updateBranchDisplay(branches) {
-        const container = document.getElementById('branchDataContainer');
-        
-        // Sort and Filter - Remove generic "Unknown" from the Top Grid
-        const sorted = Object.entries(branches)
-            .filter(([name]) => !name.includes("Unknown") && !name.includes("Site @"))
-            .sort((a,b) => b[1] - a[1]);
-        
-        if (sorted.length === 0) {
-            container.innerHTML = `<div class="p-4 text-muted small fw-700">NO NAMED BRANCHES DETECTED.</div>`;
-            return;
-        }
+    // --- BAGONG BRANCH ANALYSIS FUNCTION (IPINALIT SA LUMA) ---
+    function updateBranchAnalysis(snap) {
+        let branchCount = {};
+        const bContainer = document.getElementById('branchDataContainer');
+        const adminList = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales", "Ron Sanity"];
 
-        container.innerHTML = sorted.slice(0, 15).map(([branch, count]) => `
+        snap.forEach(doc => {
+            const d = doc.data();
+            const rawName = d.staffName || d.user || "Unknown";
+            const name = processDisplayName(rawName);
+            
+            if (adminList.includes(name)) return;
+            
+            const branch = d.location || d.storeName || "Unknown Branch";
+            const type = (d.type || "").toLowerCase();
+
+            if (type.includes('in') && branch !== "Unknown Branch") {
+                branchCount[branch] = (branchCount[branch] || 0) + 1;
+            }
+        });
+
+        const sortedBranches = Object.entries(branchCount).sort((a, b) => b[1] - a[1]);
+        document.getElementById('uniqueStoreBadge').innerText = `${sortedBranches.length} UNIQUE SITES VISITED`;
+
+        bContainer.innerHTML = sortedBranches.map(([name, count]) => `
             <div class="branch-item">
-                <div class="branch-title text-truncate" title="${branch}">${branch}</div>
+                <div class="branch-title text-truncate" title="${name}">${name}</div>
                 <div class="branch-count">${count} <span style="font-size: 0.6rem; color: #aaa;">VISITS</span></div>
             </div>
         `).join('');
     }
 
-    /**
-     * UI Renderer: Leaderboard / Ranking
-     * Highlights top-performing coordinators
-     */
     function updateRankDisplay(counts) {
         const container = document.getElementById('rankDataContainer');
         const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-        
-        // Highlight Lead Coordinator in KPI card
         if (sorted.length > 0) {
             document.getElementById('kpiLeadName').innerText = sorted[0][0];
             document.getElementById('kpiLeadVisits').innerText = `${sorted[0][1]} Visits Today`;
         }
-
         container.innerHTML = sorted.map(([name, total], idx) => {
-            let medal = "";
-            if(idx === 0) medal = '<i class="fas fa-medal medal-gold"></i>';
-            else if(idx === 1) medal = '<i class="fas fa-medal medal-silver"></i>';
-            else if(idx === 2) medal = '<i class="fas fa-medal medal-bronze"></i>';
-
+            let medal = idx === 0 ? '<i class="fas fa-medal medal-gold"></i>' : (idx === 1 ? '<i class="fas fa-medal medal-silver"></i>' : (idx === 2 ? '<i class="fas fa-medal medal-bronze"></i>' : ""));
             return `
                 <div class="col-md-6 col-xl-4">
                     <div class="rank-item">
@@ -707,42 +578,19 @@
         }).join('');
     }
 
-    /**
-     * UI Renderer: Completed Visits Feed
-     * Displays the actual timeline of work finished
-     */
     function updateFeedDisplay(logs) {
         const container = document.getElementById('feedDataContainer');
-        
-        // Reverse to show newest at the top
-        container.innerHTML = logs.reverse().map(log => {
-            // Logic to provide a Map link if it's an "Unknown" or coordinate-based branch
-            let mapLink = "";
-            if (log.lat && log.lng) {
-                mapLink = `<a href="https://www.google.com/maps?q=${log.lat},${log.lng}" target="_blank" class="map-link"><i class="fas fa-location-arrow me-1"></i>Map View</a>`;
-            }
-
-            return `
-                <tr>
-                    <td><div class="personnel-name">${log.name}</div></td>
-                    <td>
-                        <div class="text-muted small fw-800 text-truncate" style="max-width: 200px;">${log.branch}</div>
-                        ${mapLink}
-                    </td>
-                    <td><span class="duration-pill">${prettyTime(log.mins)}</span></td>
-                </tr>
-            `;
-        }).join('');
+        container.innerHTML = logs.reverse().map(log => `
+            <tr>
+                <td><div class="personnel-name">${log.name}</div></td>
+                <td><div class="text-muted small fw-800 text-truncate" style="max-width: 200px;">${log.branch}</div></td>
+                <td><span class="duration-pill">${prettyTime(log.mins)}</span></td>
+            </tr>
+        `).join('');
     }
 
-    /**
-     * Chart.js Component: Performance Bar Chart
-     * Visualizes the workload distribution across the team
-     */
     function renderPerformanceChart(labels, data) {
-        const canvas = document.getElementById('performanceChart');
-        const ctx = canvas.getContext('2d');
-        
+        const ctx = document.getElementById('performanceChart').getContext('2d');
         if (chartInstance) {
             chartInstance.data.labels = labels;
             chartInstance.data.datasets[0].data = data;
@@ -752,75 +600,25 @@
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Visits',
-                        data: data,
-                        backgroundColor: '#ef233c',
-                        hoverBackgroundColor: '#d90429',
-                        borderRadius: 12,
-                        barThickness: 28
-                    }]
+                    datasets: [{ label: 'Visits', data: data, backgroundColor: '#ef233c', borderRadius: 12, barThickness: 28 }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#2b2d42',
-                            titleFont: { size: 14, weight: 'bold' },
-                            padding: 12,
-                            cornerRadius: 10
-                        }
-                    },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { color: '#f1f5f9', drawBorder: false },
-                            ticks: { font: { weight: '800' }, color: '#8d99ae' }
-                        },
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { font: { size: 9, weight: '800' }, color: '#2b2d42' } 
-                        }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
     }
 
-    /**
-     * Utility: String Formatting for Names
-     */
     function processDisplayName(str) {
         if (!str) return "";
         let n = str.includes('@') ? str.split('@')[0].replace(/[._]/g, ' ') : str;
         return n.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     }
 
-    /**
-     * Utility: Time calculation into human-readable format
-     */
     function prettyTime(m) {
         if (m < 60) return m + " MINS";
-        const h = Math.floor(m / 60);
-        const rm = m % 60;
-        return rm > 0 ? `${h}HR ${rm}M` : `${h}HR`;
+        return `${Math.floor(m / 60)}HR ${m % 60}M`;
     }
 
-    /**
-     * Feature: Excel Export
-     * Exports current table data to an .xlsx file for reporting
-     */
-    window.downloadReport = () => {
-        const table = document.getElementById('feedDataContainer').parentElement;
-        const wb = XLSX.utils.table_to_book(table, { sheet: "iMerch Performance" });
-        XLSX.writeFile(wb, `iMerch_Activity_Report_${datePicker.value}.xlsx`);
-    };
-
-    // Re-sync data whenever the date filter is modified
     datePicker.onchange = startDataSync;
-
 </script>
 </body>
 </html>
