@@ -3,510 +3,692 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Summary Monitoring Dashboard</title>
+    <title>iMerch | Enterprise Summary Dashboard</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <style>
-        /* -------------------------------------------------------------------------
-           PREMIUM UI ROOT VARIABLES
-        -------------------------------------------------------------------------- */
+        /* ========================================================================
+           GLOBAL THEME VARIABLES
+           ========================================================================
+        */
         :root { 
-            --primary: #d90429; 
-            --secondary: #ef233c;
-            --dark: #2b2d42;
-            --light-text: #8d99ae;
-            --bg-canvas: #f4f7f6; 
-            --white: #ffffff;
-            --success: #22c55e;
-            --warning: #f59e0b;
+            --primary-red: #d90429; 
+            --secondary-red: #ef233c;
+            --dark-navy: #2b2d42;
+            --cool-gray: #8d99ae;
+            --light-bg: #f8fafc; 
+            --pure-white: #ffffff;
+            --success-green: #22c55e;
             --gold: #FFD700;
             --silver: #C0C0C0;
             --bronze: #CD7F32;
-            --card-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glass-shadow: 0 10px 40px rgba(0,0,0,0.06);
+            --border-soft: 1px solid rgba(0,0,0,0.08);
+            --transition-speed: 0.3s ease-in-out;
         }
 
-        /* -------------------------------------------------------------------------
-           BASE BODY STYLES
-        -------------------------------------------------------------------------- */
+        /* ========================================================================
+           BASE STYLES
+           ========================================================================
+        */
         body { 
-            background-color: var(--bg-canvas); 
+            background-color: var(--light-bg); 
             font-family: 'Plus Jakarta Sans', sans-serif; 
+            color: var(--dark-navy);
             margin: 0; 
-            color: var(--dark);
-            -webkit-font-smoothing: antialiased;
+            padding: 0;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* -------------------------------------------------------------------------
-           NAVIGATION BAR (WHITE WITH RED LINING)
-        -------------------------------------------------------------------------- */
+        /* ========================================================================
+           NAVIGATION BAR (WHITE WITH RED LINING - UPDATED)
+           ========================================================================
+        */
         .navbar { 
-            background: rgba(255, 255, 255, 0.95) !important; 
-            backdrop-filter: blur(10px);
-            border-bottom: 3px solid var(--primary); 
-            padding: 0 2.5rem; 
+            background: rgba(255, 255, 255, 0.98) !important; 
+            backdrop-filter: blur(15px);
+            border-bottom: 4px solid var(--primary-red); 
+            padding-left: 3rem; 
+            padding-right: 3rem;
             z-index: 1050; 
-            height: 80px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            height: 90px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .brand-text {
-            font-weight: 800; font-size: 1.6rem; letter-spacing: -1.5px;
-            color: var(--dark); text-decoration: none; display: flex; align-items: center;
-        }
-        .brand-text span { color: var(--primary); }
-
-        .live-badge { 
-            background: rgba(34, 197, 94, 0.1); color: #15803d; padding: 10px 20px; 
-            border-radius: 50px; font-size: 0.75rem; font-weight: 800; display: flex; 
-            align-items: center; gap: 10px; border: 1px solid rgba(34, 197, 94, 0.2);
+            font-weight: 800; 
+            font-size: 1.8rem; 
+            letter-spacing: -2px;
+            color: var(--dark-navy); 
+            text-decoration: none; 
+            display: flex; 
+            align-items: center;
         }
 
-        .pulse-live { 
-            width: 10px; height: 10px; background: var(--success); 
-            border-radius: 50%; position: relative;
-        }
-        .pulse-live::after {
-            content: ""; position: absolute; width: 100%; height: 100%;
-            background: var(--success); border-radius: 50%;
-            animation: pulse-ring 1.5s infinite;
+        .brand-text span { 
+            color: var(--primary-red); 
         }
 
-        @keyframes pulse-ring {
-            0% { transform: scale(0.5); opacity: 0.8; }
-            100% { transform: scale(2.5); opacity: 0; }
+        .live-status-badge { 
+            background: rgba(34, 197, 94, 0.1); 
+            color: #166534; 
+            padding: 12px 24px; 
+            border-radius: 50px; 
+            font-size: 0.75rem; 
+            font-weight: 800; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            border: 1.5px solid rgba(34, 197, 94, 0.2);
         }
 
-        /* -------------------------------------------------------------------------
-           LOGIN SCREEN
-        -------------------------------------------------------------------------- */
-        #loginContainer { 
-            height: 100vh; width: 100%; display: flex; align-items: center; 
-            justify-content: center; background: #ffffff; position: fixed; z-index: 2000;
+        .pulse-indicator { 
+            width: 12px; 
+            height: 12px; 
+            background: var(--success-green); 
+            border-radius: 50%; 
+            position: relative;
         }
 
-        .login-card { 
-            text-align: center; padding: 4rem; border-radius: 40px; 
-            background: var(--white); box-shadow: 0 30px 60px rgba(0,0,0,0.08); 
-            width: 100%; max-width: 480px; border: 1px solid #f0f0f0;
+        .pulse-indicator::after {
+            content: ""; 
+            position: absolute; 
+            width: 100%; 
+            height: 100%;
+            background: var(--success-green); 
+            border-radius: 50%;
+            animation: ripple 2s infinite;
         }
 
-        .btn-google { 
-            background: #ffffff; color: #444; border-radius: 16px; 
-            padding: 18px; font-weight: 700; border: 2px solid #eee; width: 100%; 
-            transition: var(--transition); display: flex; align-items: center; 
-            justify-content: center; gap: 15px; margin-top: 30px;
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(3); opacity: 0; }
         }
 
-        .btn-google:hover { 
-            background: #f8f9fa; border-color: var(--primary); transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        /* ========================================================================
+           DASHBOARD CARDS & LAYOUT
+           ========================================================================
+        */
+        .main-container { 
+            padding: 3rem; 
+            display: none; 
+            margin-top: 110px; 
         }
 
-        /* -------------------------------------------------------------------------
-           DASHBOARD COMPONENTS
-        -------------------------------------------------------------------------- */
-        .main-content { padding: 2.5rem; display: none; margin-top: 100px; }
-
-        .glass-card { 
-            background: var(--white); border-radius: 30px; padding: 2.2rem; 
-            border: 1px solid rgba(0,0,0,0.03); box-shadow: var(--card-shadow); 
-            margin-bottom: 2rem; transition: var(--transition);
+        .stat-card { 
+            background: var(--pure-white); 
+            border-radius: 30px; 
+            padding: 2.5rem; 
+            border: var(--border-soft); 
+            box-shadow: var(--glass-shadow); 
+            margin-bottom: 2rem; 
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
         }
 
-        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
-
-        .stat-value { font-size: 3.2rem; font-weight: 800; color: var(--dark); letter-spacing: -2px; }
-        .stat-label { font-size: 0.75rem; font-weight: 700; color: var(--light-text); text-transform: uppercase; letter-spacing: 1.5px; }
-
-        /* -------------------------------------------------------------------------
-           TABLE & LISTS
-        -------------------------------------------------------------------------- */
-        .table-container { max-height: 520px; overflow-y: auto; padding-right: 5px; }
-        .table thead th { 
-            position: sticky; top: 0; background: white; z-index: 10;
-            font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px;
-            color: var(--light-text); border: none; padding-bottom: 15px;
+        .stat-card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
         }
 
-        .staff-name-cell { font-weight: 800; color: var(--dark); font-size: 0.8rem; }
-        .location-text { font-size: 0.75rem; color: #64748b; font-weight: 500; }
-
-        .duration-badge { 
-            padding: 6px 14px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; 
-            background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+        .value-display { 
+            font-size: 3.5rem; 
+            font-weight: 800; 
+            color: var(--dark-navy); 
+            letter-spacing: -3px; 
+            line-height: 1.2;
         }
 
-        /* -------------------------------------------------------------------------
-           COORDINATOR GRID & MEDALS
-        -------------------------------------------------------------------------- */
-        .summary-mini-card {
-            background: #fff; border: 1.5px solid #f8f9fa;
-            border-radius: 20px; padding: 15px 20px; transition: var(--transition);
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .summary-mini-card:hover { border-color: var(--primary); background: #fffcfc; }
-
-        .medal-icon { font-size: 1.3rem; margin-left: 8px; }
-        .medal-1 { color: var(--gold); text-shadow: 0 0 10px rgba(255,215,0,0.3); }
-        .medal-2 { color: var(--silver); }
-        .medal-3 { color: var(--bronze); }
-
-        /* -------------------------------------------------------------------------
-           LOADER
-        -------------------------------------------------------------------------- */
-        .loader { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--white); display: none; flex-direction: column; 
-            justify-content: center; align-items: center; z-index: 9999; 
+        .label-display { 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            color: var(--cool-gray); 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+            margin-bottom: 15px;
         }
 
-        /* -------------------------------------------------------------------------
-           SCROLLBAR
-        -------------------------------------------------------------------------- */
+        /* ========================================================================
+           BRANCH / STORE ANALYTICS (CUSTOM GRID)
+           ========================================================================
+        */
+        .branch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .branch-item {
+            background: #ffffff;
+            border: 1.5px solid #f1f5f9;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .branch-item:hover {
+            border-color: var(--primary-red);
+            background: #fffafa;
+        }
+
+        .branch-title {
+            font-weight: 800;
+            font-size: 0.8rem;
+            color: var(--dark-navy);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .branch-count {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary-red);
+        }
+
+        /* ========================================================================
+           TABLES & FEED STYLES
+           ========================================================================
+        */
+        .table-wrap { 
+            max-height: 550px; 
+            overflow-y: auto; 
+            padding-right: 10px;
+        }
+
+        .table-custom thead th { 
+            position: sticky; 
+            top: 0; 
+            background: #ffffff; 
+            z-index: 10;
+            font-size: 0.65rem; 
+            text-transform: uppercase; 
+            letter-spacing: 1.5px;
+            color: var(--cool-gray); 
+            border: none; 
+            padding-bottom: 20px;
+        }
+
+        .personnel-name { 
+            font-weight: 800; 
+            color: var(--dark-navy); 
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .duration-pill { 
+            padding: 8px 16px; 
+            border-radius: 12px; 
+            font-size: 0.7rem; 
+            font-weight: 800; 
+            background: #f1f5f9; 
+            color: #475569; 
+            border: 1px solid #e2e8f0;
+        }
+
+        /* ========================================================================
+           MEDALS & RANKING
+           ========================================================================
+        */
+        .rank-item {
+            background: #fff;
+            border-radius: 20px;
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1.5px solid #f8fafc;
+            margin-bottom: 10px;
+        }
+
+        .medal-gold { color: var(--gold); font-size: 1.4rem; }
+        .medal-silver { color: var(--silver); font-size: 1.4rem; }
+        .medal-bronze { color: var(--bronze); font-size: 1.4rem; }
+
+        /* ========================================================================
+           UTILITIES
+           ========================================================================
+        */
+        .loader-screen { 
+            position: fixed; 
+            inset: 0; 
+            background: #ffffff; 
+            display: none; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 9999; 
+        }
+
+        #loginScreen {
+            position: fixed;
+            inset: 0;
+            background: #ffffff;
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .excel-btn {
+            background: #1d6f42;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 15px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            transition: 0.3s;
+        }
+
+        .excel-btn:hover {
+            background: #145a35;
+            transform: scale(1.05);
+        }
+
+        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary-red); }
+
     </style>
 </head>
 <body>
 
-<div id="loginContainer">
-    <div class="login-card">
-        <div class="brand-text mb-4" style="font-size: 2.8rem; justify-content: center;">iMERCH<span>MEDIA</span></div>
-        <h4 class="fw-800 mb-2">Security Portal</h4>
-        <p class="text-muted small mb-5">Access restricted to authorized administrators only.</p>
+<div id="loginScreen">
+    <div style="width: 100%; max-width: 480px; padding: 4rem; text-align: center;">
+        <div class="brand-text mb-4 justify-content-center" style="font-size: 3rem;">iMERCH<span>MEDIA</span></div>
+        <h4 class="fw-800 mb-2">Management Console</h4>
+        <p class="text-muted small mb-5">High-level activity summary for authorized admins.</p>
         
-        <button class="btn-google" id="loginBtn">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="24">
-            Sign in with Google Account
+        <button id="authBtn" class="btn btn-dark w-100 py-3 rounded-4 fw-800 d-flex align-items-center justify-content-center gap-3 shadow-lg">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="22">
+            Continue with Google
         </button>
 
-        <div class="mt-4 d-flex align-items-center justify-content-center gap-2">
-            <input type="checkbox" id="rememberMe" style="width: 18px; height: 18px; accent-color: var(--primary);">
-            <label for="rememberMe" class="small fw-600 text-muted">Keep me logged in for 30 days</label>
+        <div class="mt-4 d-flex align-items-center justify-content-center gap-3">
+            <input type="checkbox" id="keepIn" style="width: 20px; height: 20px; accent-color: var(--primary-red);">
+            <label for="keepIn" class="small fw-700 text-muted">Stay signed in</label>
         </div>
     </div>
 </div>
 
-<div id="loadingScreen" class="loader">
-    <div class="spinner-border text-danger" style="width: 3.5rem; height: 3.5rem; border-width: 5px;" role="status"></div>
-    <div class="mt-4 fw-800 text-dark" style="letter-spacing: 4px; font-size: 0.75rem;">SYNCHRONIZING DATABASE...</div>
+<div id="loadingOverlay" class="loader-screen">
+    <div class="spinner-border text-danger" style="width: 4rem; height: 4rem; border-width: 6px;"></div>
+    <div class="mt-4 fw-800 text-dark" style="letter-spacing: 5px; font-size: 0.7rem;">BUILDING ANALYTICS...</div>
 </div>
 
-<div class="main-content" id="dashboardContent">
-    <nav class="navbar fixed-top d-flex justify-content-between align-items-center">
+<div class="main-container" id="dashboardUI">
+    
+    <nav class="navbar fixed-top">
         <div class="brand-text">iMERCH<span>MEDIA</span></div>
-        
         <div class="d-flex align-items-center gap-4">
-            <div class="live-badge" id="liveIndicator">
-                <span class="pulse-live"></span>
-                <span><strong id="liveLogCount">0</strong> LOGS DETECTED TODAY</span>
+            <div class="live-status-badge">
+                <span class="pulse-indicator"></span>
+                <span>SYSTEM ACTIVE: <strong id="totalRawLogs">0</strong> LOGS</span>
             </div>
-            <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-700" onclick="logout()">
-                <i class="fas fa-sign-out-alt me-2"></i>LOGOUT
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm" style="width: 45px; height: 45px;" onclick="exitAuth()">
+                <i class="fas fa-power-off text-danger"></i>
             </button>
         </div>
     </nav>
 
     <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-end mb-5">
-            <div>
-                <h1 class="fw-800 m-0" style="letter-spacing: -2px; font-size: 2.5rem;">Daily Summary</h1>
-                <p class="text-muted fw-600 m-0" id="dateSubtitle">Loading date...</p>
+        <div class="row align-items-end mb-5">
+            <div class="col-lg-8">
+                <h1 class="fw-800 m-0" style="font-size: 3.2rem; letter-spacing: -3.5px;">Performance Summary</h1>
+                <p id="dateInfo" class="text-muted fw-700 m-0"></p>
             </div>
-            <div class="bg-white p-3 rounded-4 shadow-sm border d-flex align-items-center gap-3">
-                <i class="fas fa-calendar-alt text-danger"></i>
-                <input type="date" id="summaryDateFilter" class="border-0 fw-800" style="outline: none; cursor: pointer; color: var(--dark);">
+            <div class="col-lg-4 d-flex justify-content-lg-end gap-3">
+                <div class="bg-white border p-3 rounded-4 shadow-sm d-flex align-items-center gap-3">
+                    <i class="fas fa-calendar-day text-danger"></i>
+                    <input type="date" id="calendarFilter" class="border-0 fw-800" style="outline: none; cursor: pointer;">
+                </div>
+                <button class="excel-btn" onclick="downloadReport()">
+                    <i class="fas fa-download me-2"></i>EXCEL
+                </button>
             </div>
         </div>
 
         <div class="row g-4 mb-5">
-            <div class="col-md-4">
-                <div class="glass-card">
-                    <div class="stat-label">Grand Total Logs</div>
-                    <div id="totalStores" class="stat-value text-danger">0</div>
-                    <div class="small fw-700 text-muted mt-2"><i class="fas fa-arrow-up text-success me-1"></i> System Activity</div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="label-display">System Check-ins</div>
+                    <div id="kpiTotalLogs" class="value-display text-danger">0</div>
+                    <div class="fw-800 small text-muted">Total Data Entries</div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="glass-card">
-                    <div class="stat-label">Active Field Staff</div>
-                    <div id="activeStaff" class="stat-value">0</div>
-                    <div class="small fw-700 text-muted mt-2">Personnel on Duty Today</div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="label-display">Active Staff</div>
+                    <div id="kpiStaffCount" class="value-display">0</div>
+                    <div class="fw-800 small text-success">Deployed Personnel</div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="glass-card">
-                    <div class="stat-label">Top Performer</div>
-                    <div id="topStaff" class="stat-value text-truncate" style="font-size: 1.5rem; padding-top: 15px;">--</div>
-                    <div class="small fw-800 text-warning mt-2"><i class="fas fa-crown me-1"></i> Highest Visit Volume</div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="label-display">Lead Coordinator</div>
+                    <div id="kpiLeadName" class="value-display text-truncate" style="font-size: 1.5rem; padding-top: 15px;">--</div>
+                    <div id="kpiLeadVisits" class="fw-800 small text-warning">0 Visits Today</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="label-display">Total Man-Hours</div>
+                    <div id="kpiHours" class="value-display">0</div>
+                    <div class="fw-800 small text-muted">Field Compliance Time</div>
                 </div>
             </div>
         </div>
 
         <div class="row g-4">
-            <div class="col-lg-7">
-                <div class="glass-card" style="min-height: 650px;">
+            
+            <div class="col-lg-12">
+                <div class="stat-card">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="fw-800 m-0">Performance Analysis</h5>
-                        <div id="totalGroupVisits" class="badge bg-danger rounded-pill px-4 py-2 fw-800" style="font-size: 0.7rem;">TOTAL VISITS: 0</div>
+                        <h5 class="fw-800 m-0"><i class="fas fa-map-marked-alt me-2 text-danger"></i>Store & Branch Analysis</h5>
+                        <span class="badge bg-light text-dark fw-800 px-3 py-2 border">TOP VISITED BRANCHES</span>
                     </div>
-                    
-                    <div style="height: 320px; width: 100%;">
+                    <div class="branch-grid" id="branchDataContainer">
+                        </div>
+                </div>
+            </div>
+
+            <div class="col-xl-7 col-lg-6">
+                <div class="stat-card" style="min-height: 600px;">
+                    <h5 class="fw-800 mb-5">Visit Volume Analysis</h5>
+                    <div style="height: 350px;">
                         <canvas id="performanceChart"></canvas>
                     </div>
                     
-                    <div class="mt-5">
-                        <h6 class="fw-800 mb-4 text-muted" style="font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;">Coordinator Ranking Overview</h6>
-                        <div class="row g-3" id="coordinatorSummaryList">
-                            </div>
-                    </div>
+                    <hr class="my-5" style="opacity: 0.1;">
+                    
+                    <h6 class="label-display mb-4">Coordinator Performance Rank</h6>
+                    <div class="row g-3" id="rankDataContainer">
+                        </div>
                 </div>
             </div>
-            
-            <div class="col-lg-5">
-                <div class="glass-card" style="min-height: 650px;">
+
+            <div class="col-xl-5 col-lg-6">
+                <div class="stat-card" style="min-height: 600px;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h5 class="fw-800 m-0">Completed Visits</h5>
-                        <i class="fas fa-clock-rotate-left text-muted"></i>
+                        <h5 class="fw-800 m-0">Recent Completed Visits</h5>
+                        <i class="fas fa-history text-muted"></i>
                     </div>
-                    <div class="table-container">
-                        <table class="table table-hover align-middle">
+                    <div class="table-wrap">
+                        <table class="table table-hover table-custom align-middle">
                             <thead>
                                 <tr>
-                                    <th>Personnel</th>
-                                    <th>Last Location</th>
-                                    <th>Duration</th>
+                                    <th>Coordinator</th>
+                                    <th>Target Store</th>
+                                    <th>Compliance</th>
                                 </tr>
                             </thead>
-                            <tbody id="durationTableBody">
+                            <tbody id="feedDataContainer">
                                 </tbody>
                         </table>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
 
 <script type="module">
-    // -------------------------------------------------------------------------
-    // FIREBASE CORE SETUP
-    // -------------------------------------------------------------------------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, query, where, onSnapshot, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    const firebaseConfig = {
+    // Standard Configuration
+    const fbSettings = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
         projectId: "imerch-checkins-out"
     };
 
-    const app = initializeApp(firebaseConfig);
+    // Initialize Services
+    const app = initializeApp(fbSettings);
     const db = initializeFirestore(app, { 
         localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) 
     });
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    // -------------------------------------------------------------------------
-    // GLOBAL STATE & CONSTANTS
-    // -------------------------------------------------------------------------
-    let perfChart = null;
-    let unsubscribe = null;
-    const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales", "Ron Sanity"];
-    const dateInput = document.getElementById('summaryDateFilter');
-    
-    // Set default date to today
-    dateInput.valueAsDate = new Date();
+    // App State
+    let chartInstance = null;
+    let liveUnsub = null;
+    const datePicker = document.getElementById('calendarFilter');
+    const adminBlacklist = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales", "Ron Sanity"];
 
-    // -------------------------------------------------------------------------
-    // AUTHENTICATION LOGIC
-    // -------------------------------------------------------------------------
+    // Default Date Initialization
+    datePicker.valueAsDate = new Date();
+
+    /**
+     * Authentication Observer
+     */
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('dashboardContent').style.display = 'block';
-            initMonitoring();
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboardUI').style.display = 'block';
+            startDataSync();
         } else {
-            document.getElementById('loginContainer').style.display = 'flex';
-            document.getElementById('dashboardContent').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('dashboardUI').style.display = 'none';
         }
     });
 
-    document.getElementById('loginBtn').onclick = async () => {
+    /**
+     * Login Functionality
+     */
+    document.getElementById('authBtn').onclick = async () => {
+        const mode = document.getElementById('keepIn').checked ? browserLocalPersistence : browserSessionPersistence;
         try {
-            const mode = document.getElementById('rememberMe').checked ? browserLocalPersistence : browserSessionPersistence;
             await setPersistence(auth, mode);
             await signInWithPopup(auth, provider);
-        } catch (e) { 
-            console.error(e);
-            alert("Authorization Failed: Please use an iMerch authorized email."); 
+        } catch (error) {
+            console.error("Auth failed:", error);
+            alert("Security Error: Unable to authenticate.");
         }
     };
 
-    window.logout = () => signOut(auth);
+    /**
+     * Logout Functionality
+     */
+    window.exitAuth = () => signOut(auth);
 
-    // -------------------------------------------------------------------------
-    // UTILITY FUNCTIONS
-    // -------------------------------------------------------------------------
-    const formatDuration = (mins) => {
-        if (mins < 60) return `${mins} MINS`;
-        const h = Math.floor(mins / 60);
-        const m = mins % 60;
-        return m > 0 ? `${h}HR ${m}M` : `${h}HR`;
-    };
-
-    const nameFromEmail = (input) => {
-        if (!input) return "Unknown";
-        let n = input.includes('@') ? input.split('@')[0].replace(/[._]/g, ' ') : input;
-        return n.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    };
-
-    // -------------------------------------------------------------------------
-    // CORE DATA MONITORING
-    // -------------------------------------------------------------------------
-    function initMonitoring() {
-        if (unsubscribe) unsubscribe();
-        document.getElementById('loadingScreen').style.display = 'flex';
+    /**
+     * CORE SYNC: Fetch and process Firebase data
+     */
+    function startDataSync() {
+        // Cleanup existing listeners
+        if (liveUnsub) liveUnsub();
         
-        const selDate = new Date(dateInput.value);
-        const start = new Date(selDate.setHours(0,0,0,0));
-        const end = new Date(selDate.setHours(23,59,59,999));
-        
-        document.getElementById('dateSubtitle').innerText = selDate.toLocaleDateString('en-US', { 
+        // Show loading state
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        // Time Range Calculations
+        const selected = new Date(datePicker.value);
+        const startOfDay = new Date(selected.setHours(0,0,0,0));
+        const endOfDay = new Date(selected.setHours(23,59,59,999));
+
+        // Display Header Date
+        document.getElementById('dateInfo').innerText = startOfDay.toLocaleDateString('en-US', { 
             weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
         });
 
-        const q = query(
+        // Firestore Query
+        const mainQuery = query(
             collection(db, "attendance"), 
-            where("timestamp", ">=", Timestamp.fromDate(start)), 
-            where("timestamp", "<=", Timestamp.fromDate(end)), 
+            where("timestamp", ">=", Timestamp.fromDate(startOfDay)), 
+            where("timestamp", "<=", Timestamp.fromDate(endOfDay)), 
             orderBy("timestamp", "asc")
         );
 
-        unsubscribe = onSnapshot(q, (snap) => {
-            let counts = {}; 
-            let staffActivity = {}; 
-            let tableData = []; 
-            let totalGroupVisits = 0;
+        // Real-time listener
+        liveUnsub = onSnapshot(mainQuery, (snapshot) => {
+            let staffMetrics = {};
+            let branchMetrics = {};
+            let sessionsInProgress = {};
+            let activityLog = [];
+            let cumulativeMinutes = 0;
 
-            snap.docs.forEach(doc => {
-                const d = doc.data();
-                let person = nameFromEmail(d.staffName || d.name || d.user || d.email || "");
-                
-                if (adminExclusion.includes(person)) return;
+            snapshot.docs.forEach(doc => {
+                const item = doc.data();
+                const rawName = item.staffName || item.name || item.user || item.email || "";
+                let name = processDisplayName(rawName);
 
-                const type = (d.type || "").toLowerCase();
-                const time = d.timestamp?.toDate() || new Date();
-                const lat = d.latitude || d.geopoint?.latitude;
-                const lng = d.longitude || d.geopoint?.longitude;
+                // Filter out non-coordinator accounts
+                if (adminBlacklist.includes(name) || !name) return;
 
-                if (type.includes('in')) {
-                    counts[person] = (counts[person] || 0) + 1;
-                    staffActivity[person] = { 
-                        inTime: time, 
-                        loc: d.location || d.storeName || "Field Site", 
-                        lat, lng 
+                const logType = (item.type || "").toLowerCase();
+                const store = item.location || item.storeName || "Unknown Branch";
+                const logTime = item.timestamp?.toDate() || new Date();
+
+                // Process Check-ins
+                if (logType.includes('in')) {
+                    staffMetrics[name] = (staffMetrics[name] || 0) + 1;
+                    branchMetrics[store] = (branchMetrics[store] || 0) + 1;
+                    sessionsInProgress[name] = { 
+                        inTime: logTime, 
+                        branch: store, 
+                        lat: item.latitude || 0, 
+                        lng: item.longitude || 0 
                     };
-                } else if (type.includes('out') && staffActivity[person]) {
-                    const diff = Math.floor((time - staffActivity[person].inTime) / 60000);
-                    tableData.push({ 
-                        name: person, 
-                        mins: diff > 0 ? diff : 1, 
-                        ...staffActivity[person] 
+                } 
+                // Process Check-outs
+                else if (logType.includes('out') && sessionsInProgress[name]) {
+                    const elapsedMins = Math.floor((logTime - sessionsInProgress[name].inTime) / 60000);
+                    cumulativeMinutes += elapsedMins > 0 ? elapsedMins : 1;
+                    
+                    activityLog.push({ 
+                        name: name, 
+                        branch: sessionsInProgress[name].branch, 
+                        mins: elapsedMins > 0 ? elapsedMins : 1, 
+                        ...sessionsInProgress[name] 
                     });
-                    delete staffActivity[person];
+                    
+                    delete sessionsInProgress[name];
                 }
             });
 
-            // Update Statistics
-            document.getElementById('totalStores').innerText = snap.size;
-            document.getElementById('liveLogCount').innerText = snap.size;
-            document.getElementById('activeStaff').innerText = Object.keys(counts).length;
+            // Update KPI Displays
+            document.getElementById('kpiTotalLogs').innerText = snapshot.size;
+            document.getElementById('totalRawLogs').innerText = snapshot.size;
+            document.getElementById('kpiStaffCount').innerText = Object.keys(staffMetrics).length;
+            document.getElementById('kpiHours').innerText = (cumulativeMinutes / 60).toFixed(1) + " HRS";
 
-            // Render Feed Table
-            document.getElementById('durationTableBody').innerHTML = tableData.reverse().map(r => {
-                const mapBtn = r.lat ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" class="ms-2 text-danger"><i class="fas fa-location-dot"></i></a>` : "";
-                return `
-                    <tr>
-                        <td><div class="staff-name-cell">${r.name}</div></td>
-                        <td><div class="location-text">${r.loc}${mapBtn}</div></td>
-                        <td><span class="duration-badge">${formatDuration(r.mins)}</span></td>
-                    </tr>
-                `;
-            }).join('');
-
-            // Sort and Render Ranking Grid
-            const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-            document.getElementById('coordinatorSummaryList').innerHTML = sorted.map(([name, total], idx) => {
-                totalGroupVisits += total;
-                let medalClass = "";
-                if(idx === 0) medalClass = "medal-1";
-                else if(idx === 1) medalClass = "medal-2";
-                else if(idx === 2) medalClass = "medal-3";
-
-                const medalHtml = idx < 3 ? `<i class="fas fa-medal medal-icon ${medalClass}"></i>` : "";
-
-                return `
-                    <div class="col-md-6 col-xl-4">
-                        <div class="summary-mini-card">
-                            <div>
-                                <div class="fw-800 small text-uppercase">${name}${medalHtml}</div>
-                                <div class="fw-700 text-muted" style="font-size: 0.6rem;">RANK #${idx+1}</div>
-                            </div>
-                            <div class="fw-800 h3 m-0 text-danger">${total}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            document.getElementById('totalGroupVisits').innerText = `TOTAL VISITS: ${totalGroupVisits}`;
+            // Update UI Sections
+            updateBranchDisplay(branchMetrics);
+            updateRankDisplay(staffMetrics);
+            updateFeedDisplay(activityLog);
             
-            if(sorted.length > 0) {
-                document.getElementById('topStaff').innerText = `${sorted[0][0]} (${sorted[0][1]})`;
-                updateChart(Object.keys(counts), Object.values(counts));
-            }
+            // Re-render Chart
+            renderPerformanceChart(Object.keys(staffMetrics), Object.values(staffMetrics));
 
-            document.getElementById('loadingScreen').style.display = 'none';
-        }, (err) => {
-            console.error("Snapshot Error:", err);
-            document.getElementById('loadingScreen').style.display = 'none';
+            // Hide loading state
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }, (error) => {
+            console.error("Snapshot error:", error);
+            document.getElementById('loadingOverlay').style.display = 'none';
         });
     }
 
-    // -------------------------------------------------------------------------
-    // CHARTING ENGINE
-    // -------------------------------------------------------------------------
-    function updateChart(labels, data) {
-        const ctx = document.getElementById('performanceChart').getContext('2d');
-        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, '#d90429');
-        gradient.addColorStop(1, '#ef233c');
+    /**
+     * UI: Update Branch Data Grid
+     */
+    function updateBranchDisplay(branches) {
+        const container = document.getElementById('branchDataContainer');
+        const sorted = Object.entries(branches).sort((a,b) => b[1] - a[1]);
+        
+        container.innerHTML = sorted.slice(0, 12).map(([branch, count]) => `
+            <div class="branch-item">
+                <div class="branch-title text-truncate">${branch}</div>
+                <div class="branch-count">${count} <span style="font-size: 0.6rem; color: #aaa;">VISITS</span></div>
+            </div>
+        `).join('');
+    }
 
-        if (perfChart) {
-            perfChart.data.labels = labels;
-            perfChart.data.datasets[0].data = data;
-            perfChart.update();
+    /**
+     * UI: Update Staff Ranking List
+     */
+    function updateRankDisplay(counts) {
+        const container = document.getElementById('rankDataContainer');
+        const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+        
+        // Update KPI for lead coordinator
+        if (sorted.length > 0) {
+            document.getElementById('kpiLeadName').innerText = sorted[0][0];
+            document.getElementById('kpiLeadVisits').innerText = `${sorted[0][1]} Visits Captured`;
+        }
+
+        container.innerHTML = sorted.map(([name, total], idx) => {
+            let medalIcon = "";
+            if(idx === 0) medalIcon = '<i class="fas fa-medal medal-gold"></i>';
+            else if(idx === 1) medalIcon = '<i class="fas fa-medal medal-silver"></i>';
+            else if(idx === 2) medalIcon = '<i class="fas fa-medal medal-bronze"></i>';
+
+            return `
+                <div class="col-md-6 col-xl-4">
+                    <div class="rank-item">
+                        <div>
+                            <div class="personnel-name">${name} ${medalIcon}</div>
+                            <div class="text-muted" style="font-size: 0.6rem;">Rank Achievement #${idx+1}</div>
+                        </div>
+                        <div class="fw-800 h4 m-0 text-danger">${total}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * UI: Update Completed Activity Feed
+     */
+    function updateFeedDisplay(logs) {
+        const container = document.getElementById('feedDataContainer');
+        container.innerHTML = logs.reverse().map(log => `
+            <tr>
+                <td><div class="personnel-name">${log.name}</div></td>
+                <td><div class="text-muted small fw-600">${log.branch}</div></td>
+                <td><span class="duration-pill">${prettyTime(log.mins)}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    /**
+     * CHART: Main Performance Visualization
+     */
+    function renderPerformanceChart(labels, data) {
+        const canvas = document.getElementById('performanceChart');
+        const ctx = canvas.getContext('2d');
+        
+        if (chartInstance) {
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = data;
+            chartInstance.update();
         } else {
-            perfChart = new Chart(ctx, {
+            chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Visits',
+                        label: 'Captured Visits',
                         data: data,
-                        backgroundColor: labels.map((_, i) => i === 0 ? gradient : '#e2e8f0'),
-                        borderRadius: 12,
-                        barThickness: 35
+                        backgroundColor: '#ef233c',
+                        borderRadius: 15,
+                        barThickness: 32
                     }]
                 },
                 options: {
@@ -514,15 +696,49 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { beginAtZero: true, grid: { drawBorder: false, color: '#f0f0f0' }, ticks: { font: { weight: '600' } } },
-                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' } } }
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#f1f5f9', drawBorder: false },
+                            ticks: { font: { weight: 'bold' } }
+                        },
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { font: { size: 10, weight: '800' } } 
+                        }
                     }
                 }
             });
         }
     }
 
-    dateInput.onchange = initMonitoring;
+    /**
+     * HELPERS: Name Formatting & Time Display
+     */
+    function processDisplayName(str) {
+        if (!str) return "";
+        let n = str.includes('@') ? str.split('@')[0].replace(/[._]/g, ' ') : str;
+        return n.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+
+    function prettyTime(m) {
+        if (m < 60) return m + " MINS";
+        const h = Math.floor(m / 60);
+        const rm = m % 60;
+        return rm > 0 ? `${h}HR ${rm}M` : `${h}HR`;
+    }
+
+    /**
+     * EXPORT: Download current view to Excel
+     */
+    window.downloadReport = () => {
+        const table = document.getElementById('feedDataContainer').parentElement;
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Performance Report" });
+        XLSX.writeFile(wb, `iMerch_Summary_${datePicker.value}.xlsx`);
+    };
+
+    // Event Listeners
+    datePicker.onchange = startDataSync;
+
 </script>
 </body>
 </html>
