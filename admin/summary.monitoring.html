@@ -30,6 +30,7 @@
             --dark-navy: #2b2d42;
             --deep-black: #1a1b26;
             --cool-gray: #8d99ae;
+            --slate-50: #f8fafc;
             --slate-100: #f1f5f9;
             --slate-200: #e2e8f0;
             --slate-300: #cbd5e1;
@@ -74,10 +75,11 @@
 
         body { 
             background-color: var(--light-bg); 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
+            font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif; 
             color: var(--dark-navy);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
+            font-feature-settings: "cv11", "ss01";
             min-height: 100vh;
             line-height: 1.6;
         }
@@ -228,6 +230,9 @@
             position: relative;
             overflow: hidden;
             z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .kpi-card:hover { 
@@ -246,8 +251,22 @@
             font-weight: 900; 
             color: var(--dark-navy); 
             letter-spacing: -6px; 
-            line-height: 1;
+            line-height: 1.1;
             margin-bottom: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* AUTO-SCALE LOGIC FOR LONG NAMES */
+        .value-display.name-scale {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            letter-spacing: -1.5px;
+            white-space: normal;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.2;
         }
 
         .label-display { 
@@ -363,6 +382,7 @@
         @media (max-width: 1200px) {
             .analytics-block, .feed-card { padding: 2.5rem; }
             .value-display { font-size: 3rem; }
+            .navbar { height: 90px; }
         }
 
     </style>
@@ -438,8 +458,8 @@
             <div class="col-xl-3 col-md-6">
                 <div class="kpi-card">
                     <div class="label-display">Top Coordinator</div>
-                    <div id="kpiLeadName" class="value-display text-truncate" style="font-size: 2rem; margin-top: 15px;">--</div>
-                    <div id="kpiLeadVisits" class="fw-900 small text-warning">Leading store coverage</div>
+                    <div id="kpiLeadName" class="value-display name-scale">--</div>
+                    <div id="kpiLeadVisits" class="fw-900 small text-warning" style="margin-top: 10px;">Leading store coverage</div>
                 </div>
             </div>
             <div class="col-xl-3 col-md-6">
@@ -526,7 +546,13 @@
     let performanceChartInstance = null;
     let liveDataSubscription = null;
     const dateController = document.getElementById('calendarFilter');
-    const systemAdminList = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales", "Ron Sanity"];
+    
+    // STRICT ADMIN WHITELIST - DO NOT REMOVE
+    const systemAdminList = [
+        "Joy Biazon", "Brylle Oca", "Pauline Oca", 
+        "Samantha Claire", "Ron Sarmenta", "Arem Gonzales", 
+        "Ron Sanity", "admin", "imerch"
+    ];
 
     dateController.valueAsDate = new Date();
 
@@ -540,7 +566,6 @@
             setTimeout(() => {
                 loginUI.style.display = 'none';
                 dashUI.style.display = 'block';
-                document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
                 initializeOperationalSync();
             }, 800);
         } else {
@@ -569,7 +594,6 @@
 
     // OPERATIONAL DATA SYNC ENGINE (826 STABLE)
     function initializeOperationalSync() {
-        // Clear existing listeners to prevent memory leaks
         if (liveDataSubscription) liveDataSubscription();
         document.getElementById('loadingOverlay').style.display = 'flex';
 
@@ -600,7 +624,6 @@
                     const rawName = record.staffName || record.name || record.user || record.email;
                     const cleanName = formatSystemName(rawName);
 
-                    // ADMIN SECURITY FILTERING
                     if (systemAdminList.includes(cleanName) || !cleanName) return;
 
                     const actionType = (record.type || "").toLowerCase();
@@ -609,13 +632,10 @@
 
                     if (actionType.includes('in')) {
                         operationalMetrics.personnelCounts[cleanName] = (operationalMetrics.personnelCounts[cleanName] || 0) + 1;
-                        operationalMetrics.sessionBuffer[cleanName] = { 
-                            inAt: logTime, 
-                            loc: locationName 
-                        };
+                        operationalMetrics.sessionBuffer[cleanName] = { inAt: logTime, loc: locationName };
                     } else if (actionType.includes('out') && operationalMetrics.sessionBuffer[cleanName]) {
                         const duration = Math.floor((logTime - operationalMetrics.sessionBuffer[cleanName].inAt) / 60000);
-                        const validatedDuration = duration > 0 ? duration : 5; // System buffer for rapid transitions
+                        const validatedDuration = duration > 0 ? duration : 5;
                         
                         operationalMetrics.accumulatedMinutes += validatedDuration;
                         operationalMetrics.completedLogs.push({ 
@@ -623,8 +643,6 @@
                             site: operationalMetrics.sessionBuffer[cleanName].loc, 
                             duration: validatedDuration 
                         });
-                        
-                        // Clear buffer after successful out-log
                         delete operationalMetrics.sessionBuffer[cleanName];
                     }
                 });
@@ -644,7 +662,6 @@
 
     // INTERFACE REFRESH LOGIC
     function updateDashboardUI(totalLogs, metrics) {
-        // Update Primary KPIs
         document.getElementById('kpiTotalLogs').innerText = totalLogs.toLocaleString();
         document.getElementById('totalRawLogs').innerText = totalLogs;
         document.getElementById('kpiStaffCount').innerText = Object.keys(metrics.personnelCounts).length;
@@ -652,12 +669,12 @@
 
         const performanceSorted = Object.entries(metrics.personnelCounts).sort((a,b) => b[1] - a[1]);
         
-        // Update Lead Performer
+        const leadNameEl = document.getElementById('kpiLeadName');
         if (performanceSorted.length > 0) {
-            document.getElementById('kpiLeadName').innerText = performanceSorted[0][0];
+            leadNameEl.innerText = performanceSorted[0][0];
             document.getElementById('kpiLeadVisits').innerText = `${performanceSorted[0][1]} STORES VISITED TODAY`;
         } else {
-            document.getElementById('kpiLeadName').innerText = "--";
+            leadNameEl.innerText = "--";
             document.getElementById('kpiLeadVisits').innerText = "NO FIELD ACTIVITY";
         }
 
@@ -669,6 +686,10 @@
     // RANKING RENDERER (DETAILED)
     function renderRankings(sortedList) {
         const container = document.getElementById('rankDataContainer');
+        if (sortedList.length === 0) {
+            container.innerHTML = `<div class="col-12 text-center text-muted fw-800">No performance data for this date.</div>`;
+            return;
+        }
         container.innerHTML = sortedList.slice(0, 12).map(([name, count], idx) => {
             let badgeIcon = "";
             if(idx === 0) badgeIcon = `<i class="fas fa-crown" style="color: var(--gold-ranking)"></i>`;
@@ -692,8 +713,11 @@
     // FEED RENDERER (DETAILED)
     function renderLiveFeed(logs) {
         const tableBody = document.getElementById('feedDataContainer');
-        // Reverse to show latest first
-        tableBody.innerHTML = logs.reverse().slice(0, 25).map(log => `
+        if (logs.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="3" class="text-center text-muted py-5">Waiting for activity logs...</td></tr>`;
+            return;
+        }
+        tableBody.innerHTML = [...logs].reverse().slice(0, 25).map(log => `
             <tr>
                 <td><div class="name fw-900" style="font-size: 0.95rem;">${log.name}</div></td>
                 <td><div class="text-muted fw-800" style="font-size: 0.8rem;">${log.site}</div></td>
@@ -705,8 +729,6 @@
     // CHART ENGINE (DETAILED)
     function renderPersonnelMatrix(labels, values) {
         const ctx = document.getElementById('performanceChart').getContext('2d');
-        
-        // Memory Management: Cleanup existing chart
         if (performanceChartInstance) performanceChartInstance.destroy();
         
         performanceChartInstance = new Chart(ctx, {
@@ -718,9 +740,8 @@
                     data: values,
                     backgroundColor: '#d90429',
                     hoverBackgroundColor: '#ef233c',
-                    borderRadius: 20,
+                    borderRadius: 15,
                     barPercentage: 0.5,
-                    categoryPercentage: 0.8,
                     borderSkipped: false
                 }]
             },
@@ -734,41 +755,28 @@
                         titleFont: { family: 'Plus Jakarta Sans', size: 14, weight: 'bold' },
                         bodyFont: { family: 'Plus Jakarta Sans', size: 13 },
                         padding: 15,
-                        displayColors: false,
-                        callbacks: {
-                            label: (context) => ` Total Visited: ${context.parsed.y} Stores`
-                        }
+                        displayColors: false
                     }
                 },
                 scales: {
                     y: { 
                         beginAtZero: true, 
                         grid: { color: '#f1f5f9', drawBorder: false },
-                        ticks: { 
-                            font: { weight: '900', size: 12, family: 'Plus Jakarta Sans' }, 
-                            color: '#94a3b8',
-                            stepSize: 1 
-                        }
+                        ticks: { font: { weight: '900', size: 12 }, color: '#94a3b8', stepSize: 1 }
                     },
                     x: { 
                         grid: { display: false },
-                        ticks: { 
-                            font: { weight: '900', size: 10, family: 'Plus Jakarta Sans' }, 
-                            color: '#1e293b' 
-                        }
+                        ticks: { font: { weight: '900', size: 10 }, color: '#1e293b' }
                     }
                 },
-                animation: {
-                    duration: 2000,
-                    easing: 'easeOutQuart'
-                }
+                animation: { duration: 1500, easing: 'easeOutQuart' }
             }
         });
     }
 
     // UTILITY REPOSITORY (826 STABLE)
     function formatSystemName(str) {
-        if (!str) return "N/A Personnel";
+        if (!str) return "";
         let n = str.includes('@') ? str.split('@')[0].replace(/[._]/g, ' ') : str;
         return n.toLowerCase().split(' ').map(s => s.charAt(0).toUpperCase() + s.substring(1)).join(' ');
     }
@@ -780,14 +788,10 @@
         return mins > 0 ? `${hrs}H ${mins}M` : `${hrs}H FLAT`;
     }
 
-    // EVENT LISTENERS
-    dateController.onchange = () => {
-        initializeOperationalSync();
-    };
+    dateController.onchange = () => { initializeOperationalSync(); };
 
-    // SYSTEM INITIALIZER ON LOAD
     window.addEventListener('load', () => {
-        console.log("iMerch Media Console v2.826 Initialized.");
+        console.log("iMerch Media Console v2.826 Operational.");
     });
 
 </script>
