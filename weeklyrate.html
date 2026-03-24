@@ -2,220 +2,228 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Weekly Coverage Pulse</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iMerch - Weekly Performance Monitoring</title>
+    
+    <link rel="icon" type="image/png" href="im.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --imerch-red: #E11D48;
-            --imerch-dark: #1F2937;
-            --imerch-slate: #6B7280;
-            --imerch-green: #10B981;
-            --imerch-gold: #D4AF37;
-            --bg-body: #F9FAFB;
-            --card-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+        :root { 
+            --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #58a6ff; 
+            --green: #238636; --border: #30363d; --red: #f85149; --orange: #d29922; --header: #010409;
+            --secondary-text: #8b949e; --glass: rgba(22, 27, 34, 0.8);
+            --sidebar-width: 260px;
+            --primary-red: #d90429;
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
-            margin: 0;
-            color: var(--imerch-dark);
-            -webkit-font-smoothing: antialiased;
+        [data-theme="light"] {
+            --bg: #f6f8fa; --card: #ffffff; --text: #24292f; --accent: #0969da;
+            --green: #1a7f37; --border: #d0d7de; --red: #cf222e; --orange: #9a6700; --header: #ffffff;
+            --secondary-text: #57606a; --glass: rgba(255, 255, 255, 0.8);
         }
-
-        /* --- HEADER --- */
-        .header-container {
-            background-color: white;
-            padding: 20px 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #E5E7EB;
-        }
-
-        .imerch-branding { font-size: 24px; font-weight: 700; }
-        .imerch-red-text { color: var(--imerch-red); }
-
-        .operational-status-pill {
-            background-color: #ECFDF5;
-            color: var(--imerch-green);
-            padding: 8px 18px;
-            border-radius: 50px;
-            font-size: 13px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .status-dot { height: 10px; width: 10px; background-color: var(--imerch-green); border-radius: 50%; display: inline-block; }
-
-        /* --- DASHBOARD WRAPPER --- */
-        .dashboard-wrapper { padding: 40px 50px; }
-
-        .title-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-
-        .main-title h1 { font-size: 48px; margin: 0; letter-spacing: -2px; color: #111827; }
         
-        /* Calendar Style */
-        .calendar-box {
-            background: white;
-            padding: 10px 20px;
-            border-radius: 12px;
-            box-shadow: var(--card-shadow);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border: 1px solid #E5E7EB;
-        }
-        .calendar-box input {
-            border: none;
-            font-family: 'Inter';
-            font-weight: 600;
-            color: var(--imerch-dark);
-            outline: none;
-            cursor: pointer;
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; transition: 0.3s; display: flex; min-height: 100vh; }
+
+        /* --- SIDEBAR STYLE (Consistent with Monitoring) --- */
+        #sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            border-right: 5px solid var(--primary-red);
+            height: 100vh;
+            position: fixed;
+            left: 0; top: 0;
+            display: flex; flex-direction: column;
+            z-index: 1000; color: #1a1a1a;
         }
 
-        /* --- SUMMARY CARDS --- */
-        .pulse-summary-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 30px;
-            margin-bottom: 50px;
+        .sidebar-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+        .side-logo { width: 120px; margin-bottom: 10px; }
+
+        .nav-menu { padding: 20px 15px; flex-grow: 1; }
+        .nav-link {
+            display: flex; align-items: center; padding: 12px 15px; color: #333;
+            text-decoration: none; border-radius: 10px; font-weight: 700;
+            margin-bottom: 10px; transition: 0.2s; cursor: pointer;
+        }
+        .nav-link:hover { background: rgba(217, 4, 41, 0.05); color: var(--primary-red); }
+        .nav-link.active { background: var(--primary-red); color: #fff; }
+        .nav-link i { margin-right: 12px; width: 20px; text-align: center; }
+
+        #content-wrapper {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1; padding: 25px;
+            width: calc(100% - var(--sidebar-width));
         }
 
-        .summary-card {
-            background: white;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: var(--card-shadow);
-            border-top: 4px solid var(--imerch-red);
-        }
+        .glass-panel { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3); }
 
-        .summary-card h4 { margin: 0; font-size: 13px; text-transform: uppercase; color: var(--imerch-slate); }
-        .summary-card .value { font-size: 42px; font-weight: 700; margin: 15px 0 8px 0; color: #111827; }
-        .summary-card.coor h3 { font-size: 24px; margin: 15px 0 10px 0; }
-        .summary-card.coor p { color: var(--imerch-gold); font-weight: 600; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; margin-bottom: 25px; }
+        
+        /* --- WEEKLY SPECIFIC STYLES --- */
+        .filter-bar { display: flex; gap: 15px; margin-bottom: 25px; align-items: center; }
+        .icon-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 10px; cursor: pointer; }
 
-        /* --- TABLE --- */
-        .matrix-container {
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: var(--card-shadow);
-        }
+        .weekly-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th { background: rgba(88, 166, 255, 0.1); color: var(--accent); font-size: 0.75rem; padding: 15px; text-align: center; border-bottom: 2px solid var(--border); text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid var(--border); text-align: center; font-size: 0.85rem; }
 
-        .matrix-header { display: flex; justify-content: space-between; margin-bottom: 25px; }
-        .live-matrix-badge { background: var(--imerch-red); color: white; padding: 5px 12px; border-radius: 50px; font-size: 11px; font-weight: 600; }
-
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 20px 15px; border-bottom: 2px solid #E5E7EB; color: var(--imerch-slate); font-size: 12px; text-transform: uppercase; }
-        td { padding: 18px 15px; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
-
-        .performance-badge { padding: 6px 14px; border-radius: 50px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
-        .status-dot-table { height: 8px; width: 8px; border-radius: 50%; display: inline-block; }
-        .high { background-color: #ECFDF5; color: var(--imerch-green); }
-        .high .status-dot-table { background-color: var(--imerch-green); }
-        .low { background-color: #FEF2F2; color: var(--imerch-red); }
-        .low .status-dot-table { background-color: var(--imerch-red); }
+        .rate-high { color: #4ade80; font-weight: bold; }
+        .rate-low { color: #f87171; font-weight: bold; }
+        
+        #loading-screen { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:2000; }
     </style>
 </head>
-<body>
+<body data-theme="dark">
 
-    <header class="header-container">
-        <div class="imerch-branding">IMERCH<span class="imerch-red-text">MEDIA</span></div>
-        <div class="operational-status-pill">
-            <span class="status-dot"></span>
-            OPERATIONS LIVE: <span id="action-count">0</span> ACTIONS
+    <div id="loading-screen">
+        <div style="width:40px; height:40px; border:4px solid var(--border); border-top:4px solid var(--accent); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <p style="margin-top:15px; color:var(--secondary-text); font-size: 0.8rem; letter-spacing:2px;">CALCULATING WEEKLY METRICS...</p>
+    </div>
+
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            <img src="logo1.png" class="side-logo" alt="iMerch">
+            <div style="font-weight: 900; font-size: 1.2rem;">CCPI</div>
+            <div style="font-size: 0.65rem; color: var(--primary-red); font-weight: 800; letter-spacing: 1px;">WEEKLY ANALYTICS</div>
         </div>
-    </header>
+        <nav class="nav-menu">
+            <a href="monitoring.html" class="nav-link"><i class="fas fa-chart-line"></i><span>Realtime Monitoring</span></a>
+            <a href="summary.monitoring.html" class="nav-link"><i class="fas fa-file-contract"></i><span>Summary Reports</span></a>
+            <div class="nav-link active"><i class="fas fa-calendar-week"></i><span>Weekly Performance</span></div>
+            <a href="mcp.html" class="nav-link"><i class="fas fa-users-cog"></i><span>MCP CCPI</span></a>
+        </nav>
+    </aside>
 
-    <div class="dashboard-wrapper">
-        <div class="title-section">
-            <div class="main-title">
-                <h1>Operational Pulse</h1>
-                <p id="display-date">Tuesday, March 24th 2026</p>
+    <div id="content-wrapper">
+        <div class="navbar glass-panel">
+            <div>
+                <span style="font-weight: 900; color: var(--accent);">Weekly Rate Analysis</span><br>
+                <span style="font-size: 0.6rem; color: var(--secondary-text);">STAFF EFFICIENCY BREAKDOWN</span>
             </div>
-            <div class="calendar-box">
-                <i class="far fa-calendar-alt" style="color: var(--imerch-red);"></i>
-                <input type="date" id="pulse-calendar">
-            </div>
-        </div>
-
-        <div class="pulse-summary-grid">
-            <div class="summary-card">
-                <h4>Data Throughput</h4>
-                <div class="value" id="visits-volume">0</div>
-                <p>Daily interaction volume</p>
-            </div>
-            
-            <div class="summary-card">
-                <h4>Active Force</h4>
-                <div class="value" id="active-force">0</div>
-                <p>Personnel currently deployed</p>
-            </div>
-            
-            <div class="summary-card coor">
-                <h4>Top Coordinator</h4>
-                <h3 id="top-coor-name">---</h3>
-                <p id="top-coor-stat">0 Stores Visited Today</p>
-            </div>
-            
-            <div class="summary-card">
-                <h4>Field Compliance</h4>
-                <div class="value" id="overall-coverage">0%</div>
-                <p>Total operational rate</p>
-            </div>
+            <img src="logo1.png" style="height:40px;">
         </div>
 
-        <div class="matrix-container">
-            <div class="matrix-header">
-                <h2>Personnel Performance Matrix</h2>
-                <div class="live-matrix-badge">LIVE MATRIX</div>
+        <div class="filter-bar">
+            <div class="icon-btn">
+                <i class="fas fa-calendar-alt"></i> 
+                <select id="weekPicker" style="background:none; border:none; color:inherit; font-weight:bold; outline:none; cursor:pointer;">
+                    <option value="0">Current Week</option>
+                    <option value="1">Last Week</option>
+                </select>
             </div>
-            <table id="performance-table">
+            <input type="text" id="staffSearch" class="icon-btn" style="flex-grow:1;" placeholder="Filter by staff name...">
+            <button class="icon-btn" onclick="exportWeeklyData()"><i class="fas fa-download"></i> EXPORT</button>
+        </div>
+
+        <div class="weekly-grid">
+            <div class="glass-panel" style="padding:20px;">
+                <div style="font-size:0.8rem; font-weight:800; color:var(--accent); margin-bottom:15px;">WEEKLY ATTENDANCE TREND</div>
+                <div style="height:200px;"><canvas id="weeklyTrendChart"></canvas></div>
+            </div>
+            <div class="glass-panel" style="padding:20px;">
+                <div style="font-size:0.8rem; font-weight:800; color:var(--accent); margin-bottom:15px;">TOP PERFORMERS (6/6)</div>
+                <div id="topPerformersList"></div>
+            </div>
+        </div>
+
+        <div class="table-container glass-panel">
+            <table>
                 <thead>
                     <tr>
-                        <th>Coordinator</th>
-                        <th>Actual Visits</th>
-                        <th>Target (Daily)</th>
-                        <th>Coverage Rate</th>
-                        <th>Performance</th>
+                        <th>Staff Name</th>
+                        <th>Mon</th>
+                        <th>Tue</th>
+                        <th>Wed</th>
+                        <th>Thu</th>
+                        <th>Fri</th>
+                        <th>Sat</th>
+                        <th>Weekly Avg</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
-                <tbody id="matrix-data">
+                <tbody id="weeklyTableBody">
                     </tbody>
             </table>
         </div>
     </div>
 
-    <script>
-        // 1. Initialize Calendar
-        const calendar = document.getElementById('pulse-calendar');
-        calendar.valueAsDate = new Date();
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, getDocs, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 2. Realtime Tallying Logic (Placeholder for your Firebase sync)
-        function syncWithMonitoring(selectedDate) {
-            // Dito ikakabit ang logic na magbabasa sa monitoring.html data
-            // Sample computation based on your 6-stores-per-day rule:
-            console.log("Syncing tally for: " + selectedDate);
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
+            authDomain: "imerch-checkins-out.firebaseapp.com",
+            projectId: "imerch-checkins-out",
+            storageBucket: "imerch-checkins-out.firebasestorage.app",
+            appId: "1:842279761036:web:1d3889999612d602f337a9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadWeeklyData() {
+            document.getElementById('loading-screen').style.display = 'flex';
+            
+            // Logic: Get start of current week (Monday)
+            const now = new Date();
+            const day = now.getDay() || 7; 
+            const monday = new Date(now.setDate(now.getDate() - day + 1));
+            monday.setHours(0,0,0,0);
+
+            const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(monday)));
+            const snap = await getDocs(q);
+            
+            const staffStats = {};
+            const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Ron Sarmenta"];
+
+            snap.forEach(doc => {
+                const data = doc.data();
+                const name = data.name || data.staffName;
+                if (!name || adminExclusion.includes(name)) return;
+
+                if (!staffStats[name]) {
+                    staffStats[name] = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, total: 0 };
+                }
+
+                const logDate = data.timestamp.toDate();
+                const dayName = logDate.toLocaleDateString('en-US', { weekday: 'short' });
+                
+                if (data.type?.toLowerCase().includes('in') && staffStats[name][dayName] !== undefined) {
+                    staffStats[name][dayName]++;
+                    staffStats[name].total++;
+                }
+            });
+
+            renderTable(staffStats);
+            document.getElementById('loading-screen').style.display = 'none';
         }
 
-        calendar.addEventListener('change', (e) => {
-            syncWithMonitoring(e.target.value);
-            // Update the display date text
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('display-date').innerText = new Date(e.target.value).toLocaleDateString(undefined, options);
-        });
+        function renderTable(stats) {
+            const body = document.getElementById('weeklyTableBody');
+            let html = "";
+            
+            Object.keys(stats).forEach(name => {
+                const s = stats[name];
+                const avg = ((s.total / 36) * 100).toFixed(1); // Assuming 6 logs/day * 6 days = 36 target
+                const statusClass = avg >= 80 ? 'rate-high' : 'rate-low';
 
-        // Initial Load
-        syncWithMonitoring(calendar.value);
+                html += `<tr>
+                    <td style="text-align:left; font-weight:bold;">${name}</td>
+                    <td>${s.Mon}</td><td>${s.Tue}</td><td>${s.Wed}</td>
+                    <td>${s.Thu}</td><td>${s.Fri}</td><td>${s.Sat}</td>
+                    <td class="${statusClass}">${avg}%</td>
+                    <td><span style="font-size:0.7rem; padding:4px 8px; border-radius:4px; background:var(--border);">${avg >= 80 ? 'EXCELLENT' : 'REVIEW'}</span></td>
+                </tr>`;
+            });
+            body.innerHTML = html;
+        }
+
+        // Initialize
+        loadWeeklyData();
     </script>
 </body>
 </html>
