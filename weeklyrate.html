@@ -212,7 +212,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, onSnapshot, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = { 
             apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU", 
@@ -230,29 +230,34 @@
 
         function initSync() {
             try {
-                const startRange = new Date();
-                startRange.setDate(startRange.getDate() - 7);
-                startRange.setHours(0,0,0,0);
+                // Pinapunta natin ang date sa Sunday (start of week) para mahatak ang logs ng March 24
+                const now = new Date();
+                const startOfWeek = new Date(now);
+                startOfWeek.setDate(now.getDate() - now.getDay()); 
+                startOfWeek.setHours(0, 0, 0, 0);
 
-                document.getElementById('date-label').innerText = `LIVE: ${startRange.toLocaleDateString()} - ${new Date().toLocaleDateString()}`;
+                document.getElementById('date-label').innerText = `CURRENT WEEK: ${startOfWeek.toLocaleDateString()} - ${now.toLocaleDateString()}`;
 
+                // Simple query para sigurado (removed orderBy for troubleshooting)
                 const q = query(
                     collection(db, "attendance"),
-                    where("timestamp", ">=", Timestamp.fromDate(startRange)),
-                    orderBy("timestamp", "desc")
+                    where("timestamp", ">=", Timestamp.fromDate(startOfWeek))
                 );
 
-                // Added error handler to onSnapshot to prevent "Uncaught in promise"
                 onSnapshot(q, (snapshot) => {
                     const userStats = {};
                     let totalFleetVisits = 0;
 
+                    console.log("Found records:", snapshot.size);
+
                     snapshot.forEach(doc => {
                         const d = doc.data();
-                        // Aligned with monitoring dashboard fields
-                        const name = d.staffMember || d.name || "Unknown";
+                        
+                        // Dynamic checking ng name fields para tumugma sa Monitoring view
+                        const name = d.staffMember || d.name || d.staffName || "Unknown";
                         const action = (d.action || d.type || "").toLowerCase();
 
+                        // Bilangin kung Check-in at hindi Admin
                         if (!admins.includes(name) && (action.includes("in") || action.includes("check"))) {
                             userStats[name] = (userStats[name] || 0) + 1;
                             totalFleetVisits++;
@@ -262,13 +267,12 @@
                     refreshDashboard(userStats, totalFleetVisits);
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('main-ui').style.display = 'block';
-                    console.log("iMerch Performance: Stable & Operational.");
                 }, (error) => {
-                    console.warn("Message Channel Silenced:", error.message);
+                    console.error("Firebase Error:", error);
                 });
 
             } catch (err) {
-                console.error("Critical Deployment Error:", err);
+                console.error("Setup Error:", err);
             }
         }
 
