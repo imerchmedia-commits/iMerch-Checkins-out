@@ -1,3 +1,4 @@
+![iMerch Header](path/to/your/header-banner.png)
 Markdown
 # 🏢 iMerch-Checkins-out
 ### *Precision Attendance & Workforce Monitoring Ecosystem*
@@ -63,13 +64,3 @@ This software and its source code are the exclusive property of iMerch Media Inc
 
 © 2026 iMerch Media Inc. | Developed by Ron Sarmenta
 
-
----
-
-### Why this is "Classy":
-1.  **Gold/Red Badges:** These colors suggest authority and professional quality.
-2.  **Clean Tables:** It avoids "walls of text" by organizing the tech stack into a readable table.
-3.  **Professional Quotes:** Using an "Executive Overview" and quotes makes it feel like a high-end corporate product.
-4.  **Security Focus:** Mentioning "Zero-Trust" and "RBAC" shows that the code is built with high standards.
-
-**Would you like me to generate a sleek banner image to put at the very top of this R
