@@ -3,66 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch - Weekly Performance Index</title>
+    <title>iMerch - Weekly Summary Monitoring</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #d90429; --border: #30363d; --secondary-text: #8b949e; --green: #238636; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        .glass-panel { background: rgba(22, 27, 34, 0.95); border: 1px solid var(--border); border-radius: 12px; padding: 25px; border-top: 5px solid var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 1200px; margin: 0 auto; }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; flex-wrap: wrap; gap: 15px; }
-        .title-area h2 { margin: 0; font-size: 1.2rem; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; }
-        .btn-export { background: var(--green); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 800; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
-        .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .summary-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: center; }
-        .summary-val { display: block; font-size: 1.5rem; font-weight: 900; color: #fff; }
-        .chart-box { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; margin-bottom: 30px; height: 300px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        th { text-align: left; padding: 15px; color: var(--secondary-text); border-bottom: 2px solid var(--border); text-transform: uppercase; font-size: 0.7rem; }
-        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.85rem; vertical-align: middle; }
-        .progress-bg { width: 100px; height: 8px; background: #30363d; border-radius: 10px; overflow: hidden; display: inline-block; }
-        .progress-fill { height: 100%; transition: width 1s; border-radius: 10px; }
+        :root { 
+            --bg: #0d1117; --card: #161b22; --text: #c9d1d9; 
+            --accent: #d90429; --border: #30363d; 
+            --green: #238636; --yellow: #d29922; --red: #f85149;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        
+        /* Summary Cards Style (Gaya ng Monitoring Dashboard) */
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { 
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px; 
+            padding: 25px; text-align: center; position: relative; overflow: hidden;
+            transition: 0.3s;
+        }
+        .stat-card.excellent { border-top: 6px solid var(--green); }
+        .stat-card.good { border-top: 6px solid var(--yellow); }
+        .stat-card.followup { border-top: 6px solid var(--red); }
+        
+        .stat-val { display: block; font-size: 3rem; font-weight: 900; margin: 10px 0; color: #fff; }
+        .stat-label { font-size: 0.8rem; font-weight: 800; color: #8b949e; text-transform: uppercase; letter-spacing: 1.5px; }
+        
+        .glass-panel { 
+            background: rgba(22, 27, 34, 0.95); border: 1px solid var(--border); border-radius: 12px; 
+            padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 1200px; margin: 0 auto;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; padding: 15px; color: #8b949e; border-bottom: 2px solid var(--border); font-size: 0.75rem; text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: 500; }
+        
+        .progress-bar { width: 100px; height: 8px; background: #30363d; border-radius: 5px; display: inline-block; overflow: hidden; margin-right: 10px; }
+        .progress-fill { height: 100%; transition: 1s; }
+
         #loader { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
     </style>
 </head>
 <body>
 
     <div id="loader">
-        <i class="fas fa-sync fa-spin fa-3x" style="color: var(--accent); margin-bottom: 20px;"></i>
-        <p style="font-size: 0.75rem; letter-spacing: 3px; font-weight: 800;">SYNCING iMERCH WEEKLY DATA...</p>
+        <i class="fas fa-chart-pie fa-spin fa-3x" style="color: var(--accent)"></i>
+        <p style="margin-top:20px; font-weight:800; letter-spacing:2px;">LOADING WEEKLY RATE...</p>
     </div>
 
     <div class="glass-panel" id="main-ui" style="display:none;">
-        <div class="header-flex">
-            <div class="title-area">
-                <h2><i class="fas fa-chart-line"></i> Weekly Performance Index</h2>
-                <div style="font-size: 0.65rem; color: var(--green); margin-top:5px;"><i class="fas fa-circle"></i> LIVE STATUS</div>
-            </div>
-            <div style="text-align: right;">
-                <div id="date-label" style="font-size: 0.65rem; color: var(--secondary-text); margin-bottom: 8px; font-weight: 700;"></div>
-                <button class="btn-export" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXPORT REPORT</button>
-            </div>
-        </div>
-
-        <div class="stats-summary">
-            <div class="summary-card"><span class="summary-val" id="top-total-visits">0</span><span style="font-size: 0.65rem; color: var(--secondary-text);">Total Weekly Logs</span></div>
-            <div class="summary-card"><span class="summary-val" id="top-active-staff">0</span><span style="font-size: 0.65rem; color: var(--secondary-text);">Staff Active</span></div>
-            <div class="summary-card"><span class="summary-val" id="top-weekly-avg">0%</span><span style="font-size: 0.65rem; color: var(--secondary-text);">Avg Coverage Rate</span></div>
-        </div>
+        <h2 style="text-align:center; color:var(--accent); letter-spacing:2px; font-weight:900;">iMERCH WEEKLY PERFORMANCE SUMMARY</h2>
+        <p id="date-range" style="text-align:center; font-size:0.7rem; color:#8b949e; margin-bottom:30px; font-weight:bold;"></p>
         
-        <div class="chart-box"><canvas id="weeklyPerformanceChart"></canvas></div>
+        <div class="summary-grid">
+            <div class="stat-card excellent">
+                <span class="stat-label">EXCELLENT (90%+)</span>
+                <span class="stat-val" id="count-excellent">0</span>
+            </div>
+            <div class="stat-card good">
+                <span class="stat-label">GOOD (70-89%)</span>
+                <span class="stat-val" id="count-good">0</span>
+            </div>
+            <div class="stat-card followup">
+                <span class="stat-label">FOLLOW UP (<70%)</span>
+                <span class="stat-val" id="count-followup">0</span>
+            </div>
+        </div>
 
         <div style="overflow-x: auto;">
-            <table id="performanceData">
+            <table>
                 <thead>
                     <tr>
-                        <th>Staff Member</th>
-                        <th style="text-align: center;">Target</th>
-                        <th style="text-align: center;">Actual</th>
-                        <th>Coverage Rate</th>
+                        <th>Staff Name</th>
+                        <th>Target</th>
+                        <th>Actual</th>
+                        <th>Weekly Rate</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -71,115 +86,75 @@
         </div>
     </div>
 
-    <script>
-        const firebaseConfig = { 
-            apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU", 
-            authDomain: "imerch-checkins-out.firebaseapp.com", 
-            projectId: "imerch-checkins-out",
-            appId: "1:842279761036:web:1d3889999612d602f337a9"
-        };
+<script>
+    const firebaseConfig = { 
+        apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU", 
+        authDomain: "imerch-checkins-out.firebaseapp.com", 
+        projectId: "imerch-checkins-out",
+        appId: "1:842279761036:web:1d3889999612d602f337a9"
+    };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const WEEKLY_TARGET = 36;
-        const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
-        let chartInstance = null;
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const TARGET = 36;
+    const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
-        function initSync() {
-            const now = new Date();
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay()); 
-            startOfWeek.setHours(0, 0, 0, 0);
+    function init() {
+        const start = new Date(); 
+        start.setDate(start.getDate() - start.getDay()); 
+        start.setHours(0,0,0,0);
+        document.getElementById('date-range').innerText = `RUNNING WEEK: ${start.toLocaleDateString()} TO ${new Date().toLocaleDateString()}`;
 
-            document.getElementById('date-label').innerText = `WEEK: ${startOfWeek.toLocaleDateString()} - ${now.toLocaleDateString()}`;
+        db.collection("attendance").onSnapshot(snap => {
+            const stats = {};
+            let countExc = 0, countGood = 0, countFollow = 0;
 
-            // DIAGNOSTIC LOG:
-            console.log("System Date Start:", startOfWeek);
+            snap.forEach(doc => {
+                const d = doc.data();
+                const logD = d.timestamp?.toDate ? d.timestamp.toDate() : new Date(d.timestamp);
+                const name = d.staffName || d.name || d.staffMember;
 
-            db.collection("attendance").onSnapshot((snapshot) => {
-                console.log("Total Documents Found:", snapshot.size);
-                
-                const userStats = {};
-                let totalFleetVisits = 0;
-
-                snapshot.forEach(doc => {
-                    const d = doc.data();
-                    
-                    // Convert Timestamp safely
-                    let logD = d.timestamp?.toDate ? d.timestamp.toDate() : new Date(d.timestamp);
-                    
-                    // Field Detection (checks all possible field names)
-                    const name = d.staffName || d.name || d.staffMember || d.User || d.Staff;
-                    
-                    if (logD >= startOfWeek && name && !admins.includes(name)) {
-                        userStats[name] = (userStats[name] || 0) + 1;
-                        totalFleetVisits++;
-                    }
-                });
-
-                console.log("Filtered Logs for UI:", totalFleetVisits);
-                updateUI(userStats, totalFleetVisits);
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('main-ui').style.display = 'block';
-            }, err => {
-                console.error("Firebase Error:", err.message);
-                alert("Firebase Error: " + err.message);
+                if (logD >= start && name && !admins.includes(name)) {
+                    stats[name] = (stats[name] || 0) + 1;
+                }
             });
-        }
 
-        function updateUI(stats, totalVisits) {
             const tbody = document.getElementById('tableBody');
-            const sortedStaff = Object.keys(stats).sort((a,b) => stats[b] - stats[a]);
-            let rows = "", totalPctSum = 0;
-            const labels = [], dataPoints = [], barColors = [];
+            let rows = "";
+            const sortedNames = Object.keys(stats).sort((a,b) => stats[b] - stats[a]);
 
-            sortedStaff.forEach(staff => {
-                const actual = stats[staff];
-                const pct = Math.min((actual / WEEKLY_TARGET) * 100, 100).toFixed(0);
-                totalPctSum += parseInt(pct);
+            sortedNames.forEach(name => {
+                const act = stats[name];
+                const pct = Math.min((act / TARGET) * 100, 100).toFixed(0);
+                let clr = '#f85149', status = 'FOLLOW UP';
 
-                let color = '#d90429'; 
-                let status = 'FOLLOW UP';
-                if(pct >= 90) { color = '#238636'; status = 'EXCELLENT'; }
-                else if(pct >= 70) { color = '#d29922'; status = 'GOOD'; }
-
-                labels.push(staff.split(/[. ]/)[0]); 
-                dataPoints.push(actual);
-                barColors.push(color);
+                if (pct >= 90) { clr = '#238636'; status = 'EXCELLENT'; countExc++; }
+                else if (pct >= 70) { clr = '#d29922'; status = 'GOOD'; countGood++; }
+                else { countFollow++; }
 
                 rows += `<tr>
-                    <td style="font-weight:800;color:#fff">${staff.toUpperCase()}</td>
-                    <td style="text-align:center;">${WEEKLY_TARGET}</td>
-                    <td style="text-align:center;font-weight:900;color:var(--accent)">${actual}</td>
+                    <td><b style="color:#fff">${name.toUpperCase()}</b></td>
+                    <td>${TARGET}</td>
+                    <td style="color:var(--accent); font-weight:900">${act}</td>
                     <td>
-                        <div class="progress-bg"><div class="progress-fill" style="width:${pct}%; background:${color}"></div></div>
-                        <span style="font-weight:900;margin-left:5px;font-size:0.75rem">${pct}%</span>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%; background:${clr}"></div></div>
+                        <span style="font-weight:bold">${pct}%</span>
                     </td>
-                    <td style="font-weight:900; color: ${color}; font-size: 0.7rem;">${status}</td>
+                    <td style="color:${clr}; font-weight:900; font-size:0.7rem">${status}</td>
                 </tr>`;
             });
 
-            document.getElementById('top-total-visits').innerText = totalVisits;
-            document.getElementById('top-active-staff').innerText = sortedStaff.length;
-            const avg = sortedStaff.length > 0 ? (totalPctSum / sortedStaff.length).toFixed(0) : 0;
-            document.getElementById('top-weekly-avg').innerText = avg + "%";
-            tbody.innerHTML = rows || '<tr><td colspan="5" style="text-align:center;padding:40px;opacity:0.5">No fleet logs found for this week.</td></tr>';
+            document.getElementById('count-excellent').innerText = countExc;
+            document.getElementById('count-good').innerText = countGood;
+            document.getElementById('count-followup').innerText = countFollow;
             
-            if (chartInstance) chartInstance.destroy();
-            const ctx = document.getElementById('weeklyPerformanceChart').getContext('2d');
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: labels, datasets: [{ data: dataPoints, backgroundColor: barColors, borderRadius: 5 }] },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#8b949e' } }, x: { ticks: { color: '#8b949e', font: { size: 9, weight: 'bold' } } } } }
-            });
-        }
+            tbody.innerHTML = rows || '<tr><td colspan="5" style="text-align:center; opacity:0.5">No logs found for this week.</td></tr>';
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('main-ui').style.display = 'block';
+        });
+    }
 
-        function exportToExcel() {
-            const wb = XLSX.utils.table_to_book(document.getElementById("performanceData"));
-            XLSX.writeFile(wb, `iMerch_Weekly_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
-        }
-
-        window.onload = initSync;
-    </script>
+    window.onload = init;
+</script>
 </body>
 </html>
