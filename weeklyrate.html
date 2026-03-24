@@ -113,7 +113,7 @@
         }
         td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.85rem; vertical-align: middle; }
 
-        .staff-name { font-weight: 800; color: #fff; }
+        .staff-name { font-weight: 800; color: #fff; text-transform: uppercase; }
         .log-count { font-family: 'Courier New', monospace; font-weight: 900; font-size: 1.1rem; color: var(--accent); }
         .avg-label { font-size: 0.8rem; font-weight: 700; color: var(--secondary-text); }
 
@@ -194,7 +194,9 @@
         const firebaseConfig = { 
             apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU", 
             authDomain: "imerch-checkins-out.firebaseapp.com", 
-            projectId: "imerch-checkins-out" 
+            projectId: "imerch-checkins-out",
+            storageBucket: "imerch-checkins-out.firebasestorage.app",
+            appId: "1:842279761036:web:1d3889999612d602f337a9"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -243,15 +245,15 @@
 
             sortedKeys.forEach(staff => {
                 const total = stats[staff];
-                const dailyAvg = (total / 6).toFixed(1); // Calculation for 6 working days
+                const dailyAvg = (total / 6).toFixed(1); 
                 const pct = Math.min((total / WEEKLY_TARGET) * 100, 100).toFixed(0);
                 
-                // Dynamic Color Logic
-                let color = var('--red');
-                if(pct >= 90) color = '#238636';
-                else if(pct >= 70) color = '#d29922';
-                else color = '#d90429';
+                // Dynamic Color Logic based on Performance
+                let color = '#d90429'; // Default Red
+                if(pct >= 90) color = '#238636'; // Green
+                else if(pct >= 70) color = '#d29922'; // Orange
 
+                // Full name for table, First name for Chart to avoid overcrowding
                 labels.push(staff.split(' ')[0]);
                 dataPoints.push(total);
                 barColors.push(color);
@@ -272,7 +274,7 @@
                     </tr>`;
             });
 
-            tbody.innerHTML = rows;
+            tbody.innerHTML = rows || '<tr><td colspan="4" style="text-align:center; padding:40px; opacity:0.5;">No field data recorded in the last 7 days.</td></tr>';
             updateChart(labels, dataPoints, barColors);
         }
 
@@ -297,7 +299,14 @@
                     maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
-                        tooltip: { backgroundColor: '#161b22', titleColor: '#d90429', bodyFont: { weight: 'bold' } }
+                        tooltip: { 
+                            backgroundColor: '#161b22', 
+                            titleColor: '#d90429', 
+                            bodyFont: { weight: 'bold' },
+                            callbacks: {
+                                label: function(context) { return `Total Logs: ${context.raw}`; }
+                            }
+                        }
                     },
                     scales: {
                         y: { 
@@ -306,7 +315,10 @@
                             grid: { color: 'rgba(255,255,255,0.05)' }, 
                             ticks: { color: '#8b949e', font: { weight: 'bold' } } 
                         },
-                        x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 10, weight: 'bold' } } }
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { color: '#8b949e', font: { size: 10, weight: 'bold' } } 
+                        }
                     }
                 }
             });
@@ -319,6 +331,7 @@
             XLSX.writeFile(workbook, `iMerch_Weekly_Analytics_${dateStr}.xlsx`);
         };
 
+        // Start Sync on Load
         initSync();
     </script>
 </body>
