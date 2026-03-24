@@ -3,184 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Coverage Summary Monitoring</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>iMerch | Weekly Coverage Pulse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
+            --imerch-red: #E11D48;
+            --imerch-dark: #1F2937;
+            --imerch-slate: #6B7280;
+            --imerch-green: #10B981;
             --imerch-gold: #D4AF37;
-            --imerch-dark: #1A1A1A;
-            --imerch-slate: #2D3436;
-            --bg-gray: #F8F9FA;
-            --white: #FFFFFF;
+            --bg-body: #F9FAFB;
+            --card-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
         }
 
         body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background-color: var(--bg-gray);
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
             margin: 0;
             color: var(--imerch-dark);
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* --- TOP NAVIGATION BAR --- */
-        .top-nav {
-            background: var(--imerch-dark);
-            padding: 15px 40px;
+        /* --- HEADER --- */
+        .header-container {
+            background-color: white;
+            padding: 20px 50px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: var(--white);
-            border-bottom: 3px solid var(--imerch-gold);
+            border-bottom: 2px solid #E5E7EB;
         }
 
-        /* --- FILTER SECTION (Calendar & Search) --- */
-        .filter-bar {
-            background: var(--white);
-            padding: 20px 40px;
+        .imerch-branding { font-size: 24px; font-weight: 700; }
+        .imerch-red-text { color: var(--imerch-red); }
+
+        .operational-status-pill {
+            background-color: #ECFDF5;
+            color: var(--imerch-green);
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
             display: flex;
-            gap: 20px;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            gap: 8px;
+        }
+        .status-dot { height: 10px; width: 10px; background-color: var(--imerch-green); border-radius: 50%; display: inline-block; }
+
+        /* --- DASHBOARD WRAPPER --- */
+        .dashboard-wrapper { padding: 40px 50px; }
+
+        .title-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
         }
 
-        .filter-group { display: flex; flex-direction: column; }
-        .filter-group label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: var(--imerch-slate); }
+        .main-title h1 { font-size: 48px; margin: 0; letter-spacing: -2px; color: #111827; }
         
-        input[type="date"], select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
+        /* Calendar Style */
+        .calendar-box {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #E5E7EB;
+        }
+        .calendar-box input {
+            border: none;
+            font-family: 'Inter';
+            font-weight: 600;
+            color: var(--imerch-dark);
             outline: none;
+            cursor: pointer;
         }
 
         /* --- SUMMARY CARDS --- */
-        .dashboard-container { padding: 30px 40px; }
-
-        .summary-grid {
+        .pulse-summary-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
+            gap: 30px;
+            margin-bottom: 50px;
         }
 
         .summary-card {
-            background: var(--white);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-            border-left: 4px solid var(--imerch-gold);
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            border-top: 4px solid var(--imerch-red);
         }
 
-        .summary-card h4 { margin: 0; font-size: 13px; color: #7f8c8d; text-transform: uppercase; }
-        .summary-card .value { font-size: 28px; font-weight: bold; margin: 10px 0; }
+        .summary-card h4 { margin: 0; font-size: 13px; text-transform: uppercase; color: var(--imerch-slate); }
+        .summary-card .value { font-size: 42px; font-weight: 700; margin: 15px 0 8px 0; color: #111827; }
+        .summary-card.coor h3 { font-size: 24px; margin: 15px 0 10px 0; }
+        .summary-card.coor p { color: var(--imerch-gold); font-weight: 600; }
 
-        /* --- COORDINATOR TABLE --- */
-        .table-container {
-            background: var(--white);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        /* --- TABLE --- */
+        .matrix-container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
         }
+
+        .matrix-header { display: flex; justify-content: space-between; margin-bottom: 25px; }
+        .live-matrix-badge { background: var(--imerch-red); color: white; padding: 5px 12px; border-radius: 50px; font-size: 11px; font-weight: 600; }
 
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px; background: #fdfdfd; border-bottom: 2px solid #eee; font-size: 14px; }
-        td { padding: 15px; border-bottom: 1px solid #f1f1f1; font-size: 14px; }
+        th { text-align: left; padding: 20px 15px; border-bottom: 2px solid #E5E7EB; color: var(--imerch-slate); font-size: 12px; text-transform: uppercase; }
+        td { padding: 18px 15px; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
 
-        /* Percentage Badge Styles */
-        .coverage-badge {
-            padding: 6px 12px;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 12px;
-        }
-        .high { background: #E3F9E5; color: #1DB954; }
-        .mid { background: #FFF4E5; color: #FF9500; }
-        .low { background: #FFE5E5; color: #FF3B30; }
-
+        .performance-badge { padding: 6px 14px; border-radius: 50px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+        .status-dot-table { height: 8px; width: 8px; border-radius: 50%; display: inline-block; }
+        .high { background-color: #ECFDF5; color: var(--imerch-green); }
+        .high .status-dot-table { background-color: var(--imerch-green); }
+        .low { background-color: #FEF2F2; color: var(--imerch-red); }
+        .low .status-dot-table { background-color: var(--imerch-red); }
     </style>
 </head>
 <body>
 
-    <nav class="top-nav">
-        <div><strong>iMerch</strong> | Coverage Dashboard</div>
-        <div id="realtime-clock">Loading Time...</div>
-    </nav>
-
-    <div class="filter-bar">
-        <div class="filter-group">
-            <label>Select Week Start</label>
-            <input type="date" id="date-picker">
+    <header class="header-container">
+        <div class="imerch-branding">IMERCH<span class="imerch-red-text">MEDIA</span></div>
+        <div class="operational-status-pill">
+            <span class="status-dot"></span>
+            OPERATIONS LIVE: <span id="action-count">0</span> ACTIONS
         </div>
-        <div class="filter-group">
-            <label>Coordinator</label>
-            <select id="coordinator-select">
-                <option value="all">All Coordinators</option>
-                <option value="baste">Coordinator Baste</option>
-                </select>
-        </div>
-        <button style="margin-top: 18px; padding: 10px 20px; background: var(--imerch-dark); color: white; border: none; border-radius: 6px; cursor: pointer;">
-            Apply Filter
-        </button>
-    </div>
+    </header>
 
-    <div class="dashboard-container">
-        <div class="summary-grid">
-            <div class="summary-card">
-                <h4>Total Stores Visited</h4>
-                <div class="value" id="total-visited">0</div>
+    <div class="dashboard-wrapper">
+        <div class="title-section">
+            <div class="main-title">
+                <h1>Operational Pulse</h1>
+                <p id="display-date">Tuesday, March 24th 2026</p>
             </div>
-            <div class="summary-card">
-                <h4>Active Coordinators</h4>
-                <div class="value" id="active-coors">0</div>
-            </div>
-            <div class="summary-card">
-                <h4>Weekly Target %</h4>
-                <div class="value" id="weekly-avg">0%</div>
-            </div>
-            <div class="summary-card">
-                <h4>Pending Reports</h4>
-                <div class="value" style="color: #e74c3c;">0</div>
+            <div class="calendar-box">
+                <i class="far fa-calendar-alt" style="color: var(--imerch-red);"></i>
+                <input type="date" id="pulse-calendar">
             </div>
         </div>
 
-        <div class="table-container">
-            <h3><i class="fas fa-users-viewfinder"></i> Real-time Coverage Tracking</h3>
-            <table id="monitoring-table">
+        <div class="pulse-summary-grid">
+            <div class="summary-card">
+                <h4>Data Throughput</h4>
+                <div class="value" id="visits-volume">0</div>
+                <p>Daily interaction volume</p>
+            </div>
+            
+            <div class="summary-card">
+                <h4>Active Force</h4>
+                <div class="value" id="active-force">0</div>
+                <p>Personnel currently deployed</p>
+            </div>
+            
+            <div class="summary-card coor">
+                <h4>Top Coordinator</h4>
+                <h3 id="top-coor-name">---</h3>
+                <p id="top-coor-stat">0 Stores Visited Today</p>
+            </div>
+            
+            <div class="summary-card">
+                <h4>Field Compliance</h4>
+                <div class="value" id="overall-coverage">0%</div>
+                <p>Total operational rate</p>
+            </div>
+        </div>
+
+        <div class="matrix-container">
+            <div class="matrix-header">
+                <h2>Personnel Performance Matrix</h2>
+                <div class="live-matrix-badge">LIVE MATRIX</div>
+            </div>
+            <table id="performance-table">
                 <thead>
                     <tr>
                         <th>Coordinator</th>
-                        <th>Target (Daily/Weekly)</th>
                         <th>Actual Visits</th>
-                        <th>Weekly Coverage Rate</th>
-                        <th>Performance Status</th>
+                        <th>Target (Daily)</th>
+                        <th>Coverage Rate</th>
+                        <th>Performance</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="matrix-data">
                     </tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // 1. Live Clock for Management Dashboard
-        setInterval(() => {
-            document.getElementById('realtime-clock').innerText = new Date().toLocaleString();
-        }, 1000);
+        // 1. Initialize Calendar
+        const calendar = document.getElementById('pulse-calendar');
+        calendar.valueAsDate = new Date();
 
-        // 2. Calculation Engine
-        function calculateRates(actual) {
-            const weeklyTarget = 42; // Base on your 6 stores x 7 days rule
-            let rate = (actual / weeklyTarget) * 100;
-            return rate.toFixed(1);
+        // 2. Realtime Tallying Logic (Placeholder for your Firebase sync)
+        function syncWithMonitoring(selectedDate) {
+            // Dito ikakabit ang logic na magbabasa sa monitoring.html data
+            // Sample computation based on your 6-stores-per-day rule:
+            console.log("Syncing tally for: " + selectedDate);
         }
 
-        // 3. Status Logic for "Classy" Badges
-        function getBadge(rate) {
-            if (rate >= 90) return '<span class="coverage-badge high">EXCELLENT</span>';
-            if (rate >= 75) return '<span class="coverage-badge mid">GOOD</span>';
-            return '<span class="coverage-badge low">UNDERPERFORMING</span>';
-        }
+        calendar.addEventListener('change', (e) => {
+            syncWithMonitoring(e.target.value);
+            // Update the display date text
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('display-date').innerText = new Date(e.target.value).toLocaleDateString(undefined, options);
+        });
 
-        // Logic to connect with Firebase goes here...
+        // Initial Load
+        syncWithMonitoring(calendar.value);
     </script>
 </body>
 </html>
