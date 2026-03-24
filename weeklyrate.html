@@ -162,15 +162,15 @@
     <div class="glass-panel" id="main-ui" style="display:none;">
         <div class="header-flex">
             <div class="title-area">
-                <h2><i class="fas fa-chart-simple"></i> Coverage Analytics</h2>
+                <h2><i class="fas fa-chart-simple"></i> Weekly Performance Index</h2>
                 <div class="sync-indicator">
-                    <span class="dot"></span> REAL-TIME FIREBASE SYNC
+                    <span class="dot"></span> REAL-TIME MONITORING ACTIVE
                 </div>
             </div>
             <div style="text-align: right;">
                 <div id="date-label" style="font-size: 0.65rem; color: var(--secondary-text); margin-bottom: 8px; font-weight: 700;"></div>
                 <button class="btn-export" onclick="exportToExcel()">
-                    <i class="fas fa-file-excel"></i> DOWNLOAD .XLSX REPORT
+                    <i class="fas fa-file-excel"></i> EXPORT WEEKLY REPORT
                 </button>
             </div>
         </div>
@@ -178,15 +178,15 @@
         <div class="stats-summary">
             <div class="summary-card">
                 <span class="summary-val" id="top-total-visits">0</span>
-                <span class="summary-lbl">Total Stores Visited</span>
+                <span class="summary-lbl">Fleet Total Visits</span>
             </div>
             <div class="summary-card">
                 <span class="summary-val" id="top-active-staff">0</span>
-                <span class="summary-lbl">Active Personnel</span>
+                <span class="summary-lbl">Personnel Active</span>
             </div>
             <div class="summary-card">
                 <span class="summary-val" id="top-weekly-avg">0%</span>
-                <span class="summary-lbl">Fleet Performance</span>
+                <span class="summary-lbl">Average Coverage</span>
             </div>
         </div>
         
@@ -198,11 +198,11 @@
             <table id="performanceData">
                 <thead>
                     <tr>
-                        <th>Coordinator</th>
-                        <th style="text-align: center;">Target (7D)</th>
-                        <th style="text-align: center;">Actual Visits</th>
-                        <th>Weekly Coverage Rate</th>
-                        <th>Performance Status</th>
+                        <th>Personnel</th>
+                        <th style="text-align: center;">Weekly Target</th>
+                        <th style="text-align: center;">Actual Logs</th>
+                        <th>Coverage Rate</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -229,39 +229,47 @@
         let chartInstance = null;
 
         function initSync() {
-            const startRange = new Date();
-            startRange.setDate(startRange.getDate() - 7);
-            startRange.setHours(0,0,0,0);
+            try {
+                const startRange = new Date();
+                startRange.setDate(startRange.getDate() - 7);
+                startRange.setHours(0,0,0,0);
 
-            document.getElementById('date-label').innerText = `PERIOD: ${startRange.toLocaleDateString()} - ${new Date().toLocaleDateString()}`;
+                document.getElementById('date-label').innerText = `LIVE: ${startRange.toLocaleDateString()} - ${new Date().toLocaleDateString()}`;
 
-            const q = query(
-                collection(db, "attendance"),
-                where("timestamp", ">=", Timestamp.fromDate(startRange)),
-                orderBy("timestamp", "desc")
-            );
+                const q = query(
+                    collection(db, "attendance"),
+                    where("timestamp", ">=", Timestamp.fromDate(startRange)),
+                    orderBy("timestamp", "desc")
+                );
 
-            onSnapshot(q, (snapshot) => {
-                const userStats = {};
-                let totalFleetVisits = 0;
+                // Added error handler to onSnapshot to prevent "Uncaught in promise"
+                onSnapshot(q, (snapshot) => {
+                    const userStats = {};
+                    let totalFleetVisits = 0;
 
-                snapshot.forEach(doc => {
-                    const d = doc.data();
-                    // Sinisiguro na makuha ang name field kahit anong variation (name o staffMember)
-                    const name = d.name || d.staffMember || d.staffName || "Unknown";
-                    const type = (d.type || d.action || "").toLowerCase();
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        // Aligned with monitoring dashboard fields
+                        const name = d.staffMember || d.name || "Unknown";
+                        const action = (d.action || d.type || "").toLowerCase();
 
-                    // Count logs as visits if not admin and is a check-in type action
-                    if (!admins.includes(name) && (type.includes("in") || type.includes("check"))) {
-                        userStats[name] = (userStats[name] || 0) + 1;
-                        totalFleetVisits++;
-                    }
+                        if (!admins.includes(name) && (action.includes("in") || action.includes("check"))) {
+                            userStats[name] = (userStats[name] || 0) + 1;
+                            totalFleetVisits++;
+                        }
+                    });
+
+                    refreshDashboard(userStats, totalFleetVisits);
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('main-ui').style.display = 'block';
+                    console.log("iMerch Performance: Stable & Operational.");
+                }, (error) => {
+                    console.warn("Message Channel Silenced:", error.message);
                 });
 
-                refreshDashboard(userStats, totalFleetVisits);
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('main-ui').style.display = 'block';
-            });
+            } catch (err) {
+                console.error("Critical Deployment Error:", err);
+            }
         }
 
         function refreshDashboard(stats, totalVisits) {
@@ -282,7 +290,7 @@
                 if(pct >= 90) { color = '#238636'; status = 'EXCELLENT'; }
                 else if(pct >= 70) { color = '#d29922'; status = 'GOOD'; }
 
-                labels.push(staff.split(/[. ]/)[0]); // Get first name or before dot
+                labels.push(staff.split(/[. ]/)[0]); 
                 dataPoints.push(actual);
                 barColors.push(color);
 
@@ -297,7 +305,7 @@
                                 <span class="rate-badge" style="color:${color}; border-color:${color}">${pct}%</span>
                             </div>
                         </td>
-                        <td style="font-weight: 900; color: ${color}; font-size: 0.7rem; letter-spacing: 1px;">${status}</td>
+                        <td style="font-weight: 900; color: ${color}; font-size: 0.7rem;">${status}</td>
                     </tr>`;
             });
 
@@ -306,7 +314,7 @@
             const avgPerf = sortedStaff.length > 0 ? (totalPercentages / sortedStaff.length).toFixed(0) : 0;
             document.getElementById('top-weekly-avg').innerText = avgPerf + "%";
 
-            tbody.innerHTML = rows || '<tr><td colspan="5" style="text-align:center; padding:40px; opacity:0.5;">Waiting for live field data...</td></tr>';
+            tbody.innerHTML = rows || '<tr><td colspan="5" style="text-align:center; padding:40px; opacity:0.5;">Awaiting Real-time Logs...</td></tr>';
             updateChart(labels, dataPoints, barColors);
         }
 
@@ -342,7 +350,7 @@
 
         window.exportToExcel = function() {
             const table = document.getElementById("performanceData");
-            const workbook = XLSX.utils.table_to_book(table, { sheet: "Performance_Report" });
+            const workbook = XLSX.utils.table_to_book(table, { sheet: "Weekly_Performance" });
             XLSX.writeFile(workbook, `iMerch_Weekly_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
