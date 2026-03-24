@@ -198,10 +198,11 @@
             <table id="performanceData">
                 <thead>
                     <tr>
-                        <th>Field Staff</th>
-                        <th style="text-align: center;">Total Logs (7D)</th>
-                        <th style="text-align: center;">Daily Avg</th>
-                        <th>Weekly Performance</th>
+                        <th>Coordinator</th>
+                        <th style="text-align: center;">Target (7D)</th>
+                        <th style="text-align: center;">Actual Visits</th>
+                        <th>Weekly Coverage Rate</th>
+                        <th>Performance Status</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -246,9 +247,11 @@
 
                 snapshot.forEach(doc => {
                     const d = doc.data();
-                    const name = d.name || d.staffName || "Unknown";
-                    const type = (d.type || "").toLowerCase();
+                    // Sinisiguro na makuha ang name field kahit anong variation (name o staffMember)
+                    const name = d.name || d.staffMember || d.staffName || "Unknown";
+                    const type = (d.type || d.action || "").toLowerCase();
 
+                    // Count logs as visits if not admin and is a check-in type action
                     if (!admins.includes(name) && (type.includes("in") || type.includes("check"))) {
                         userStats[name] = (userStats[name] || 0) + 1;
                         totalFleetVisits++;
@@ -270,32 +273,31 @@
             let totalPercentages = 0;
 
             sortedStaff.forEach(staff => {
-                const total = stats[staff];
-                const dailyAvg = (total / 6).toFixed(1); 
-                const pct = Math.min((total / WEEKLY_TARGET) * 100, 100).toFixed(0);
+                const actual = stats[staff];
+                const pct = Math.min((actual / WEEKLY_TARGET) * 100, 100).toFixed(0);
                 totalPercentages += parseInt(pct);
 
                 let color = '#d90429';
-                if(pct >= 90) color = '#238636';
-                else if(pct >= 70) color = '#d29922';
+                let status = 'FOLLOW UP';
+                if(pct >= 90) { color = '#238636'; status = 'EXCELLENT'; }
+                else if(pct >= 70) { color = '#d29922'; status = 'GOOD'; }
 
-                labels.push(staff.split(' ')[0]);
-                dataPoints.push(total);
+                labels.push(staff.split(/[. ]/)[0]); // Get first name or before dot
+                dataPoints.push(actual);
                 barColors.push(color);
 
                 rows += `
                     <tr>
-                        <td class="staff-name">${staff}</td>
-                        <td class="log-count" style="text-align: center;">${total}</td>
-                        <td style="text-align: center; color: var(--secondary-text); font-weight: bold;">
-                            ${dailyAvg} <span style="font-size:0.6rem">LPD</span>
-                        </td>
+                        <td class="staff-name">${staff.toUpperCase()}</td>
+                        <td style="text-align: center; color: var(--secondary-text); font-weight: bold;">${WEEKLY_TARGET}</td>
+                        <td class="log-count" style="text-align: center;">${actual}</td>
                         <td>
                             <div class="progress-container">
                                 <div class="progress-bg"><div class="progress-fill" style="width:${pct}%; background:${color}"></div></div>
                                 <span class="rate-badge" style="color:${color}; border-color:${color}">${pct}%</span>
                             </div>
                         </td>
+                        <td style="font-weight: 900; color: ${color}; font-size: 0.7rem; letter-spacing: 1px;">${status}</td>
                     </tr>`;
             });
 
@@ -304,7 +306,7 @@
             const avgPerf = sortedStaff.length > 0 ? (totalPercentages / sortedStaff.length).toFixed(0) : 0;
             document.getElementById('top-weekly-avg').innerText = avgPerf + "%";
 
-            tbody.innerHTML = rows || '<tr><td colspan="4" style="text-align:center; padding:40px; opacity:0.5;">Waiting for field check-ins...</td></tr>';
+            tbody.innerHTML = rows || '<tr><td colspan="5" style="text-align:center; padding:40px; opacity:0.5;">Waiting for live field data...</td></tr>';
             updateChart(labels, dataPoints, barColors);
         }
 
@@ -317,11 +319,11 @@
                 data: {
                     labels: l,
                     datasets: [{ 
-                        label: 'Total Logs', 
+                        label: 'Visits', 
                         data: d, 
                         backgroundColor: c, 
                         borderRadius: 5,
-                        barThickness: 25
+                        barThickness: 20
                     }]
                 },
                 options: {
@@ -332,7 +334,7 @@
                     },
                     scales: {
                         y: { beginAtZero: true, max: 45, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b949e' } },
-                        x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 10, weight: 'bold' } } }
+                        x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 9, weight: 'bold' } } }
                     }
                 }
             });
