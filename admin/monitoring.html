@@ -270,7 +270,9 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, query, onSnapshot, orderBy, where, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Global function to switch views
+        /** * CORE UI CONTROLLER
+         * Manages view switching and navigation link states
+         */
         window.switchView = function(view, element) {
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
@@ -278,7 +280,7 @@
             document.getElementById(view + '-view').classList.add('active');
             element.classList.add('active');
 
-            // Force refresh iframes to ensure data is updated
+            // Iframe Refresh Logic to ensure up-to-date data on tab switch
             if(view === 'summary') {
                 const summaryIframe = document.getElementById('summaryIframe');
                 summaryIframe.src = summaryIframe.src;
@@ -305,6 +307,7 @@
             document.getElementById('sync-badge').style.display = 'none';
         }
 
+        // Configuration & Threshold Constants
         const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
         const DAILY_TARGET = 6;
 
@@ -326,25 +329,48 @@
         const dateInput = document.getElementById('dateFilter');
         dateInput.valueAsDate = new Date();
 
+        /** * GEOLOCATION HANDLER
+         * Loads specific staff coordinates into the embedded map frame
+         */
         window.loadStaffMap = function(lat, lng, name) {
             const mapFrame = document.getElementById('main-map');
             document.getElementById('mapText').style.display = 'none';
             mapFrame.style.display = 'block';
+            // Output=embed ensures it loads correctly within the iframe
             mapFrame.src = `https://maps.google.com/maps?q=${lat},${lng}&hl=en&z=14&output=embed`;
             
             const extLink = document.getElementById('externalMapLink');
-            extLink.href = `https://www.google.com/maps?q=${lat},${lng}`;
+            extLink.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
             extLink.style.display = 'inline-block';
-            document.getElementById('mapTitle').innerText = `📍 LOCATION: ${name.split(' ')[0].toUpperCase()}`;
+            document.getElementById('mapTitle').innerText = `📍 LOCATION: ${name.toUpperCase()}`;
         };
 
+        /** * CHART INITIALIZATION
+         * Configures Chart.js instances for Performance and Comparison widgets
+         */
         function initCharts() {
+            // Main Performance Bar Chart (Now with Full Name Support)
             perfChart = new Chart(document.getElementById('performanceChart').getContext('2d'), {
                 type: 'bar',
                 data: { labels: [], datasets: [{ data: [], backgroundColor: '#58a6ff', borderRadius: 5 }] },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
+                options: { 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } }, 
+                        x: { 
+                            grid: { display: false },
+                            ticks: { 
+                                font: { size: 9 }, // Smaller font for long full names
+                                maxRotation: 45,
+                                minRotation: 45 
+                            } 
+                        } 
+                    } 
+                }
             });
 
+            // Yesterday vs Today Comparison Doughnut
             compChart = new Chart(document.getElementById('comparisonChart').getContext('2d'), {
                 type: 'doughnut',
                 data: { labels: ['Today', 'Yesterday'], datasets: [{ data: [0, 0], backgroundColor: ['#58a6ff', '#30363d'], borderWidth: 0 }] },
@@ -352,16 +378,20 @@
             });
         }
 
+        // Authentication State Listener
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
                 initCharts();
                 loadStaffAndMonitor();
-            } else { window.location.href = "../index.html"; }
+            } else { 
+                window.location.href = "../index.html"; 
+            }
         });
 
         async function loadStaffAndMonitor() {
+            // Pre-fetch staff masterlist for name resolution
             const staffSnap = await getDocs(collection(db, "staff_members"));
             staffSnap.forEach(doc => {
                 const d = doc.data();
@@ -373,6 +403,7 @@
         }
 
         async function updateYesterdayStats() {
+            // Helper function to calculate total logs from the previous day
             const y = new Date(); y.setDate(y.getDate() - 1);
             const s = new Date(y.setHours(0,0,0,0)), e = new Date(y.setHours(23,59,59,999));
             const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(s)), where("timestamp", "<=", Timestamp.fromDate(e)));
@@ -382,6 +413,7 @@
         }
 
         function startMonitoring() {
+            // Main Firebase Real-time Listener
             const sel = new Date(dateInput.value);
             const s = new Date(sel.setHours(0,0,0,0)), e = new Date(sel.setHours(23,59,59,999));
             const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(s)), where("timestamp", "<=", Timestamp.fromDate(e)), orderBy("timestamp", "desc"));
@@ -389,6 +421,7 @@
             onSnapshot(q, (snap) => {
                 const newLogs = snap.docs.map(doc => doc.data());
                 
+                // New activity notification logic
                 if (!isInitialLoad && newLogs.length > currentLogs.length) {
                     const badge = document.getElementById('sync-badge');
                     if (!document.getElementById('summary-view').classList.contains('active')) {
@@ -397,7 +430,8 @@
                 }
 
                 currentLogs = newLogs;
-                renderData();
+                renderData(); // Refreshes both Table and Performance Index
+                
                 compChart.data.datasets[0].data[0] = currentLogs.length;
                 compChart.update();
                 document.getElementById('totalLogsToday').innerText = currentLogs.length;
@@ -406,6 +440,9 @@
             });
         }
 
+        /** * DATA RENDERING ENGINE
+         * Synchronizes the real-time log table with the weekly performance charts
+         */
         function renderData() {
             const search = document.getElementById('logSearch').value.toLowerCase();
             const body = document.getElementById('logsBody');
@@ -414,12 +451,15 @@
 
             currentLogs.forEach(log => {
                 const email = (log.email || log.staffEmail || "").toLowerCase();
+                // RESOLVE NAME: Use full name from DB or Registry. Never Split.
                 const name = log.name || log.staffName || staffRegistry[email] || email.split('@')[0] || "Unknown";
                 const branch = log.locationName || log.branch || "---";
                 const type = log.type || "Check-in";
 
+                // Admin Filtering
                 if (adminExclusion.includes(name)) return;
                 
+                // Search Filtering Logic
                 if (name.toLowerCase().includes(search) || branch.toLowerCase().includes(search)) {
                     const time = log.timestamp ? log.timestamp.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '--:--';
                     tableHTML += `<tr>
@@ -430,42 +470,62 @@
                         <td><button onclick="loadStaffMap(${log.latitude}, ${log.longitude}, '${name}')" style="background:var(--card); color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:8px; cursor:pointer;">📍</button></td>
                     </tr>`;
                 }
-                if(type.toLowerCase().includes('in')) counts[name] = (counts[name] || 0) + 1;
+
+                // ANALYTICS SYNC: Build counts using Full Name as key
+                if(type.toLowerCase().includes('in')) {
+                    counts[name] = (counts[name] || 0) + 1;
+                }
             });
 
             body.innerHTML = tableHTML;
+            
+            // Build Performance Index Summary List
             let summaryHTML = "";
             const names = Object.keys(counts);
             names.forEach(name => {
                 const val = counts[name], per = Math.min((val/DAILY_TARGET)*100, 100);
-                let col = "var(--orange)"; if(val === 6) col = "var(--green)"; if(val > 6) col = "var(--red)";
+                let col = "var(--orange)"; 
+                if(val === 6) col = "var(--green)"; 
+                if(val > 6) col = "var(--red)";
+                
                 chartColors.push(col);
                 summaryHTML += `<div style="margin-bottom:12px;">
                     <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:bold; margin-bottom:4px;">
-                        <span>${name}</span><span style="color:${col}">${val}/${DAILY_TARGET}</span>
+                        <span style="text-transform: uppercase;">${name}</span>
+                        <span style="color:${col}">${val}/${DAILY_TARGET}</span>
                     </div>
                     <div style="height:6px; background:var(--border); border-radius:10px;">
-                        <div style="width:${per}%; height:100%; background:${col}; border-radius:10px;"></div>
+                        <div style="width:${per}%; height:100%; background:${col}; border-radius:10px; transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);"></div>
                     </div>
                 </div>`;
             });
-            perfChart.data.labels = names.map(n => n.split(' ')[0]);
+
+            // Update Chart using Full Names array
+            perfChart.data.labels = names; 
             perfChart.data.datasets[0].data = names.map(n => counts[n]);
             perfChart.data.datasets[0].backgroundColor = chartColors;
             perfChart.update();
+
             document.getElementById('presentCount').innerText = names.length;
-            summaryList.innerHTML = summaryHTML;
+            summaryList.innerHTML = summaryHTML || '<div style="text-align:center; padding:20px; font-size:0.7rem; opacity:0.5;">No staff logs today</div>';
         }
 
+        // Global Event Listeners
         document.getElementById('themeToggle').addEventListener('click', () => {
             const b = document.body; b.setAttribute('data-theme', b.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         });
-        document.getElementById('logoutBtnSide').addEventListener('click', () => signOut(auth).then(() => window.location.href = "../index.html"));
+
+        document.getElementById('logoutBtnSide').addEventListener('click', () => {
+            signOut(auth).then(() => window.location.href = "../index.html");
+        });
+
         dateInput.addEventListener('change', () => {
             isInitialLoad = true;
             startMonitoring();
         });
+
         document.getElementById('logSearch').addEventListener('input', renderData);
+
     </script>
 </body>
 </html>
