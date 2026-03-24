@@ -1,5 +1,5 @@
 ![iMerch Header](path/to/your/header-banner.png)
-Markdown
+
 # 🏢 iMerch-Checkins-out
 ### *Precision Attendance & Workforce Monitoring Ecosystem*
 
