@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch - Full Weekly Performance Analytics</title>
+    <title>iMerch - Weekly & Daily Analytics</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -22,7 +22,7 @@
         }
 
         body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            font-family: 'Inter', sans-serif; 
             background: transparent; 
             color: var(--text); 
             margin: 0; 
@@ -115,6 +115,7 @@
 
         .staff-name { font-weight: 800; color: #fff; }
         .log-count { font-family: 'Courier New', monospace; font-weight: 900; font-size: 1.1rem; color: var(--accent); }
+        .avg-label { font-size: 0.8rem; font-weight: 700; color: var(--secondary-text); }
 
         /* Progress Bar */
         .progress-container { display: flex; align-items: center; gap: 12px; min-width: 150px; }
@@ -142,22 +143,22 @@
 <body>
 
     <div id="loader">
-        <i class="fas fa-circle-notch fa-spin fa-2x" style="color: var(--accent);"></i>
-        <p style="margin-top: 15px; font-size: 0.7rem; letter-spacing: 2px;">SYNCING WEEKLY DATABASE...</p>
+        <i class="fas fa-chart-line fa-spin fa-2x" style="color: var(--accent);"></i>
+        <p style="margin-top: 15px; font-size: 0.7rem; letter-spacing: 2px;">CALCULATING PERFORMANCE METRICS...</p>
     </div>
 
     <div class="glass-panel" id="main-ui" style="display:none;">
         <div class="header-flex">
             <div class="title-area">
-                <h2><i class="fas fa-chart-bar"></i> Weekly Performance</h2>
+                <h2><i class="fas fa-medal"></i> Weekly Performance Index</h2>
                 <div class="sync-indicator">
-                    <span class="dot"></span> REALTIME MONITORING ACTIVE
+                    <span class="dot"></span> LIVE SYNC ACTIVE
                 </div>
             </div>
             <div style="text-align: right;">
                 <div id="date-label" style="font-size: 0.65rem; color: var(--secondary-text); margin-bottom: 8px; font-weight: 700;"></div>
                 <button class="btn-export" onclick="exportToExcel()">
-                    <i class="fas fa-file-excel"></i> DOWNLOAD REPORT (.XLSX)
+                    <i class="fas fa-file-excel"></i> EXPORT DETAILED REPORT
                 </button>
             </div>
         </div>
@@ -170,10 +171,10 @@
             <table id="performanceData">
                 <thead>
                     <tr>
-                        <th>Field Personnel</th>
-                        <th style="text-align: center;">Total Logs</th>
-                        <th style="text-align: center;">Target (6D)</th>
-                        <th>Performance Index</th>
+                        <th>Field Staff</th>
+                        <th style="text-align: center;">Total Logs (7D)</th>
+                        <th style="text-align: center;">Daily Average</th>
+                        <th>Weekly Performance</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -182,7 +183,7 @@
         </div>
         
         <div style="margin-top: 20px; font-size: 0.6rem; color: var(--secondary-text); text-align: center; border-top: 1px solid var(--border); padding-top: 15px;">
-            iMerch Media Inc. Performance Tracking System | Established 2009
+            iMerch Media Inc. | Data Intelligence Unit | Established April 23, 2009
         </div>
     </div>
 
@@ -199,7 +200,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const TARGET_LOGS = 36; // Weekly Target (6 per day x 6 days)
+        const WEEKLY_TARGET = 36; // 6 logs x 6 days
         const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
         let chartInstance = null;
 
@@ -208,7 +209,7 @@
             startRange.setDate(startRange.getDate() - 7);
             startRange.setHours(0,0,0,0);
 
-            document.getElementById('date-label').innerText = `PERIOD: ${startRange.toLocaleDateString()} - ${new Date().toLocaleDateString()}`;
+            document.getElementById('date-label').innerText = `DATA RANGE: ${startRange.toLocaleDateString()} - ${new Date().toLocaleDateString()}`;
 
             const q = query(
                 collection(db, "attendance"),
@@ -242,8 +243,14 @@
 
             sortedKeys.forEach(staff => {
                 const total = stats[staff];
-                const pct = Math.min((total / TARGET_LOGS) * 100, 100).toFixed(0);
-                const color = pct >= 90 ? '#238636' : (pct >= 70 ? '#d29922' : '#d90429');
+                const dailyAvg = (total / 6).toFixed(1); // Calculation for 6 working days
+                const pct = Math.min((total / WEEKLY_TARGET) * 100, 100).toFixed(0);
+                
+                // Dynamic Color Logic
+                let color = var('--red');
+                if(pct >= 90) color = '#238636';
+                else if(pct >= 70) color = '#d29922';
+                else color = '#d90429';
 
                 labels.push(staff.split(' ')[0]);
                 dataPoints.push(total);
@@ -253,7 +260,9 @@
                     <tr>
                         <td class="staff-name">${staff}</td>
                         <td class="log-count" style="text-align: center;">${total}</td>
-                        <td style="text-align: center; color: var(--secondary-text); font-weight: 700;">${TARGET_LOGS}</td>
+                        <td class="avg-label" style="text-align: center;">
+                            <span style="color: ${total >= 30 ? '#4ade80' : '#8b949e'}">${dailyAvg} logs/day</span>
+                        </td>
                         <td>
                             <div class="progress-container">
                                 <div class="progress-bg"><div class="progress-fill" style="width:${pct}%; background:${color}"></div></div>
@@ -275,13 +284,28 @@
                 type: 'bar',
                 data: {
                     labels: l,
-                    datasets: [{ label: 'Total Logs', data: d, backgroundColor: c, borderRadius: 6, barThickness: 25 }]
+                    datasets: [{ 
+                        label: 'Weekly Total', 
+                        data: d, 
+                        backgroundColor: c, 
+                        borderRadius: 6,
+                        borderWidth: 1,
+                        borderColor: 'rgba(255,255,255,0.1)'
+                    }]
                 },
                 options: {
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#161b22', titleColor: '#d90429', bodyFont: { weight: 'bold' } }
+                    },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b949e', font: { weight: 'bold' } } },
+                        y: { 
+                            beginAtZero: true, 
+                            max: 40,
+                            grid: { color: 'rgba(255,255,255,0.05)' }, 
+                            ticks: { color: '#8b949e', font: { weight: 'bold' } } 
+                        },
                         x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 10, weight: 'bold' } } }
                     }
                 }
@@ -290,8 +314,9 @@
 
         window.exportToExcel = function() {
             const table = document.getElementById("performanceData");
-            const workbook = XLSX.utils.table_to_book(table, { sheet: "iMerch_Weekly_Report" });
-            XLSX.writeFile(workbook, `iMerch_Weekly_Rate_${new Date().toISOString().split('T')[0]}.xlsx`);
+            const workbook = XLSX.utils.table_to_book(table, { sheet: "iMerch_Performance_Report" });
+            const dateStr = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(workbook, `iMerch_Weekly_Analytics_${dateStr}.xlsx`);
         };
 
         initSync();
