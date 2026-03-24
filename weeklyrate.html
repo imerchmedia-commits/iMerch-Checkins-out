@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch - Weekly & Daily Analytics</title>
+    <title>iMerch - Weekly Performance Index</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,7 +14,7 @@
             --bg: #0d1117; 
             --card: #161b22; 
             --text: #c9d1d9; 
-            --accent: #d90429; /* iMerch Red */
+            --accent: #d90429; 
             --border: #30363d; 
             --secondary-text: #8b949e; 
             --green: #238636;
@@ -22,15 +22,14 @@
         }
 
         body { 
-            font-family: 'Inter', sans-serif; 
-            background: transparent; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: var(--bg); 
             color: var(--text); 
             margin: 0; 
             padding: 15px;
             overflow-x: hidden;
         }
 
-        /* Container & Glass Effect */
         .glass-panel { 
             background: rgba(22, 27, 34, 0.95); 
             border: 1px solid var(--border); 
@@ -38,21 +37,24 @@
             padding: 25px; 
             border-top: 5px solid var(--accent);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        /* Header Styles */
         .header-flex { 
             display: flex; 
             justify-content: space-between; 
-            align-items: flex-start; 
+            align-items: center; 
             margin-bottom: 25px; 
             border-bottom: 1px solid var(--border);
             padding-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .title-area h2 {
             margin: 0;
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             font-weight: 900;
             color: var(--accent);
             text-transform: uppercase;
@@ -72,7 +74,6 @@
         .dot { height: 8px; width: 8px; background-color: var(--green); border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        /* Buttons */
         .btn-export { 
             background: var(--green); 
             color: white; 
@@ -89,19 +90,33 @@
         }
         .btn-export:hover { background: #2ea043; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3); }
 
-        /* Chart Styling */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .summary-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-val { display: block; font-size: 1.5rem; font-weight: 900; color: #fff; }
+        .summary-lbl { font-size: 0.65rem; color: var(--secondary-text); text-transform: uppercase; font-weight: bold; }
+
         .chart-box { 
             background: rgba(0,0,0,0.2);
             border-radius: 10px;
             padding: 15px;
             margin-bottom: 30px;
-            height: 250px;
+            height: 300px;
             border: 1px solid var(--border);
         }
 
-        /* Table Styling */
         .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
         th { 
             text-align: left; 
             padding: 15px; 
@@ -115,11 +130,9 @@
 
         .staff-name { font-weight: 800; color: #fff; text-transform: uppercase; }
         .log-count { font-family: 'Courier New', monospace; font-weight: 900; font-size: 1.1rem; color: var(--accent); }
-        .avg-label { font-size: 0.8rem; font-weight: 700; color: var(--secondary-text); }
 
-        /* Progress Bar */
-        .progress-container { display: flex; align-items: center; gap: 12px; min-width: 150px; }
-        .progress-bg { flex-grow: 1; height: 10px; background: #30363d; border-radius: 10px; overflow: hidden; }
+        .progress-container { display: flex; align-items: center; gap: 12px; min-width: 160px; }
+        .progress-bg { flex-grow: 1; height: 8px; background: #30363d; border-radius: 10px; overflow: hidden; }
         .progress-fill { height: 100%; transition: width 1s ease-in-out; border-radius: 10px; }
         
         .rate-badge { 
@@ -133,7 +146,6 @@
             background: rgba(0,0,0,0.3);
         }
 
-        /* Loading Overlay */
         #loader {
             position: fixed; inset: 0; background: var(--bg); display: flex;
             flex-direction: column; align-items: center; justify-content: center; z-index: 100;
@@ -143,23 +155,38 @@
 <body>
 
     <div id="loader">
-        <i class="fas fa-chart-line fa-spin fa-2x" style="color: var(--accent);"></i>
-        <p style="margin-top: 15px; font-size: 0.7rem; letter-spacing: 2px;">CALCULATING PERFORMANCE METRICS...</p>
+        <i class="fas fa-chart-line fa-spin fa-3x" style="color: var(--accent); margin-bottom: 20px;"></i>
+        <p style="font-size: 0.75rem; letter-spacing: 3px; font-weight: 800;">SYNCING iMERCH PERFORMANCE DATA...</p>
     </div>
 
     <div class="glass-panel" id="main-ui" style="display:none;">
         <div class="header-flex">
             <div class="title-area">
-                <h2><i class="fas fa-medal"></i> Weekly Performance Index</h2>
+                <h2><i class="fas fa-chart-simple"></i> Coverage Analytics</h2>
                 <div class="sync-indicator">
-                    <span class="dot"></span> LIVE SYNC ACTIVE
+                    <span class="dot"></span> REAL-TIME FIREBASE SYNC
                 </div>
             </div>
             <div style="text-align: right;">
                 <div id="date-label" style="font-size: 0.65rem; color: var(--secondary-text); margin-bottom: 8px; font-weight: 700;"></div>
                 <button class="btn-export" onclick="exportToExcel()">
-                    <i class="fas fa-file-excel"></i> EXPORT DETAILED REPORT
+                    <i class="fas fa-file-excel"></i> DOWNLOAD .XLSX REPORT
                 </button>
+            </div>
+        </div>
+
+        <div class="stats-summary">
+            <div class="summary-card">
+                <span class="summary-val" id="top-total-visits">0</span>
+                <span class="summary-lbl">Total Stores Visited</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-val" id="top-active-staff">0</span>
+                <span class="summary-lbl">Active Personnel</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-val" id="top-weekly-avg">0%</span>
+                <span class="summary-lbl">Fleet Performance</span>
             </div>
         </div>
         
@@ -173,17 +200,12 @@
                     <tr>
                         <th>Field Staff</th>
                         <th style="text-align: center;">Total Logs (7D)</th>
-                        <th style="text-align: center;">Daily Average</th>
+                        <th style="text-align: center;">Daily Avg</th>
                         <th>Weekly Performance</th>
                     </tr>
                 </thead>
-                <tbody id="tableBody">
-                    </tbody>
+                <tbody id="tableBody"></tbody>
             </table>
-        </div>
-        
-        <div style="margin-top: 20px; font-size: 0.6rem; color: var(--secondary-text); text-align: center; border-top: 1px solid var(--border); padding-top: 15px;">
-            iMerch Media Inc. | Data Intelligence Unit | Established April 23, 2009
         </div>
     </div>
 
@@ -195,14 +217,13 @@
             apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU", 
             authDomain: "imerch-checkins-out.firebaseapp.com", 
             projectId: "imerch-checkins-out",
-            storageBucket: "imerch-checkins-out.firebasestorage.app",
             appId: "1:842279761036:web:1d3889999612d602f337a9"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const WEEKLY_TARGET = 36; // 6 logs x 6 days
+        const WEEKLY_TARGET = 36;
         const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
         let chartInstance = null;
 
@@ -211,7 +232,7 @@
             startRange.setDate(startRange.getDate() - 7);
             startRange.setHours(0,0,0,0);
 
-            document.getElementById('date-label').innerText = `DATA RANGE: ${startRange.toLocaleDateString()} - ${new Date().toLocaleDateString()}`;
+            document.getElementById('date-label').innerText = `PERIOD: ${startRange.toLocaleDateString()} - ${new Date().toLocaleDateString()}`;
 
             const q = query(
                 collection(db, "attendance"),
@@ -221,39 +242,43 @@
 
             onSnapshot(q, (snapshot) => {
                 const userStats = {};
+                let totalFleetVisits = 0;
+
                 snapshot.forEach(doc => {
                     const d = doc.data();
                     const name = d.name || d.staffName || "Unknown";
-                    const isCheckIn = (d.type || "").toLowerCase().includes("in");
+                    const type = (d.type || "").toLowerCase();
 
-                    if (!admins.includes(name) && isCheckIn) {
+                    if (!admins.includes(name) && (type.includes("in") || type.includes("check"))) {
                         userStats[name] = (userStats[name] || 0) + 1;
+                        totalFleetVisits++;
                     }
                 });
-                refreshDashboard(userStats);
+
+                refreshDashboard(userStats, totalFleetVisits);
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-ui').style.display = 'block';
             });
         }
 
-        function refreshDashboard(stats) {
+        function refreshDashboard(stats, totalVisits) {
             const tbody = document.getElementById('tableBody');
-            const sortedKeys = Object.keys(stats).sort((a,b) => stats[b] - stats[a]);
+            const sortedStaff = Object.keys(stats).sort((a,b) => stats[b] - stats[a]);
             
             let rows = "";
             const labels = [], dataPoints = [], barColors = [];
+            let totalPercentages = 0;
 
-            sortedKeys.forEach(staff => {
+            sortedStaff.forEach(staff => {
                 const total = stats[staff];
                 const dailyAvg = (total / 6).toFixed(1); 
                 const pct = Math.min((total / WEEKLY_TARGET) * 100, 100).toFixed(0);
-                
-                // Dynamic Color Logic based on Performance
-                let color = '#d90429'; // Default Red
-                if(pct >= 90) color = '#238636'; // Green
-                else if(pct >= 70) color = '#d29922'; // Orange
+                totalPercentages += parseInt(pct);
 
-                // Full name for table, First name for Chart to avoid overcrowding
+                let color = '#d90429';
+                if(pct >= 90) color = '#238636';
+                else if(pct >= 70) color = '#d29922';
+
                 labels.push(staff.split(' ')[0]);
                 dataPoints.push(total);
                 barColors.push(color);
@@ -262,8 +287,8 @@
                     <tr>
                         <td class="staff-name">${staff}</td>
                         <td class="log-count" style="text-align: center;">${total}</td>
-                        <td class="avg-label" style="text-align: center;">
-                            <span style="color: ${total >= 30 ? '#4ade80' : '#8b949e'}">${dailyAvg} logs/day</span>
+                        <td style="text-align: center; color: var(--secondary-text); font-weight: bold;">
+                            ${dailyAvg} <span style="font-size:0.6rem">LPD</span>
                         </td>
                         <td>
                             <div class="progress-container">
@@ -274,7 +299,12 @@
                     </tr>`;
             });
 
-            tbody.innerHTML = rows || '<tr><td colspan="4" style="text-align:center; padding:40px; opacity:0.5;">No field data recorded in the last 7 days.</td></tr>';
+            document.getElementById('top-total-visits').innerText = totalVisits;
+            document.getElementById('top-active-staff').innerText = sortedStaff.length;
+            const avgPerf = sortedStaff.length > 0 ? (totalPercentages / sortedStaff.length).toFixed(0) : 0;
+            document.getElementById('top-weekly-avg').innerText = avgPerf + "%";
+
+            tbody.innerHTML = rows || '<tr><td colspan="4" style="text-align:center; padding:40px; opacity:0.5;">Waiting for field check-ins...</td></tr>';
             updateChart(labels, dataPoints, barColors);
         }
 
@@ -287,38 +317,22 @@
                 data: {
                     labels: l,
                     datasets: [{ 
-                        label: 'Weekly Total', 
+                        label: 'Total Logs', 
                         data: d, 
                         backgroundColor: c, 
-                        borderRadius: 6,
-                        borderWidth: 1,
-                        borderColor: 'rgba(255,255,255,0.1)'
+                        borderRadius: 5,
+                        barThickness: 25
                     }]
                 },
                 options: {
                     maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
-                        tooltip: { 
-                            backgroundColor: '#161b22', 
-                            titleColor: '#d90429', 
-                            bodyFont: { weight: 'bold' },
-                            callbacks: {
-                                label: function(context) { return `Total Logs: ${context.raw}`; }
-                            }
-                        }
+                        tooltip: { backgroundColor: '#161b22', titleColor: '#d90429' }
                     },
                     scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            max: 40,
-                            grid: { color: 'rgba(255,255,255,0.05)' }, 
-                            ticks: { color: '#8b949e', font: { weight: 'bold' } } 
-                        },
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { color: '#8b949e', font: { size: 10, weight: 'bold' } } 
-                        }
+                        y: { beginAtZero: true, max: 45, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b949e' } },
+                        x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 10, weight: 'bold' } } }
                     }
                 }
             });
@@ -326,12 +340,10 @@
 
         window.exportToExcel = function() {
             const table = document.getElementById("performanceData");
-            const workbook = XLSX.utils.table_to_book(table, { sheet: "iMerch_Performance_Report" });
-            const dateStr = new Date().toISOString().split('T')[0];
-            XLSX.writeFile(workbook, `iMerch_Weekly_Analytics_${dateStr}.xlsx`);
+            const workbook = XLSX.utils.table_to_book(table, { sheet: "Performance_Report" });
+            XLSX.writeFile(workbook, `iMerch_Weekly_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
-        // Start Sync on Load
         initSync();
     </script>
 </body>
