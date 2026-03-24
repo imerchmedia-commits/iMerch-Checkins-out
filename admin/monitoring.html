@@ -24,7 +24,6 @@
         
         body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; transition: 0.3s; display: flex; min-height: 100vh; overflow-x: hidden; }
 
-        /* --- SIDEBAR STYLE --- */
         #sidebar {
             width: var(--sidebar-width);
             background: #ffffff;
@@ -67,7 +66,6 @@
         .nav-link.active { background: var(--primary-red); color: #fff; }
         .nav-link i { margin-right: 12px; width: 20px; text-align: center; }
 
-        /* --- NOTIFICATION BADGE --- */
         .sync-badge {
             background-color: var(--primary-red);
             color: white;
@@ -87,7 +85,6 @@
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(217, 4, 41, 0); }
         }
 
-        /* --- MAIN CONTENT AREA --- */
         #content-wrapper {
             margin-left: var(--sidebar-width);
             flex-grow: 1;
@@ -153,6 +150,10 @@
             <div class="nav-link active" onclick="switchView('monitoring', this)">
                 <i class="fas fa-chart-line"></i>
                 <span>Realtime Monitoring</span>
+            </div>
+            <div class="nav-link" onclick="switchView('weeklyrate', this)">
+                <i class="fas fa-calendar-week"></i>
+                <span>Weekly Rate</span>
             </div>
             <div class="nav-link" id="summaryNavLink" onclick="switchView('summary', this); clearSyncBadge();">
                 <i class="fas fa-file-contract"></i>
@@ -243,6 +244,12 @@
                 </div>
             </section>
 
+            <section id="weeklyrate-view" class="view-section">
+                <div class="glass-panel" style="padding: 10px;">
+                    <iframe src="weeklyrate.html" id="weeklyrateIframe" class="mcp-frame"></iframe>
+                </div>
+            </section>
+
             <section id="summary-view" class="view-section">
                 <div class="glass-panel" style="padding: 10px;">
                     <iframe src="summary.monitoring.html" id="summaryIframe" class="mcp-frame"></iframe>
@@ -278,10 +285,14 @@
             } else if (view === 'mcp') {
                 const mcpIframe = document.getElementById('mcpIframe');
                 mcpIframe.src = mcpIframe.src;
+            } else if (view === 'weeklyrate') {
+                const weeklyrateIframe = document.getElementById('weeklyrateIframe');
+                weeklyrateIframe.src = weeklyrateIframe.src;
             }
             
             const titleMap = {
                 'monitoring': ['Realtime CCPI Monitoring', 'FIELD STAFF LIVE FEED'],
+                'weeklyrate': ['Weekly Performance Rate', 'WEEKLY ATTENDANCE STATS'],
                 'summary': ['Summary Monitoring', 'CONSOLIDATED REPORTS'],
                 'mcp': ['MCP CCPI', 'MANAGEMENT CONTROL PANEL']
             };
