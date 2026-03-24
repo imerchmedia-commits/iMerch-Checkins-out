@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch - Weekly Performance Rate</title>
+    <title>iMerch - Full Weekly Performance Analytics</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,192 +11,290 @@
     
     <style>
         :root { 
-            --bg: #0d1117; --card: #161b22; --text: #c9d1d9; --accent: #d90429; 
-            --border: #30363d; --secondary-text: #8b949e; --green: #238636;
+            --bg: #0d1117; 
+            --card: #161b22; 
+            --text: #c9d1d9; 
+            --accent: #d90429; /* iMerch Red */
+            --border: #30363d; 
+            --secondary-text: #8b949e; 
+            --green: #238636;
+            --orange: #d29922;
         }
+
         body { 
-            font-family: 'Inter', sans-serif; background: transparent; color: var(--text); 
-            margin: 0; padding: 10px; overflow-x: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: transparent; 
+            color: var(--text); 
+            margin: 0; 
+            padding: 15px;
+            overflow-x: hidden;
         }
+
+        /* Container & Glass Effect */
         .glass-panel { 
-            background: rgba(22, 27, 34, 0.9); border: 1px solid var(--border); 
-            border-radius: 12px; padding: 20px; border-top: 4px solid var(--accent);
+            background: rgba(22, 27, 34, 0.95); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            padding: 25px; 
+            border-top: 5px solid var(--accent);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        .title { font-weight: 800; font-size: 0.9rem; color: var(--accent); letter-spacing: 1px; }
-        
-        .btn-export {
-            background: #238636; color: white; border: none; padding: 8px 15px; 
-            border-radius: 6px; font-weight: 800; font-size: 0.7rem; cursor: pointer;
-            transition: 0.3s; display: flex; align-items: center; gap: 8px;
+
+        /* Header Styles */
+        .header-flex { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            margin-bottom: 25px; 
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
         }
-        .btn-export:hover { background: #2ea043; transform: translateY(-2px); }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-        th { text-align: left; padding: 12px; color: var(--secondary-text); border-bottom: 2px solid var(--border); text-transform: uppercase; font-size: 0.7rem; }
-        td { padding: 12px; border-bottom: 1px solid var(--border); }
+        .title-area h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
 
-        .progress-bg { width: 100px; height: 8px; background: #30363d; border-radius: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--accent); border-radius: 10px; transition: 0.5s; }
+        .sync-indicator {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .dot { height: 8px; width: 8px; background-color: var(--green); border-radius: 50%; display: inline-block; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        /* Buttons */
+        .btn-export { 
+            background: var(--green); 
+            color: white; 
+            border: none; 
+            padding: 10px 18px; 
+            border-radius: 8px; 
+            font-weight: 800; 
+            font-size: 0.75rem; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .btn-export:hover { background: #2ea043; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(35, 134, 54, 0.3); }
+
+        /* Chart Styling */
+        .chart-box { 
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 30px;
+            height: 250px;
+            border: 1px solid var(--border);
+        }
+
+        /* Table Styling */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px; }
+        th { 
+            text-align: left; 
+            padding: 15px; 
+            color: var(--secondary-text); 
+            border-bottom: 2px solid var(--border); 
+            text-transform: uppercase; 
+            font-size: 0.7rem; 
+            letter-spacing: 1px;
+        }
+        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 0.85rem; vertical-align: middle; }
+
+        .staff-name { font-weight: 800; color: #fff; }
+        .log-count { font-family: 'Courier New', monospace; font-weight: 900; font-size: 1.1rem; color: var(--accent); }
+
+        /* Progress Bar */
+        .progress-container { display: flex; align-items: center; gap: 12px; min-width: 150px; }
+        .progress-bg { flex-grow: 1; height: 10px; background: #30363d; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 1s ease-in-out; border-radius: 10px; }
         
         .rate-badge { 
-            padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 0.75rem;
-            background: rgba(217, 4, 41, 0.1); color: var(--accent); border: 1px solid var(--accent);
+            min-width: 45px;
+            text-align: center;
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-weight: 900; 
+            font-size: 0.7rem; 
+            border: 1px solid;
+            background: rgba(0,0,0,0.3);
         }
 
-        #loading { text-align: center; padding: 50px; color: var(--secondary-text); letter-spacing: 2px; font-size: 0.7rem; }
-        .chart-container { height: 200px; margin-bottom: 20px; }
+        /* Loading Overlay */
+        #loader {
+            position: fixed; inset: 0; background: var(--bg); display: flex;
+            flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+        }
     </style>
 </head>
 <body>
 
-    <div id="loading"><i class="fas fa-spinner fa-spin"></i> CALCULATING WEEKLY PERFORMANCE...</div>
+    <div id="loader">
+        <i class="fas fa-circle-notch fa-spin fa-2x" style="color: var(--accent);"></i>
+        <p style="margin-top: 15px; font-size: 0.7rem; letter-spacing: 2px;">SYNCING WEEKLY DATABASE...</p>
+    </div>
 
-    <div id="main-content" style="display:none;">
-        <div class="glass-panel">
-            <div class="header-flex">
-                <div>
-                    <div class="title"><i class="fas fa-chart-line"></i> WEEKLY PERFORMANCE RATE</div>
-                    <div id="date-range" style="font-size: 0.65rem; color: var(--secondary-text); margin-top: 4px;"></div>
+    <div class="glass-panel" id="main-ui" style="display:none;">
+        <div class="header-flex">
+            <div class="title-area">
+                <h2><i class="fas fa-chart-bar"></i> Weekly Performance</h2>
+                <div class="sync-indicator">
+                    <span class="dot"></span> REALTIME MONITORING ACTIVE
                 </div>
+            </div>
+            <div style="text-align: right;">
+                <div id="date-label" style="font-size: 0.65rem; color: var(--secondary-text); margin-bottom: 8px; font-weight: 700;"></div>
                 <button class="btn-export" onclick="exportToExcel()">
-                    <i class="fas fa-file-excel"></i> EXPORT TO EXCEL
+                    <i class="fas fa-file-excel"></i> DOWNLOAD REPORT (.XLSX)
                 </button>
             </div>
-            
-            <div class="chart-container">
-                <canvas id="weeklyChart"></canvas>
-            </div>
+        </div>
+        
+        <div class="chart-box">
+            <canvas id="weeklyPerformanceChart"></canvas>
+        </div>
 
-            <div style="overflow-x: auto;">
-                <table id="performanceTable">
-                    <thead>
-                        <tr>
-                            <th>Staff Member</th>
-                            <th>Total Logs (7D)</th>
-                            <th>Target</th>
-                            <th>Performance Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody id="weeklyBody"></tbody>
-                </table>
-            </div>
+        <div class="table-wrapper">
+            <table id="performanceData">
+                <thead>
+                    <tr>
+                        <th>Field Personnel</th>
+                        <th style="text-align: center;">Total Logs</th>
+                        <th style="text-align: center;">Target (6D)</th>
+                        <th>Performance Index</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 20px; font-size: 0.6rem; color: var(--secondary-text); text-align: center; border-top: 1px solid var(--border); padding-top: 15px;">
+            iMerch Media Inc. Performance Tracking System | Established 2009
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, query, where, onSnapshot, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
-            authDomain: "imerch-checkins-out.firebaseapp.com",
-            projectId: "imerch-checkins-out"
+        const firebaseConfig = { 
+            apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU", 
+            authDomain: "imerch-checkins-out.firebaseapp.com", 
+            projectId: "imerch-checkins-out" 
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const WEEKLY_TARGET = 36; // 6 logs x 6 days
-        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+        const TARGET_LOGS = 36; // Weekly Target (6 per day x 6 days)
+        const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+        let chartInstance = null;
 
-        async function loadWeeklyData() {
-            const now = new Date();
-            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            sevenDaysAgo.setHours(0,0,0,0);
-            
-            document.getElementById('date-range').innerText = `RANGE: ${sevenDaysAgo.toLocaleDateString()} - ${now.toLocaleDateString()}`;
+        function initSync() {
+            const startRange = new Date();
+            startRange.setDate(startRange.getDate() - 7);
+            startRange.setHours(0,0,0,0);
+
+            document.getElementById('date-label').innerText = `PERIOD: ${startRange.toLocaleDateString()} - ${new Date().toLocaleDateString()}`;
 
             const q = query(
                 collection(db, "attendance"),
-                where("timestamp", ">=", Timestamp.fromDate(sevenDaysAgo)),
+                where("timestamp", ">=", Timestamp.fromDate(startRange)),
                 orderBy("timestamp", "desc")
             );
 
-            try {
-                const snap = await getDocs(q);
-                const stats = {};
-
-                snap.forEach(doc => {
+            onSnapshot(q, (snapshot) => {
+                const userStats = {};
+                snapshot.forEach(doc => {
                     const d = doc.data();
                     const name = d.name || d.staffName || "Unknown";
-                    const type = (d.type || "").toLowerCase();
+                    const isCheckIn = (d.type || "").toLowerCase().includes("in");
 
-                    if (!adminExclusion.includes(name) && type.includes("in")) {
-                        stats[name] = (stats[name] || 0) + 1;
+                    if (!admins.includes(name) && isCheckIn) {
+                        userStats[name] = (userStats[name] || 0) + 1;
                     }
                 });
-
-                renderData(stats);
-            } catch (e) {
-                console.error("Error: ", e);
-                document.getElementById('loading').innerText = "ERROR LOADING DATA. PLEASE REFRESH.";
-            }
+                refreshDashboard(userStats);
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('main-ui').style.display = 'block';
+            });
         }
 
-        function renderData(stats) {
-            const body = document.getElementById('weeklyBody');
-            const labels = [], values = [], colors = [];
-            let html = "";
+        function refreshDashboard(stats) {
+            const tbody = document.getElementById('tableBody');
+            const sortedKeys = Object.keys(stats).sort((a,b) => stats[b] - stats[a]);
+            
+            let rows = "";
+            const labels = [], dataPoints = [], barColors = [];
 
-            const sortedNames = Object.keys(stats).sort((a,b) => stats[b] - stats[a]);
+            sortedKeys.forEach(staff => {
+                const total = stats[staff];
+                const pct = Math.min((total / TARGET_LOGS) * 100, 100).toFixed(0);
+                const color = pct >= 90 ? '#238636' : (pct >= 70 ? '#d29922' : '#d90429');
 
-            sortedNames.forEach(name => {
-                const count = stats[name];
-                const percent = Math.min((count / WEEKLY_TARGET) * 100, 100).toFixed(0);
-                
-                labels.push(name.split(' ')[0]);
-                values.push(count);
-                colors.push(percent >= 90 ? '#238636' : (percent >= 70 ? '#d29922' : '#d90429'));
+                labels.push(staff.split(' ')[0]);
+                dataPoints.push(total);
+                barColors.push(color);
 
-                html += `
+                rows += `
                     <tr>
-                        <td><b>${name}</b></td>
-                        <td style="color:var(--accent); font-weight:800; text-align:center;">${count}</td>
-                        <td style="text-align:center;">${WEEKLY_TARGET}</td>
+                        <td class="staff-name">${staff}</td>
+                        <td class="log-count" style="text-align: center;">${total}</td>
+                        <td style="text-align: center; color: var(--secondary-text); font-weight: 700;">${TARGET_LOGS}</td>
                         <td>
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div class="progress-bg"><div class="progress-fill" style="width:${percent}%; background:${colors[colors.length-1]}"></div></div>
-                                <span class="rate-badge" style="color:${colors[colors.length-1]}; border-color:${colors[colors.length-1]}">${percent}%</span>
+                            <div class="progress-container">
+                                <div class="progress-bg"><div class="progress-fill" style="width:${pct}%; background:${color}"></div></div>
+                                <span class="rate-badge" style="color:${color}; border-color:${color}">${pct}%</span>
                             </div>
                         </td>
-                    </tr>
-                `;
+                    </tr>`;
             });
 
-            body.innerHTML = html;
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('main-content').style.display = 'block';
+            tbody.innerHTML = rows;
+            updateChart(labels, dataPoints, barColors);
+        }
+
+        function updateChart(l, d, c) {
+            const ctx = document.getElementById('weeklyPerformanceChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
             
-            new Chart(document.getElementById('weeklyChart'), {
+            chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        data: values,
-                        backgroundColor: colors,
-                        borderRadius: 5
-                    }]
+                    labels: l,
+                    datasets: [{ label: 'Total Logs', data: d, backgroundColor: c, borderRadius: 6, barThickness: 25 }]
                 },
                 options: {
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#30363d' }, ticks: { color: '#8b949e', font: { size: 10 } } },
-                        x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 10 } } }
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8b949e', font: { weight: 'bold' } } },
+                        x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 10, weight: 'bold' } } }
                     }
                 }
             });
         }
 
         window.exportToExcel = function() {
-            const table = document.getElementById("performanceTable");
-            const wb = XLSX.utils.table_to_book(table, { sheet: "Weekly_Performance" });
-            const fileName = `iMerch_Weekly_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(wb, fileName);
+            const table = document.getElementById("performanceData");
+            const workbook = XLSX.utils.table_to_book(table, { sheet: "iMerch_Weekly_Report" });
+            XLSX.writeFile(workbook, `iMerch_Weekly_Rate_${new Date().toISOString().split('T')[0]}.xlsx`);
         };
 
-        loadWeeklyData();
+        initSync();
     </script>
 </body>
 </html>
