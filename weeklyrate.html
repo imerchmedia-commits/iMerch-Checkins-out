@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
 
     <style>
         :root { 
@@ -111,11 +110,11 @@
     <div class="row g-4 mb-5">
         <div class="col-lg-8">
             <h1 class="fw-900" style="font-size: 3.5rem; letter-spacing: -4px;">Weekly Rate Summary</h1>
-            <p class="text-muted fw-600 fs-5">Personnel Coverage & Payout Calculations</p>
+            <p id="weekRangeDisplay" class="text-muted fw-600 fs-5">Select a date to calculate the week...</p>
         </div>
         <div class="col-lg-4">
             <div class="summary-mini-card">
-                <div class="small fw-800 opacity-50 uppercase mb-2">Grand Total Payout</div>
+                <div class="small fw-800 opacity-50 uppercase mb-2">Grand Total Payout (Weekly)</div>
                 <div class="display-5 fw-900" id="grandTotalLabel">₱0.00</div>
             </div>
         </div>
@@ -131,15 +130,14 @@
                     <th>Total Weekly Rate (#)</th>
                 </tr>
             </thead>
-            <tbody id="payrollBody">
-                </tbody>
+            <tbody id="payrollBody"></tbody>
         </table>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -150,25 +148,33 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // SYSTEM SETTINGS
-    const RATE_PER_STORE = 500; // Palitan mo ito base sa actual rate nyo
+    const RATE_PER_STORE = 500; 
     const weekPicker = document.getElementById('weekPicker');
+    const weekRangeDisplay = document.getElementById('weekRangeDisplay');
+    
+    // Default to today
     weekPicker.valueAsDate = new Date();
 
     async function loadWeeklyRates() {
         const payrollBody = document.getElementById('payrollBody');
         const grandTotalLabel = document.getElementById('grandTotalLabel');
-        payrollBody.innerHTML = '<tr><td colspan="4" class="text-center p-5 fw-800">SYNCING DATA...</td></tr>';
+        payrollBody.innerHTML = '<tr><td colspan="4" class="text-center p-5 fw-800">SYNCING WEEKLY DATA...</td></tr>';
 
-        // Set date range (Start of day for selected date)
-        const selectedDate = new Date(weekPicker.value);
-        const start = new Date(selectedDate.setHours(0,0,0,0));
-        const end = new Date(selectedDate.setHours(23,59,59,999));
+        // --- WEEKLY LOGIC: Monday to Sunday ---
+        const curr = new Date(weekPicker.value);
+        const first = curr.getDate() - curr.getDay() + (curr.getDay() === 0 ? -6 : 1); // Monday
+        const last = first + 6; // Sunday
+
+        const startOfWeek = new Date(new Date(curr.setDate(first)).setHours(0,0,0,0));
+        const endOfWeek = new Date(new Date(curr.setDate(last)).setHours(23,59,59,999));
+
+        weekRangeDisplay.innerText = `Range: ${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}`;
 
         const q = query(
             collection(db, "attendance"),
-            where("timestamp", ">=", Timestamp.fromDate(start)),
-            where("timestamp", "<=", Timestamp.fromDate(end))
+            where("timestamp", ">=", Timestamp.fromDate(startOfWeek)),
+            where("timestamp", "<=", Timestamp.fromDate(endOfWeek)),
+            orderBy("timestamp", "desc")
         );
 
         try {
@@ -181,7 +187,7 @@
                 const name = data.staffName || data.name || "Unknown Staff";
                 const type = (data.type || "").toLowerCase();
 
-                // Counting only Check-ins as "Covered Stores"
+                // Only count "Check-in" types
                 if (type.includes('in')) {
                     stats[name] = (stats[name] || 0) + 1;
                 }
@@ -201,7 +207,7 @@
                             <span class="badge-count">${count} STORES</span>
                         </td>
                         <td>
-                            <div class="fw-700 text-muted small">${count} x ₱${RATE_PER_STORE.toLocaleString()}</div>
+                            <div class="fw-700 text-muted small">${count} Visits x ₱${RATE_PER_STORE.toLocaleString()}</div>
                         </td>
                         <td>
                             <div class="rate-text">₱${totalRate.toLocaleString()}</div>
@@ -210,12 +216,12 @@
                 `;
             }).join('');
 
-            payrollBody.innerHTML = rows || '<tr><td colspan="4" class="text-center p-5 fw-800">NO ACTIVITY LOGS FOUND</td></tr>';
+            payrollBody.innerHTML = rows || '<tr><td colspan="4" class="text-center p-5 fw-800">NO LOGS FOUND FOR THIS WEEK</td></tr>';
             grandTotalLabel.innerText = `₱${grandTotal.toLocaleString()}`;
 
         } catch (e) {
-            console.error(e);
-            payrollBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger p-5">CONNECTION ERROR</td></tr>';
+            console.error("Firebase Error:", e);
+            payrollBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger p-5 font-monospace">Error: ${e.message}</td></tr>`;
         }
     }
 
