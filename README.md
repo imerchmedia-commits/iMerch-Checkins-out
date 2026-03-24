@@ -1,4 +1,6 @@
-![iMerch Header](path/to/your/header-banner.png)
+<p align="center">
+  <img src="banner.png" alt="iMerch-Checkins-out Banner" width="100%">
+</p>
 
 # 🏢 iMerch-Checkins-out
 ### *Precision Attendance & Workforce Monitoring Ecosystem*
