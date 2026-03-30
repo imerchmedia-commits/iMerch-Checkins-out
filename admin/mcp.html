@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch Monitoring Portal | v12.0 Stability Build</title>
+    <title>iMerch Monitoring Portal | Enterprise v13.0</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -23,83 +23,96 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             color: var(--im-dark);
             margin: 0;
+            overflow-x: hidden;
         }
 
         /* NAVBAR - WHITE WITH RED LINING */
         .mcp-nav {
             background: var(--im-white);
-            border-bottom: 6px solid var(--im-red);
-            padding: 1rem 3rem;
+            border-bottom: 5px solid var(--im-red);
+            padding: 0.8rem 3rem;
             display: flex; justify-content: space-between; align-items: center;
             position: sticky; top: 0; z-index: 1000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
         }
 
-        .mcp-brand { display: flex; align-items: center; gap: 12px; }
+        .mcp-brand { display: flex; align-items: center; gap: 15px; }
         .logo-sq {
-            background: var(--im-red); width: 40px; height: 40px; border-radius: 10px;
+            background: var(--im-red); width: 45px; height: 45px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center; color: white;
+            font-size: 1.2rem;
         }
-        .mcp-brand h1 { margin: 0; font-weight: 800; font-size: 1.4rem; letter-spacing: -1px; }
+        .mcp-brand h1 { margin: 0; font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; }
 
         /* LAYOUT */
-        .mcp-wrapper { padding: 2.5rem; max-width: 1700px; margin: 0 auto; }
+        .mcp-wrapper { padding: 2rem; max-width: 1800px; margin: 0 auto; }
         .mcp-card {
-            background: var(--im-white); border-radius: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.08); display: flex;
+            background: var(--im-white); border-radius: 25px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.05); display: flex;
             overflow: hidden; min-height: 850px; border: 1px solid var(--im-border);
         }
 
         /* SIDEBAR */
-        .mcp-side { flex: 0 0 360px; padding: 3rem 2.5rem; background: #fafafa; border-right: 1px solid var(--im-border); }
-        .mcp-side h2 { font-weight: 800; font-size: 1.7rem; margin-bottom: 2.5rem; }
+        .mcp-side { flex: 0 0 380px; padding: 2.5rem; background: #fafafa; border-right: 1px solid var(--im-border); }
+        .mcp-side h2 { font-weight: 800; font-size: 1.6rem; margin-bottom: 2rem; color: var(--im-dark); }
 
-        .mcp-label { font-weight: 800; font-size: 0.75rem; color: #999; text-transform: uppercase; display: block; margin-bottom: 8px; }
+        .mcp-label { font-weight: 800; font-size: 0.7rem; color: #999; text-transform: uppercase; display: block; margin-bottom: 8px; letter-spacing: 1px; }
         .mcp-input {
-            width: 100%; padding: 15px; border-radius: 15px; border: 2px solid var(--im-border);
-            font-weight: 700; margin-bottom: 20px; background: white; cursor: pointer;
+            width: 100%; padding: 14px; border-radius: 12px; border: 2px solid var(--im-border);
+            font-weight: 700; margin-bottom: 20px; background: white; transition: 0.2s;
         }
-        .mcp-input:focus { border-color: var(--im-red); outline: none; }
+        .mcp-input:focus { border-color: var(--im-red); outline: none; box-shadow: 0 0 0 4px rgba(217, 4, 41, 0.1); }
 
         .mcp-btn {
             width: 100%; background: var(--im-red); color: white; border: none;
-            padding: 20px; border-radius: 18px; font-weight: 800; text-transform: uppercase;
+            padding: 18px; border-radius: 15px; font-weight: 800; text-transform: uppercase;
             transition: 0.3s; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            margin-top: 10px;
         }
-        .mcp-btn:hover { background: #b00321; transform: translateY(-2px); }
-        .mcp-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .mcp-btn:hover:not(:disabled) { background: #b00321; transform: translateY(-2px); }
+        .mcp-btn:disabled { background: #e9ecef; color: #adb5bd; cursor: not-allowed; }
 
         /* STATUS BADGES */
         .status-msg {
-            margin-top: 30px; padding: 18px; border-radius: 15px; text-align: center;
-            font-weight: 800; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin-top: 25px; padding: 15px; border-radius: 12px; text-align: center;
+            font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 10px;
         }
         .st-idle { background: #f1f3f5; color: #adb5bd; }
         .st-run { background: #fff9db; color: #f08c00; border: 1px solid #ffe066; }
         .st-ok { background: #ebfbee; color: #2b8a3e; border: 1px solid #b2f2bb; }
         .st-err { background: #fff5f5; color: #c92a2a; border: 1px solid #ffc9c9; }
 
-        /* CALENDAR */
-        .mcp-main { flex: 1; padding: 3rem; position: relative; }
+        /* CALENDAR CUSTOMIZATION */
+        .mcp-main { flex: 1; padding: 2rem; position: relative; background: white; }
         .fc-toolbar { display: none !important; }
-        .fc-daygrid-day-number { font-weight: 800 !important; color: #dee2e6 !important; padding: 12px !important; text-decoration: none !important; }
-        .fc-day-today { background: rgba(217, 4, 41, 0.02) !important; }
-        .fc-daygrid-event { border: none !important; padding: 8px 12px !important; border-radius: 10px !important; font-weight: 800; margin: 4px 8px !important; font-size: 0.85rem !important; }
+        .fc-theme-standard td, .fc-theme-standard th { border: 1px solid #f1f3f5 !important; }
+        .fc-daygrid-day-number { 
+            font-weight: 800 !important; color: #cbd5e0 !important; 
+            padding: 10px !important; text-decoration: none !important; font-size: 0.9rem;
+        }
+        .fc-day-today { background: rgba(217, 4, 41, 0.03) !important; }
+        .fc-daygrid-event { 
+            border: none !important; padding: 5px 10px !important; 
+            border-radius: 8px !important; font-weight: 700; 
+            margin: 2px 5px !important; font-size: 0.75rem !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
 
-        .footer-text { text-align: center; margin-top: 30px; color: #adb5bd; font-weight: 700; font-size: 0.8rem; }
+        #clock { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--im-red); font-size: 1.1rem; }
+        .footer-text { text-align: center; margin-top: 20px; color: #999; font-weight: 700; font-size: 0.75rem; }
     </style>
 </head>
 <body>
 
 <nav class="mcp-nav">
     <div class="mcp-brand">
-        <div class="logo-sq"><i class="fas fa-database"></i></div>
+        <div class="logo-sq"><i class="fas fa-bolt"></i></div>
         <div>
             <h1>iMERCH MONITORING</h1>
-            <small style="color: var(--im-red); font-weight: 800;">ENTERPRISE STABILITY v12.0</small>
+            <small style="color: var(--im-red); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Cloud Portal v13.0</small>
         </div>
     </div>
-    <div id="clock" style="font-family: monospace; font-weight: 800; color: var(--im-red);">00:00:00</div>
+    <div id="clock">00:00:00 PM</div>
 </nav>
 
 <div class="mcp-wrapper">
@@ -107,14 +120,15 @@
         <aside class="mcp-side">
             <h2>Parameters</h2>
             
-            <label class="mcp-label">Year</label>
-            <select id="selYear" class="mcp-input" onchange="startSyncProcess()">
+            <label class="mcp-label">Target Year</label>
+            <select id="selYear" class="mcp-input">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
                 <option value="2026" selected>2026</option>
-                <option value="2027">2027</option>
             </select>
 
-            <label class="mcp-label">Month</label>
-            <select id="selMonth" class="mcp-input" onchange="startSyncProcess()">
+            <label class="mcp-label">Target Month</label>
+            <select id="selMonth" class="mcp-input">
                 <option value="01">January</option><option value="02">February</option>
                 <option value="03">March</option><option value="04" selected>April</option>
                 <option value="05">May</option><option value="06">June</option>
@@ -123,8 +137,8 @@
                 <option value="11">November</option><option value="12">December</option>
             </select>
 
-            <label class="mcp-label">Coordinator</label>
-            <select id="selUser" class="mcp-input" onchange="startSyncProcess()">
+            <label class="mcp-label">Personnel / Coordinator</label>
+            <select id="selUser" class="mcp-input">
                 <option value="" disabled selected>Select Coordinator...</option>
                 <option value="ELENA YBARITTA">ELENA YBARITTA</option>
                 <option value="CARL FRANCISCO">CARL FRANCISCO</option>
@@ -143,18 +157,17 @@
                 <option value="MARK ENDITA">MARK ENDITA</option>
             </select>
 
-            <button id="syncBtn" class="mcp-btn" onclick="startSyncProcess()">
-                <i class="fas fa-sync-alt" id="syncIcon"></i> Execute Sync
+            <button id="syncBtn" class="mcp-btn" onclick="triggerSync()">
+                <i class="fas fa-sync-alt" id="syncIcon"></i> EXECUTE SYNC
             </button>
 
             <div id="status" class="status-msg st-idle">
                 <i class="fas fa-check-circle"></i> System Standby
             </div>
 
-            <div style="margin-top: 25px; padding: 15px; border-radius: 12px; background: rgba(217, 4, 41, 0.03); border: 1px dashed var(--im-red);">
-                <p style="font-size: 0.7rem; color: #777; margin: 0; line-height: 1.5; font-weight: 700;">
-                    <i class="fas fa-shield-alt text-danger me-1"></i> CORS BYPASS v12.0:<br>
-                    Using JSONP Protocol to bypass Chrome/GitHub CORS limitations. Optimized for Aremtology-On GAS Engine.
+            <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                <p style="font-size: 0.65rem; color: #bbb; line-height: 1.6; font-weight: 600;">
+                    <i class="fas fa-info-circle me-1"></i> Data is fetched in real-time from iMerch Cloud via JSONP Bypass. Changes in Google Sheets may take a few seconds to reflect.
                 </p>
             </div>
         </aside>
@@ -163,76 +176,70 @@
             <div id="calendar"></div>
         </main>
     </div>
-    <div class="footer-text">&copy; 2026 iMerch Media Inc. | Enterprise Framework</div>
+    <p class="footer-text">Developed by Ron Sarmenta | &copy; 2026 iMerch Media Inc.</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 
 <script>
-    /**
-     * iMERCH SYNC ENGINE v12.0
-     * -------------------------
-     * FIXED: Changed from fetch() to Script Injection (JSONP).
-     * This perfectly matches your GAS function: titaniumReceiver([...])
-     */
-
-    let mcpCalendar;
-    let isSyncing = false;
-    const GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ0C_D_T-0uVp_S-l2-C97e7N5wSiaLw6-M-V/exec";
+    let calendar;
+    let syncing = false;
+    
+    // YOUR UPDATED GAS LINK
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxrQdx21dYaVM7QyVM4wlf2OqSwXoiLguDMw-5vr-eQMgdKm8bFTuRvFva_9iDuMNbX_A/exec";
 
     document.addEventListener('DOMContentLoaded', function() {
         const calendarEl = document.getElementById('calendar');
-        mcpCalendar = new FullCalendar.Calendar(calendarEl, {
+        calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: false,
-            height: 'auto'
+            height: 780
         });
-        mcpCalendar.render();
+        calendar.render();
         
+        // Clock Function
         setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString();
         }, 1000);
     });
 
-    /**
-     * startSyncProcess
-     * Injects a script tag to bypass CORS.
-     */
-    function startSyncProcess() {
-        if (isSyncing) return;
+    function triggerSync() {
+        if (syncing) return;
 
         const user = document.getElementById('selUser').value;
         const year = document.getElementById('selYear').value;
         const month = document.getElementById('selMonth').value;
-        
-        if (!user) return;
 
-        isSyncing = true;
-        mcpCalendar.gotoDate(`${year}-${month}-01`);
+        if (!user) {
+            alert("Please select a coordinator first.");
+            return;
+        }
+
+        syncing = true;
+        calendar.gotoDate(`${year}-${month}-01`);
         
         const status = document.getElementById('status');
         const btn = document.getElementById('syncBtn');
         const icon = document.getElementById('syncIcon');
-        
-        status.innerHTML = `<i class="fas fa-satellite fa-spin"></i> Syncing Cloud Data...`;
+
+        status.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Fetching Cloud Data...`;
         status.className = "status-msg st-run";
         btn.disabled = true;
-        icon.className = "fas fa-sync fa-spin";
+        icon.className = "fas fa-sync-alt fa-spin";
 
-        // Step 1: Remove old injection script to keep it clean
-        const oldScript = document.getElementById('mcp_bypass_script');
+        // JSONP Implementation
+        const oldScript = document.getElementById('sync_engine');
         if (oldScript) oldScript.remove();
 
-        // Step 2: Inject the Script Tag (The "Legal Cheat" for CORS)
         const script = document.createElement('script');
-        script.id = 'mcp_bypass_script';
-        // Ang URL ay magse-send ng callback name 'titaniumReceiver' na kailangan ng GAS mo
-        script.src = `${GAS_ENDPOINT}?sheet=${encodeURIComponent(user)}&callback=titaniumReceiver&v=${Date.now()}`;
+        script.id = 'sync_engine';
+        script.src = `${WEB_APP_URL}?sheet=${encodeURIComponent(user)}&callback=mcpReceiver&v=${Date.now()}`;
         
         script.onerror = () => {
             status.innerHTML = `<i class="fas fa-times-circle"></i> Connection Failed`;
             status.className = "status-msg st-err";
-            isSyncing = false;
+            syncing = false;
             btn.disabled = false;
             icon.className = "fas fa-sync-alt";
         };
@@ -240,64 +247,64 @@
         document.body.appendChild(script);
     }
 
-    /**
-     * titaniumReceiver
-     * Ito ang callback function na tinatawag ng GAS Script mo.
-     */
-    window.titaniumReceiver = function(data) {
+    // THIS FUNCTION HANDLES THE DATA FROM GOOGLE SHEETS
+    window.mcpReceiver = function(data) {
         const status = document.getElementById('status');
         const btn = document.getElementById('syncBtn');
         const icon = document.getElementById('syncIcon');
         const year = document.getElementById('selYear').value;
         const month = document.getElementById('selMonth').value;
 
-        mcpCalendar.removeAllEvents();
-        const blacklist = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE"];
+        calendar.removeAllEvents();
 
         try {
-            if (!data || !Array.isArray(data)) throw new Error("Format Mismatch");
+            if (data.error) {
+                status.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${data.error}`;
+                status.className = "status-msg st-err";
+            } else {
+                const blacklist = ["WEEK", "TOTAL", "DATE", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+                
+                data.forEach((row, rIdx) => {
+                    row.forEach((cell, cIdx) => {
+                        let content = cell.toString().trim();
+                        let dayNum = parseInt(content);
 
-            // Direct Row/Column Scanning (Original DNA Mapping)
-            data.forEach((row, rIdx) => {
-                row.forEach((cell, cIdx) => {
-                    let content = cell.toString().trim();
-                    let dateNum = parseInt(content);
-
-                    // Check if cell is a valid day (1-31)
-                    if (content && !isNaN(dateNum) && dateNum >= 1 && dateNum <= 31 && content.length <= 2) {
-                        
-                        // Scan the next 20 rows under this date
-                        for (let i = 1; i <= 20; i++) {
-                            if (data[rIdx + i] && data[rIdx + i][cIdx]) {
-                                let task = data[rIdx + i][cIdx].toString().trim();
-                                if (task !== "" && !blacklist.some(b => task.toUpperCase().includes(b)) && isNaN(parseInt(task))) {
+                        // If the cell is a date (1-31)
+                        if (content && !isNaN(dayNum) && dayNum >= 1 && dayNum <= 31 && content.length <= 2) {
+                            
+                            // Scan rows below this date for tasks
+                            for (let i = 1; i <= 15; i++) {
+                                if (data[rIdx + i] && data[rIdx + i][cIdx]) {
+                                    let task = data[rIdx + i][cIdx].toString().trim();
                                     
-                                    let color = "#d90429"; // Default iMerch Red
-                                    if (task.toUpperCase().includes("OFF")) color = "#8d99ae";
-                                    if (task.toUpperCase().includes("LEAVE")) color = "#fb8500";
-                                    if (task.toUpperCase().includes("ADMIN")) color = "#2b2d42";
+                                    if (task !== "" && !blacklist.some(b => task.toUpperCase().includes(b)) && isNaN(parseInt(task))) {
+                                        
+                                        let color = "#d90429"; // iMerch Red
+                                        if (task.toUpperCase().includes("OFF")) color = "#adb5bd";
+                                        if (task.toUpperCase().includes("LEAVE")) color = "#fb8500";
+                                        if (task.toUpperCase().includes("OB") || task.toUpperCase().includes("FIELD")) color = "#2b2d42";
 
-                                    mcpCalendar.addEvent({
-                                        title: task,
-                                        start: `${year}-${month}-${dateNum.toString().padStart(2, '0')}`,
-                                        backgroundColor: color,
-                                        allDay: true
-                                    });
+                                        calendar.addEvent({
+                                            title: task,
+                                            start: `${year}-${month}-${dayNum.toString().padStart(2, '0')}`,
+                                            backgroundColor: color,
+                                            allDay: true
+                                        });
+                                    }
                                 }
                             }
                         }
-                    }
+                    });
                 });
-            });
 
-            status.innerHTML = `<i class="fas fa-check-circle"></i> Sync Successful`;
-            status.className = "status-msg st-ok";
+                status.innerHTML = `<i class="fas fa-check-circle"></i> Sync Successful`;
+                status.className = "status-msg st-ok";
+            }
         } catch (e) {
-            console.error("Mapping Error:", e);
-            status.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Data Error`;
+            status.innerHTML = `<i class="fas fa-bug"></i> Layout Error`;
             status.className = "status-msg st-err";
         } finally {
-            isSyncing = false;
+            syncing = false;
             btn.disabled = false;
             icon.className = "fas fa-sync-alt";
         }
