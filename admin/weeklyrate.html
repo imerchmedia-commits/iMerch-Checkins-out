@@ -5,10 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iMerch | Coverage Summary Monitoring</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
     <style>
         :root {
             --imerch-gold: #D4AF37;
             --imerch-dark: #1A1A1A;
+            --imerch-red: #FF3B30;
             --imerch-slate: #2D3436;
             --bg-gray: #F8F9FA;
             --white: #FFFFFF;
@@ -32,7 +37,7 @@
             border-bottom: 3px solid var(--imerch-gold);
         }
 
-        /* --- FILTER SECTION (Calendar & Search) --- */
+        /* --- FILTER SECTION --- */
         .filter-bar {
             background: var(--white);
             padding: 20px 40px;
@@ -73,35 +78,54 @@
         .summary-card h4 { margin: 0; font-size: 13px; color: #7f8c8d; text-transform: uppercase; }
         .summary-card .value { font-size: 28px; font-weight: bold; margin: 10px 0; }
 
-        /* --- COORDINATOR TABLE --- */
+        /* --- TABLE STYLES --- */
         .table-container {
             background: var(--white);
             border-radius: 12px;
-            padding: 20px;
+            padding: 25px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
 
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px; background: #fdfdfd; border-bottom: 2px solid #eee; font-size: 14px; }
-        td { padding: 15px; border-bottom: 1px solid #f1f1f1; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; padding: 15px; background: #fdfdfd; border-bottom: 2px solid #eee; font-size: 14px; color: #7f8c8d; }
+        td { padding: 15px; border-bottom: 1px solid #f1f1f1; font-size: 14px; vertical-align: middle; }
+
+        /* Progress Bar */
+        .progress-container { width: 100%; background: #eee; border-radius: 10px; height: 8px; position: relative; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease-in-out; }
 
         /* Percentage Badge Styles */
         .coverage-badge {
             padding: 6px 12px;
             border-radius: 50px;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 11px;
         }
         .high { background: #E3F9E5; color: #1DB954; }
         .mid { background: #FFF4E5; color: #FF9500; }
         .low { background: #FFE5E5; color: #FF3B30; }
 
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #1DB954;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
     <nav class="top-nav">
-        <div><strong>iMerch</strong> | Coverage Dashboard</div>
+        <div><strong>iMerch</strong> | Coverage Dashboard <span style="margin-left:15px; font-weight:normal; font-size:12px;"><span class="live-indicator"></span>REAL-TIME</span></div>
         <div id="realtime-clock">Loading Time...</div>
     </nav>
 
@@ -115,9 +139,9 @@
             <select id="coordinator-select">
                 <option value="all">All Coordinators</option>
                 <option value="baste">Coordinator Baste</option>
-                </select>
+            </select>
         </div>
-        <button style="margin-top: 18px; padding: 10px 20px; background: var(--imerch-dark); color: white; border: none; border-radius: 6px; cursor: pointer;">
+        <button onclick="applyFilters()" style="margin-top: 18px; padding: 10px 20px; background: var(--imerch-dark); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
             Apply Filter
         </button>
     </div>
@@ -129,58 +153,146 @@
                 <div class="value" id="total-visited">0</div>
             </div>
             <div class="summary-card">
-                <h4>Active Coordinators</h4>
+                <h4>Active Personnel</h4>
                 <div class="value" id="active-coors">0</div>
             </div>
             <div class="summary-card">
-                <h4>Weekly Target %</h4>
-                <div class="value" id="weekly-avg">0%</div>
+                <h4>Weekly Average %</h4>
+                <div class="value" id="weekly-avg" style="color: var(--imerch-gold);">0%</div>
             </div>
             <div class="summary-card">
-                <h4>Pending Reports</h4>
-                <div class="value" style="color: #e74c3c;">0</div>
+                <h4>Low Performance</h4>
+                <div class="value" id="pending-reports" style="color: var(--imerch-red);">0</div>
             </div>
         </div>
 
         <div class="table-container">
-            <h3><i class="fas fa-users-viewfinder"></i> Real-time Coverage Tracking</h3>
+            <h3 style="font-size: 18px; margin-bottom: 20px;"><i class="fas fa-chart-line" style="color: var(--imerch-gold);"></i> Weekly Performance Tracking</h3>
             <table id="monitoring-table">
                 <thead>
                     <tr>
-                        <th>Coordinator</th>
+                        <th>Personnel / Coordinator</th>
                         <th>Target (Daily/Weekly)</th>
                         <th>Actual Visits</th>
                         <th>Weekly Coverage Rate</th>
-                        <th>Performance Status</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="table-body">
                     </tbody>
             </table>
         </div>
     </div>
 
     <script>
-        // 1. Live Clock for Management Dashboard
+        // 1. FIREBASE CONFIGURATION (PAREPLACE NG ACTUAL CONFIG MO)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "your-project.firebaseapp.com",
+            databaseURL: "https://your-project.firebaseio.com",
+            projectId: "your-project",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // 2. Real-time Clock
         setInterval(() => {
             document.getElementById('realtime-clock').innerText = new Date().toLocaleString();
         }, 1000);
 
-        // 2. Calculation Engine
-        function calculateRates(actual) {
-            const weeklyTarget = 42; // Base on your 6 stores x 7 days rule
-            let rate = (actual / weeklyTarget) * 100;
-            return rate.toFixed(1);
+        // 3. Calculation Logic
+        const WEEKLY_TARGET = 42; // 6 stores * 7 days
+
+        function calculateRate(actual) {
+            return ((actual / WEEKLY_TARGET) * 100).toFixed(1);
         }
 
-        // 3. Status Logic for "Classy" Badges
-        function getBadge(rate) {
+        function getStatusBadge(rate) {
             if (rate >= 90) return '<span class="coverage-badge high">EXCELLENT</span>';
             if (rate >= 75) return '<span class="coverage-badge mid">GOOD</span>';
             return '<span class="coverage-badge low">UNDERPERFORMING</span>';
         }
 
-        // Logic to connect with Firebase goes here...
+        // 4. Firebase Listener
+        function startMonitoring() {
+            // Path: 'weekly_coverage' - siguraduhin na ito ang node name sa database mo
+            db.ref('weekly_coverage').on('value', (snapshot) => {
+                const data = snapshot.val();
+                renderData(data);
+            });
+        }
+
+        function renderData(data) {
+            const tbody = document.getElementById('table-body');
+            let rows = '';
+            
+            // Summary Counter Variables
+            let totalVisits = 0;
+            let activePeople = 0;
+            let totalRateSum = 0;
+            let lowPerformers = 0;
+
+            if (data) {
+                for (let key in data) {
+                    const item = data[key];
+                    const actual = item.actualVisits || 0;
+                    const rate = calculateRate(actual);
+                    const coordinator = item.coorName || "N/A";
+                    const name = item.fullName || "Unknown User";
+
+                    // Update Summaries
+                    totalVisits += actual;
+                    activePeople++;
+                    totalRateSum += parseFloat(rate);
+                    if (rate < 75) lowPerformers++;
+
+                    // Row Styling
+                    const barColor = rate >= 90 ? '#1DB954' : (rate >= 75 ? '#FF9500' : '#FF3B30');
+
+                    rows += `
+                        <tr>
+                            <td>
+                                <strong>${name}</strong><br>
+                                <small style="color:#7f8c8d; text-transform:uppercase;">COOR: ${coordinator}</small>
+                            </td>
+                            <td>6 / ${WEEKLY_TARGET}</td>
+                            <td><span style="font-weight:bold; font-size:16px;">${actual}</span></td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div class="progress-container" style="flex-grow:1;">
+                                        <div class="progress-fill" style="width: ${rate}%; background: ${barColor};"></div>
+                                    </div>
+                                    <span style="font-weight:bold; width:45px;">${rate}%</span>
+                                </div>
+                            </td>
+                            <td>${getStatusBadge(rate)}</td>
+                        </tr>
+                    `;
+                }
+            } else {
+                rows = '<tr><td colspan="5" style="text-align:center; padding:50px;">No data available for this week.</td></tr>';
+            }
+
+            // Inject to HTML
+            tbody.innerHTML = rows;
+            document.getElementById('total-visited').innerText = totalVisits;
+            document.getElementById('active-coors').innerText = activePeople;
+            document.getElementById('weekly-avg').innerText = activePeople > 0 ? (totalRateSum / activePeople).toFixed(1) + '%' : '0%';
+            document.getElementById('pending-reports').innerText = lowPerformers;
+        }
+
+        // 5. Initial Execution
+        document.addEventListener('DOMContentLoaded', startMonitoring);
+
+        function applyFilters() {
+            alert('Filtering logic triggered. Data is currently set to live real-time stream.');
+            // Dito pwede dagdagan ng query base sa date-picker kung kailangan
+        }
     </script>
 </body>
 </html>
