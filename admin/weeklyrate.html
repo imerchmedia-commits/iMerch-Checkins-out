@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Weekly Rate</title>
+    <title>iMerch | Weekly Rate Mon-Sat</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --imerch-red: #d90429; --border: #d0d7de; --bg: #f6f8fa; --text: #24292f; }
+        :root { --red: #d90429; --border: #d0d7de; --bg: #f6f8fa; --text: #24292f; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 15px; margin: 0; color: var(--text); }
         .card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--imerch-red); padding-bottom: 10px; margin-bottom: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--red); padding-bottom: 10px; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; font-size: 0.7rem; color: #57606a; text-transform: uppercase; padding: 10px; border-bottom: 2px solid var(--border); }
         td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
@@ -26,24 +27,24 @@
     <div class="header">
         <div>
             <h3 style="margin:0; font-weight: 900;">WEEKLY PERFORMANCE (MON-SAT)</h3>
-            <small id="weekRange" style="color:#57606a; font-weight: bold;">Connecting...</small>
+            <small id="weekRange" style="color:var(--red); font-weight: bold;">Initializing Live Feed...</small>
         </div>
         <div style="text-align:right">
-            <span style="font-size: 0.65rem; font-weight: bold; color: var(--imerch-red);">GOAL: 36 VISITS</span>
+            <span style="font-size: 0.65rem; font-weight: bold; color: #57606a;">TARGET: 36 VISITS</span>
         </div>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Personnel</th>
+                <th>Coordinator</th>
                 <th>Actual Visits</th>
-                <th>Weekly Rate (%)</th>
+                <th>Performance (%)</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody id="weeklyBody">
-            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;" id="loadingStatus">Syncing staff records...</td></tr>
+            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;" id="loadingStatus">Connecting to staff records...</td></tr>
         </tbody>
     </table>
 </div>
@@ -73,10 +74,9 @@
         return new Date(d.setDate(diff));
     }
 
-    async function startApp() {
-        const loadingText = document.getElementById('loadingStatus');
+    async function initDashboard() {
         try {
-            // 1. Fetch Staff Masterlist
+            // STEP 1: Load Staff Names
             const staffSnap = await getDocs(collection(db, "staff_members"));
             staffSnap.forEach(doc => {
                 const d = doc.data();
@@ -84,16 +84,16 @@
                 if(email) staffRegistry[email] = d.name || d.staffName;
             });
 
-            // 2. Set Dates
+            // STEP 2: Setup Date Filter (Monday to Saturday)
             const monday = getMonday(new Date());
             monday.setHours(0, 0, 0, 0);
             const saturday = new Date(monday);
             saturday.setDate(monday.getDate() + 5);
             saturday.setHours(23, 59, 59, 999);
 
-            document.getElementById('weekRange').innerText = `Mon-Sat: ${monday.toLocaleDateString()} - ${saturday.toLocaleDateString()}`;
+            document.getElementById('weekRange').innerText = `LIVE: ${monday.toLocaleDateString()} - ${saturday.toLocaleDateString()}`;
 
-            // 3. Monitor Attendance
+            // STEP 3: Realtime Listener
             const q = query(
                 collection(db, "attendance"),
                 where("timestamp", ">=", Timestamp.fromDate(monday)),
@@ -113,14 +113,10 @@
                     }
                 });
                 renderTable(stats);
-            }, (error) => {
-                console.error("Snapshot error:", error);
-                loadingText.innerText = "Error: Check Firestore Permissions.";
             });
 
         } catch (e) {
-            console.error("Critical Error:", e);
-            loadingText.innerText = "Connection Failed. Please Refresh.";
+            document.getElementById('loadingStatus').innerText = "Sync Error: Check Rules.";
         }
     }
 
@@ -128,7 +124,7 @@
         const body = document.getElementById('weeklyBody');
         const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
         if (sorted.length === 0) {
-            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No records found for this week.</td></tr>';
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No logs recorded for this week yet.</td></tr>';
             return;
         }
 
@@ -136,12 +132,12 @@
         sorted.forEach(([name, count]) => {
             const rate = ((count / WEEKLY_TARGET) * 100).toFixed(1);
             let sClass = "bg-ex", sText = "ON TARGET", barCol = "#1a7f37";
-            if (rate < 75) { sClass = "bg-low"; sText = "BELOW TARGET"; barCol = "#d90429"; }
+            if (rate < 75) { sClass = "bg-low"; sText = "LOW RATE"; barCol = "#d90429"; }
             else if (rate < 95) { sClass = "bg-good"; sText = "GOOD"; barCol = "#d29922"; }
 
             html += `<tr>
                 <td style="text-transform: capitalize;"><strong>${name}</strong></td>
-                <td style="font-weight:700;">${count} / 36</td>
+                <td style="font-weight:700;">${count} <small style="color:#8b949e">/ 36</small></td>
                 <td>
                     <div style="font-weight:bold; font-size: 0.8rem;">${rate}%</div>
                     <div class="progress-bg"><div class="progress-bar" style="width:${Math.min(rate, 100)}%; background:${barCol};"></div></div>
@@ -152,7 +148,7 @@
         body.innerHTML = html;
     }
 
-    startApp();
+    initDashboard();
 </script>
 </body>
 </html>
