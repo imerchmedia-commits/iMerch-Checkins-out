@@ -13,14 +13,14 @@
         :root { 
             --primary: #d90429;
             --bg: #f4f7f6;
-            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-bg: rgba(255, 255, 255, 0.8);
             --text-main: #2b2d42;
         }
         body { background-color: var(--bg); color: var(--text-main); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; }
-        .glass-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08); }
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08); }
         .navbar { background: #fff !important; border-bottom: 2px solid var(--primary) !important; padding: 0.6rem 1.5rem; }
         .control-card { padding: 1.5rem; position: sticky; top: 90px; }
-        .calendar-container { padding: 1rem; overflow-x: auto; background: #fff; border-radius: 20px; }
+        .calendar-container { padding: 1rem; background: #fff; border-radius: 20px; overflow-x: auto; }
         #calendar { min-width: 850px; }
         .fc .fc-daygrid-day-number { font-weight: 800 !important; color: var(--text-main); text-decoration: none; }
         .fc-daygrid-event { border-radius: 4px !important; font-size: 0.7rem !important; font-weight: 700; border: none !important; }
@@ -82,7 +82,7 @@
                     </select>
                 </div>
 
-                <div id="syncStatus" class="sync-indicator text-center bg-light">READY</div>
+                <div id="syncStatus" class="sync-indicator text-center bg-light text-muted">READY</div>
             </div>
         </div>
 
@@ -97,6 +97,7 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
     let calendar;
+    // PASTE MO DITO YUNG URL NA NASA SCREENSHOT MO
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ4VIimZPBRLs0Hdu0fcTyDwjUpquDYGKRqICNQ/exec";
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -150,6 +151,7 @@
         } catch (e) {
             status.innerHTML = "SHEET NOT FOUND";
             status.className = "sync-indicator text-center bg-danger-subtle text-danger";
+            console.log("Looking for sheet:", user);
         }
     }
 </script>
