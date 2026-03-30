@@ -61,7 +61,7 @@
         }
 
         .btn-export {
-            background: #1a1a1a;
+            background: #238636; /* Made it Green like Excel */
             color: white;
             padding: 12px 25px;
             border-radius: 10px;
@@ -69,7 +69,9 @@
             font-weight: 800;
             cursor: pointer;
             font-size: 13px;
+            transition: 0.3s;
         }
+        .btn-export:hover { background: #2ea043; transform: translateY(-2px); }
 
         table { width: 100%; border-collapse: separate; border-spacing: 0 12px; margin: 20px 0; }
         th { text-transform: uppercase; font-size: 12px; color: #888; padding: 15px; border-bottom: 2px solid #f8f8f8; }
@@ -80,7 +82,6 @@
         .name-col { font-weight: 900; color: #1a1a1a; font-size: 17px; }
         .bold-data { font-weight: 800; }
 
-        /* COLOR CLASSES */
         .txt-green { color: var(--target-green) !important; }
         .txt-orange { color: var(--over-orange) !important; }
         .txt-blue { color: var(--track-blue) !important; }
@@ -104,7 +105,7 @@
         <p id="dateRange" style="color: #888; font-weight: 700; margin-top: 10px; font-size: 14px;"></p>
         <div class="controls-row">
             <input type="date" id="dateSelector">
-            <button class="btn-export" onclick="exportExcel()"><i class="fas fa-file-excel"></i> DOWNLOAD REPORT</button>
+            <button class="btn-export" id="exportBtn"><i class="fas fa-file-excel"></i> DOWNLOAD EXCEL REPORT</button>
         </div>
     </div>
 
@@ -154,7 +155,6 @@
     const picker = document.getElementById('dateSelector');
     picker.valueAsDate = new Date();
 
-    // 1. FETCH STAFF NAMES FIRST
     async function init() {
         const snap = await getDocs(collection(db, "staff_members"));
         snap.forEach(doc => {
@@ -237,10 +237,13 @@
         });
     }
 
-    window.exportExcel = () => {
-        const wb = XLSX.utils.table_to_book(document.getElementById("performanceTable"));
-        XLSX.writeFile(wb, `iMerch_Coverage_Report.xlsx`);
-    };
+    // Fixed Export Function inside Module
+    document.getElementById('exportBtn').addEventListener('click', () => {
+        const table = document.getElementById("performanceTable");
+        const wb = XLSX.utils.table_to_book(table, { sheet: "Coverage Report" });
+        const dateStr = new Date().toLocaleDateString().replace(/\//g, '-');
+        XLSX.writeFile(wb, `iMerch_Coverage_Report_${dateStr}.xlsx`);
+    });
 
     picker.onchange = loadData;
     init();
