@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Weekly Rate (Modular)</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>iMerch | Weekly Rate</title>
     <style>
         :root { --imerch-red: #d90429; --border: #d0d7de; --bg: #f6f8fa; --text: #24292f; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 15px; margin: 0; color: var(--text); }
@@ -27,7 +26,7 @@
     <div class="header">
         <div>
             <h3 style="margin:0; font-weight: 900;">WEEKLY PERFORMANCE (MON-SAT)</h3>
-            <small id="weekRange" style="color:#57606a; font-weight: bold;">Initializing Firebase...</small>
+            <small id="weekRange" style="color:#57606a; font-weight: bold;">Connecting to Firebase...</small>
         </div>
         <div style="text-align:right">
             <span style="font-size: 0.65rem; font-weight: bold; color: var(--imerch-red);">GOAL: 36 VISITS</span>
@@ -44,13 +43,13 @@
             </tr>
         </thead>
         <tbody id="weeklyBody">
-            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;">Fetching staff registry...</td></tr>
+            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;">Syncing staff records...</td></tr>
         </tbody>
     </table>
 </div>
 
 <script type="module">
-    // 1. Gagamit tayo ng Modular SDK para tugma sa monitoring.html mo
+    // Gamit ang Modular SDK (v10) para tugma sa monitoring.html
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, query, onSnapshot, where, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -65,7 +64,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const WEEKLY_TARGET = 36; 
+    const WEEKLY_TARGET = 36; // Monday to Saturday (6 visits/day)
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
     let staffRegistry = {};
 
@@ -77,18 +76,17 @@
 
     async function initWeekly() {
         try {
-            // Kunin ang staff masterlist gaya ng ginagawa sa monitoring.html
+            // STEP 1: Load Staff Masterlist para sa Full Names
             const staffSnap = await getDocs(collection(db, "staff_members"));
             staffSnap.forEach(doc => {
                 const d = doc.data();
                 const email = (d.email || "").toLowerCase().trim();
                 if(email) staffRegistry[email] = d.name || d.staffName;
             });
-            console.log("Registry Loaded:", staffRegistry);
             startMonitoring();
         } catch (e) { 
-            console.error("Error loading registry:", e);
-            document.getElementById('weekRange').innerText = "Error loading staff data.";
+            console.error("Registry Error:", e);
+            document.getElementById('weekRange').innerText = "Database Error.";
         }
     }
 
@@ -101,6 +99,7 @@
 
         document.getElementById('weekRange').innerText = `Mon-Sat: ${monday.toLocaleDateString()} - ${saturday.toLocaleDateString()}`;
 
+        // STEP 2: Realtime Listener para sa Attendance
         const q = query(
             collection(db, "attendance"),
             where("timestamp", ">=", Timestamp.fromDate(monday)),
@@ -113,7 +112,7 @@
                 const data = doc.data();
                 const email = (data.email || data.staffEmail || "").toLowerCase().trim();
                 
-                // Name resolution logic
+                // Name Resolution gaya ng monitoring.html
                 let name = data.name || data.staffName || staffRegistry[email];
                 
                 if (!name && email) {
@@ -138,7 +137,7 @@
         const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
 
         if (sorted.length === 0) {
-            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No visit records found for this week.</td></tr>';
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No visit records found.</td></tr>';
             return;
         }
 
@@ -163,7 +162,6 @@
         body.innerHTML = html;
     }
 
-    // Initialize
     initWeekly();
 </script>
 </body>
