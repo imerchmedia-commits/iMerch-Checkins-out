@@ -103,7 +103,7 @@
 
         calendar.gotoDate(`${year}-${month}-01`);
         const status = document.getElementById('syncStatus');
-        status.innerHTML = "FETCHING SCHEDULE...";
+        status.innerHTML = "FETCHING DATA FROM SHEET...";
         status.className = "sync-indicator text-center bg-warning-subtle text-warning";
 
         const oldScript = document.getElementById('jsonpLoader');
@@ -127,31 +127,31 @@
         }
 
         calendar.removeAllEvents();
-        // Nilinis ang filter para hindi sumama ang labels ng araw
         const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
         
         data.forEach((row, i) => {
             row.forEach((cell, colIndex) => {
-                // Hanapin ang cells na may petsa (1-31)
-                if (cell && !isNaN(cell) && cell >= 1 && cell <= 31 && cell !== "") {
+                // Pinipilit nating maging integer ang cell value para makuha ang petsa
+                let dateVal = parseInt(cell);
+                
+                if (cell && !isNaN(dateVal) && dateVal >= 1 && dateVal <= 31) {
                     
-                    // Scan pababa (hanggang 15 rows) para makuha lahat ng nakasulat sa ilalim ng petsa
+                    // Scan pababa (hanggang 15 rows) para makuha lahat ng schedules
                     for (let n = 1; n <= 15; n++) {
                         if (data[i+n] && data[i+n][colIndex]) {
                             let val = data[i+n][colIndex].toString().trim();
                             
-                            // Validasyon para sigurado na schedule text ang nakukuha
-                            if (val && !ignore.some(ig => val.toUpperCase() === ig) && isNaN(val)) {
+                            // Kunin ang val kung hindi ito panibagong petsa at hindi nasa ignore list
+                            if (val && isNaN(parseInt(val)) && !ignore.some(ig => val.toUpperCase().includes(ig))) {
                                 let eventColor = "#d90429"; // Default iMerch Red
                                 
-                                // Custom colors para sa specific tags
                                 if (val.toUpperCase().includes("OFF") || val.toUpperCase().includes("HOLIDAY")) eventColor = "#6c757d";
-                                if (val.toUpperCase().includes("CONFERENCE")) eventColor = "#0d6efd"; // Blue for Conference
-                                if (val.toUpperCase().includes("ADMIN")) eventColor = "#198754"; // Green for Admin
+                                if (val.toUpperCase().includes("CONFERENCE")) eventColor = "#0d6efd";
+                                if (val.toUpperCase().includes("ADMIN")) eventColor = "#198754";
 
                                 calendar.addEvent({
                                     title: val,
-                                    start: `${year}-${month}-${cell.toString().padStart(2,'0')}`,
+                                    start: `${year}-${month}-${dateVal.toString().padStart(2,'0')}`,
                                     backgroundColor: eventColor,
                                     allDay: true
                                 });
@@ -162,8 +162,14 @@
             });
         });
 
-        status.innerHTML = "SUCCESS: " + calendar.getEvents().length + " ENTRIES LOADED";
-        status.className = "sync-indicator text-center bg-success-subtle text-success";
+        const total = calendar.getEvents().length;
+        if (total > 0) {
+            status.innerHTML = "SUCCESS: " + total + " ENTRIES LOADED";
+            status.className = "sync-indicator text-center bg-success-subtle text-success";
+        } else {
+            status.innerHTML = "NO DATA FOUND FOR THIS MONTH";
+            status.className = "sync-indicator text-center bg-secondary-subtle text-secondary";
+        }
     };
 </script>
 </body>
