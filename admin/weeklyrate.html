@@ -3,108 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Weekly Firestore Tracking</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>iMerch | Weekly Realtime Rate</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
-        :root {
-            --imerch-gold: #D4AF37;
-            --imerch-dark: #1A1A1A;
-            --imerch-red: #d90429;
-            --bg-gray: #f6f8fa;
-            --white: #FFFFFF;
-            --border: #d0d7de;
+        :root { 
+            --imerch-red: #d90429; --dark: #1a1b1e; --border: #30363d; --text: #24292f;
+            --green: #238636; --orange: #d29922;
         }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-gray);
-            margin: 0;
-            color: var(--imerch-dark);
-            padding: 20px;
-        }
-
-        .dashboard-card {
-            background: var(--white);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            padding: 25px;
-        }
-
-        .header-flex {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 2px solid var(--bg-gray);
-            padding-bottom: 15px;
-        }
-
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px; font-size: 0.75rem; color: #57606a; text-transform: uppercase; border-bottom: 2px solid var(--border); }
-        td { padding: 15px 12px; border-bottom: 1px solid var(--bg-gray); font-size: 0.9rem; }
-
-        .progress-bar {
-            height: 8px;
-            background: #eee;
-            border-radius: 10px;
-            overflow: hidden;
-            width: 100px;
-            display: inline-block;
-            margin-right: 10px;
-        }
-
-        .progress-fill { height: 100%; border-radius: 10px; transition: width 0.5s ease; }
+        body { font-family: 'Inter', sans-serif; background: #f6f8fa; color: var(--text); padding: 15px; margin: 0; }
+        .card { background: white; border-radius: 12px; border: 1px solid #d0d7de; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         
-        .status-pill {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 800;
-        }
-        .excellent { background: #dafbe1; color: #1a7f37; }
-        .warning { background: #fff8c5; color: #9a6700; }
-        .critical { background: #ffebe9; color: #cf222e; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; font-size: 0.7rem; color: #57606a; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #d0d7de; }
+        td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
 
-        #loading { text-align: center; padding: 40px; color: #57606a; }
+        .progress-bg { width: 100%; background: #eee; height: 8px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
+        
+        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 800; }
+        .bg-low { background: #ffebe9; color: #cf222e; }
+        .bg-good { background: #fff8c5; color: #9a6700; }
+        .bg-ex { background: #dafbe1; color: #1a7f37; }
     </style>
 </head>
 <body>
 
-<div class="dashboard-card">
-    <div class="header-flex">
+<div class="card">
+    <div class="header">
         <div>
-            <h2 style="margin:0; font-size: 1.2rem;">Weekly Coverage Performance</h2>
-            <span id="date-range" style="font-size: 0.75rem; color: #57606a;">Loading week...</span>
+            <h3 style="margin:0; font-weight: 900;">WEEKLY PERFORMANCE INDEX</h3>
+            <small id="dateRange" style="color:#57606a;"></small>
         </div>
-        <div style="text-align: right;">
-            <span style="font-size: 0.7rem; font-weight: bold; color: var(--imerch-red);">TARGET: 42 STORES/WEEK</span>
+        <div style="text-align:right">
+            <span style="font-size: 0.65rem; font-weight: bold; color: var(--imerch-red);">GOAL: 42 VISITS</span>
         </div>
     </div>
 
-    <div id="loading">
-        <i class="fas fa-spinner fa-spin"></i> Calculating weekly stats...
-    </div>
-
-    <table id="weeklyTable" style="display:none;">
+    <table id="mainTable">
         <thead>
             <tr>
-                <th>Field Staff</th>
+                <th>Field Personnel</th>
                 <th>Actual Visits</th>
-                <th>Performance</th>
+                <th>Weekly Rate (%)</th>
                 <th>Status</th>
             </tr>
         </thead>
-        <tbody id="tableBody"></tbody>
+        <tbody id="weeklyBody">
+            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;">Waiting for realtime data...</td></tr>
+        </tbody>
     </table>
 </div>
 
 <script>
-    // 1. Firebase Config (Galing sa monitoring.html mo)
+    // Gamitin ang parehong config mula sa monitoring.html mo
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
@@ -116,83 +72,77 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const TARGET_WEEKLY = 42; // 6 stores * 7 days
+    const TARGET = 42; 
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
-    async function fetchWeeklyData() {
-        const tableBody = document.getElementById('tableBody');
-        const loading = document.getElementById('loading');
-        const table = document.getElementById('weeklyTable');
-        
-        // Calculate Date Range (Last 7 Days)
+    function startWeeklyMonitoring() {
         const today = new Date();
-        const lastWeek = new Date();
-        lastWeek.setDate(today.getDate() - 7);
-        
-        document.getElementById('date-range').innerText = 
-            `${lastWeek.toLocaleDateString()} - ${today.toLocaleDateString()}`;
+        const last7Days = new Date();
+        last7Days.setDate(today.getDate() - 7);
+        last7Days.setHours(0,0,0,0);
 
-        try {
-            // Query Firestore Attendance
-            const q = db.collection("attendance")
-                .where("timestamp", ">=", firebase.firestore.Timestamp.fromDate(lastWeek))
-                .orderBy("timestamp", "desc");
+        document.getElementById('dateRange').innerText = `Realtime: ${last7Days.toLocaleDateString()} - Today`;
 
-            const querySnapshot = await q.get();
-            let stats = {};
+        // REALTIME LISTENER: Gagamit ng onSnapshot para mag-update agad
+        db.collection("attendance")
+            .where("timestamp", ">=", firebase.firestore.Timestamp.fromDate(last7Days))
+            .onSnapshot((snapshot) => {
+                let stats = {};
 
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                const name = data.name || data.staffName || "Unknown";
-                const type = data.type || "";
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const name = data.name || data.staffName || "Unknown";
+                    const type = data.type || "";
 
-                if (adminExclusion.includes(name)) return;
+                    if (adminExclusion.includes(name)) return;
 
-                // Bilangin lang ang Check-in logs
-                if (type.toLowerCase().includes('in')) {
-                    stats[name] = (stats[name] || 0) + 1;
-                }
+                    // Bilangin lang ang mga "Check-in" logs
+                    if (type.toLowerCase().includes('in')) {
+                        stats[name] = (stats[name] || 0) + 1;
+                    }
+                });
+
+                renderTable(stats);
+            }, (error) => {
+                console.error("Firestore Error:", error);
+                document.getElementById('weeklyBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Error: ${error.message}</td></tr>`;
             });
-
-            // Render Table
-            let html = "";
-            for (const [name, count] of Object.entries(stats)) {
-                const percentage = Math.min((count / TARGET_WEEKLY) * 100, 100).toFixed(1);
-                let statusClass = "excellent", statusText = "EXCELLENT", color = "#1a7f37";
-
-                if (percentage < 50) { 
-                    statusClass = "critical"; statusText = "LOW"; color = "#cf222e";
-                } else if (percentage < 90) { 
-                    statusClass = "warning"; statusText = "GOOD"; color = "#9a6700";
-                }
-
-                html += `
-                    <tr>
-                        <td><strong>${name.toUpperCase()}</strong></td>
-                        <td style="font-weight:bold;">${count} <span style="color:#8b949e; font-weight:normal;">/ ${TARGET_WEEKLY}</span></td>
-                        <td>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width:${percentage}%; background:${color};"></div>
-                            </div>
-                            <span style="font-weight:bold;">${percentage}%</span>
-                        </td>
-                        <td><span class="status-pill ${statusClass}">${statusText}</span></td>
-                    </tr>
-                `;
-            }
-
-            tableBody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;">No attendance logs for this week.</td></tr>';
-            loading.style.display = "none";
-            table.style.display = "table";
-
-        } catch (error) {
-            console.error("Error fetching weekly data: ", error);
-            loading.innerText = "Error loading data. Please check connection.";
-        }
     }
 
-    // Run on load
-    window.onload = fetchWeeklyData;
+    function renderTable(stats) {
+        const body = document.getElementById('weeklyBody');
+        let html = "";
+
+        const entries = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+
+        if (entries.length === 0) {
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No visits recorded in the last 7 days.</td></tr>';
+            return;
+        }
+
+        entries.forEach(([name, count]) => {
+            const rate = ((count / TARGET) * 100).toFixed(1);
+            let statusClass = "bg-ex", statusText = "EXCELLENT", barCol = "#238636";
+
+            if (rate < 60) { statusClass = "bg-low"; statusText = "LOW"; barCol = "#cf222e"; }
+            else if (rate < 90) { statusClass = "bg-good"; statusText = "GOOD"; barCol = "#d29922"; }
+
+            html += `
+                <tr>
+                    <td><strong>${name.toUpperCase()}</strong></td>
+                    <td style="font-weight:700;">${count} <small style="color:#8b949e; font-weight:normal;">/ ${TARGET}</small></td>
+                    <td>
+                        <div style="font-weight:bold; margin-bottom:2px;">${rate}%</div>
+                        <div class="progress-bg"><div class="progress-fill" style="width:${Math.min(rate, 100)}%; background:${barCol};"></div></div>
+                    </td>
+                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                </tr>`;
+        });
+
+        body.innerHTML = html;
+    }
+
+    window.onload = startWeeklyMonitoring;
 </script>
 
 </body>
