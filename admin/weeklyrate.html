@@ -3,32 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Weekly Performance (Mon-Sat)</title>
+    <title>iMerch | Weekly Rate (Mon-Sat)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <style>
-        :root { 
-            --imerch-red: #d90429; --border: #d0d7de; --text: #24292f;
-            --green: #238636; --orange: #d29922; --bg: #f6f8fa;
-        }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; }
+        :root { --imerch-red: #d90429; --border: #d0d7de; --bg: #f6f8fa; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 15px; margin: 0; }
         .card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--imerch-red); padding-bottom: 10px; }
-        
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--imerch-red); padding-bottom: 10px; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; font-size: 0.7rem; color: #57606a; text-transform: uppercase; padding: 10px; border-bottom: 2px solid var(--border); }
         td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
-
         .progress-bg { width: 100%; background: #eee; height: 10px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
         .progress-bar { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
-        
-        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
-        .bg-low { background: #ffebe9; color: #cf222e; border: 1px solid #f85149; }
-        .bg-good { background: #fff8c5; color: #9a6700; border: 1px solid #d29922; }
-        .bg-ex { background: #dafbe1; color: #1a7f37; border: 1px solid #238636; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; border: 1px solid; }
+        .bg-low { background: #ffebe9; color: #cf222e; border-color: #f85149; }
+        .bg-good { background: #fff8c5; color: #9a6700; border-color: #d29922; }
+        .bg-ex { background: #dafbe1; color: #1a7f37; border-color: #238636; }
     </style>
 </head>
 <body>
@@ -37,7 +30,7 @@
     <div class="header">
         <div>
             <h3 style="margin:0; font-weight: 900;">WEEKLY PERFORMANCE (MON-SAT)</h3>
-            <small id="weekRange" style="color:#57606a; font-weight: bold;"></small>
+            <small id="weekRange" style="color:#57606a; font-weight: bold;">Loading Staff Registry...</small>
         </div>
         <div style="text-align:right">
             <span style="font-size: 0.65rem; font-weight: bold; color: var(--imerch-red);">GOAL: 36 VISITS (6/DAY)</span>
@@ -54,7 +47,7 @@
             </tr>
         </thead>
         <tbody id="weeklyBody">
-            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;">Syncing with live attendance...</td></tr>
+            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;">Syncing staff records...</td></tr>
         </tbody>
     </table>
 </div>
@@ -71,30 +64,39 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const DAILY_TARGET = 6; 
-    const DAYS_ACTIVE = 6; // Monday to Saturday
-    const WEEKLY_TARGET = DAILY_TARGET * DAYS_ACTIVE; // 36 Visits
+    const WEEKLY_TARGET = 36; 
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+    let staffRegistry = {};
 
     function getMonday(d) {
         d = new Date(d);
-        var day = d.getDay(),
-            diff = d.getDate() - day + (day == 0 ? -6 : 1); // Adjust to Monday
+        var day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
         return new Date(d.setDate(diff));
     }
 
-    function startWeeklyMonitoring() {
+    // Kinukuha ang listahan ng staff para ma-match ang Email sa Full Name
+    async function initWeekly() {
+        try {
+            const staffSnap = await db.collection("staff_members").get();
+            staffSnap.forEach(doc => {
+                const d = doc.data();
+                const email = (d.email || "").toLowerCase().trim();
+                if(email) staffRegistry[email] = d.name || d.staffName;
+            });
+            startMonitoring();
+        } catch (e) { console.error("Registry Load Error:", e); }
+    }
+
+    function startMonitoring() {
         const monday = getMonday(new Date());
         monday.setHours(0, 0, 0, 0);
-        
         const saturday = new Date(monday);
         saturday.setDate(monday.getDate() + 5);
         saturday.setHours(23, 59, 59, 999);
 
-        document.getElementById('weekRange').innerText = 
-            `Current Week: ${monday.toLocaleDateString()} - ${saturday.toLocaleDateString()}`;
+        document.getElementById('weekRange').innerText = `Week: ${monday.toLocaleDateString()} - ${saturday.toLocaleDateString()}`;
 
-        // REALTIME LISTENER
+        // Live connection sa attendance records
         db.collection("attendance")
             .where("timestamp", ">=", firebase.firestore.Timestamp.fromDate(monday))
             .where("timestamp", "<=", firebase.firestore.Timestamp.fromDate(saturday))
@@ -102,13 +104,20 @@
                 let stats = {};
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    // Name Resolution logic from monitoring.html
-                    const name = data.name || data.staffName || "Unknown Staff";
-                    const type = data.type || "";
+                    const email = (data.email || data.staffEmail || "").toLowerCase().trim();
+                    
+                    // Priority: data.name -> Registry -> Email prefix
+                    let name = data.name || data.staffName || staffRegistry[email];
+                    
+                    if (!name && email) {
+                        name = email.split('@')[0].replace('.', ' ');
+                    } else if (!name) {
+                        name = "Unknown Staff";
+                    }
 
                     if (adminExclusion.includes(name)) return;
 
-                    if (type.toLowerCase().includes('in')) {
+                    if ((data.type || "").toLowerCase().includes('in')) {
                         stats[name] = (stats[name] || 0) + 1;
                     }
                 });
@@ -119,35 +128,35 @@
     function renderTable(stats) {
         const body = document.getElementById('weeklyBody');
         let html = "";
-        const entries = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+        const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
 
-        if (entries.length === 0) {
-            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No records found for this week (Mon-Sat).</td></tr>';
+        if (sorted.length === 0) {
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No visit records found for this week.</td></tr>';
             return;
         }
 
-        entries.forEach(([name, count]) => {
+        sorted.forEach(([name, count]) => {
             const rate = ((count / WEEKLY_TARGET) * 100).toFixed(1);
-            let statusClass = "bg-ex", statusText = "ON TARGET", barCol = "var(--green)";
+            let sClass = "bg-ex", sText = "ON TARGET", barCol = "#1a7f37";
 
-            if (rate < 70) { statusClass = "bg-low"; statusText = "LOW"; barCol = "var(--imerch-red)"; }
-            else if (rate < 95) { statusClass = "bg-good"; statusText = "GOOD"; barCol = "var(--orange)"; }
+            if (rate < 75) { sClass = "bg-low"; sText = "BELOW TARGET"; barCol = "#d90429"; }
+            else if (rate < 95) { sClass = "bg-good"; sText = "GOOD"; barCol = "#d29922"; }
 
             html += `
                 <tr>
-                    <td><strong>${name.toUpperCase()}</strong></td>
-                    <td style="font-weight:700;">${count} <small style="color:#8b949e; font-weight:normal;">/ ${WEEKLY_TARGET}</small></td>
+                    <td style="text-transform: capitalize;"><strong>${name}</strong></td>
+                    <td style="font-weight:700;">${count} / 36</td>
                     <td>
-                        <div style="font-weight:bold; margin-bottom:2px;">${rate}%</div>
+                        <div style="font-weight:bold; font-size: 0.8rem;">${rate}%</div>
                         <div class="progress-bg"><div class="progress-bar" style="width:${Math.min(rate, 100)}%; background:${barCol};"></div></div>
                     </td>
-                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                    <td><span class="badge ${sClass}">${sText}</span></td>
                 </tr>`;
         });
         body.innerHTML = html;
     }
 
-    window.onload = startWeeklyMonitoring;
+    window.onload = initWeekly;
 </script>
 </body>
 </html>
