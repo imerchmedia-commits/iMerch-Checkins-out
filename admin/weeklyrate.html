@@ -13,11 +13,9 @@
         
         .container { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         
-        /* CLEAN LIGHT HEADER */
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--red); padding-bottom: 12px; }
         .controls { display: flex; gap: 10px; align-items: center; }
         
-        /* MALINAW NA CALENDAR */
         input[type="date"] { 
             background: #ffffff; 
             color: #24292f; 
@@ -46,7 +44,6 @@
         }
         .btn-excel:hover { background: #2ea043; transform: translateY(-1px); }
 
-        /* TABLE STYLES */
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         th { text-align: left; font-size: 11px; color: var(--gray); text-transform: uppercase; padding: 12px; border-bottom: 2px solid var(--border); letter-spacing: 1px; }
         td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
@@ -67,11 +64,11 @@
 <div class="container">
     <div class="header-row">
         <div>
-            <h3 style="margin:0; font-weight:900; color: #1a1a1a; letter-spacing: -0.5px;">WEEKLY PERFORMANCE</h3>
+            <h3 style="margin:0; font-weight:900; color: #1a1a1a; letter-spacing: -0.5px;">iMerch Analytics</h3>
             <div id="dateLabel" style="font-size:11px; color:var(--red); font-weight:bold; margin-top: 2px;"></div>
         </div>
         <div class="controls">
-            <span style="font-size: 10px; font-weight: 800; color: var(--gray);">FILTER WEEK:</span>
+            <span style="font-size: 10px; font-weight: 800; color: var(--gray);">FILTER:</span>
             <input type="date" id="datePick">
             <button class="btn-excel" onclick="exportData()"><i class="fas fa-file-excel"></i> EXPORT TO EXCEL</button>
         </div>
@@ -81,13 +78,14 @@
         <thead>
             <tr>
                 <th>Personnel</th>
-                <th>Total Visits</th>
-                <th style="width:35%">Weekly Rate (%)</th>
+                <th>Weekly Visits</th>
+                <th style="width:25%">Weekly Rate %</th>
+                <th style="background:#fdf2f2; color:var(--red);">Monthly Coverage %</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <tr><td colspan="4" style="text-align:center; padding:30px; color:var(--gray);">Syncing data from Firebase...</td></tr>
+            <tr><td colspan="5" style="text-align:center; padding:30px; color:var(--gray);">Syncing data from Firebase...</td></tr>
         </tbody>
     </table>
 
@@ -110,7 +108,9 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const GOAL = 36;
+    
+    const WEEK_GOAL = 36;
+    const MONTH_GOAL = 144; // 36 x 4 weeks
     const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Ron Sarmenta", "Arem Gonzales", "Samantha Claire"];
     
     let chart = null, staffMap = {}, unsub = null;
@@ -129,46 +129,76 @@
     function load() {
         if(unsub) unsub();
         const d = new Date(picker.value);
+        
+        // Weekly Range
         const mon = new Date(d.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1)));
         mon.setHours(0,0,0,0);
         const sat = new Date(mon); sat.setDate(mon.getDate() + 5); sat.setHours(23,59,59,999);
 
-        document.getElementById('dateLabel').innerText = `MONDAY - SATURDAY: ${mon.toLocaleDateString()} - ${sat.toLocaleDateString()}`;
+        // Monthly Range
+        const firstDay = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+        const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
 
-        const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(mon)), where("timestamp", "<=", Timestamp.fromDate(sat)));
+        document.getElementById('dateLabel').innerText = `WEEK: ${mon.toLocaleDateString()} - ${sat.toLocaleDateString()} | MONTH: ${firstDay.toLocaleString('default', { month: 'long' })}`;
+
+        // Query records for the whole month
+        const q = query(collection(db, "attendance"), 
+                  where("timestamp", ">=", Timestamp.fromDate(firstDay)), 
+                  where("timestamp", "<=", Timestamp.fromDate(lastDay)));
+
         unsub = onSnapshot(q, (s) => {
-            let stats = {};
+            let weeklyStats = {};
+            let monthlyStats = {};
+
             s.forEach(doc => {
                 const v = doc.data();
+                const ts = v.timestamp.toDate();
                 const mail = (v.email || v.staffEmail || "").toLowerCase().trim();
                 const name = v.name || v.staffName || staffMap[mail] || mail.split('@')[0].replace('.', ' ');
-                if(!admins.includes(name) && (v.type||"").toLowerCase().includes('in')) stats[name] = (stats[name] || 0) + 1;
+                
+                if(admins.includes(name)) return;
+                if(!(v.type||"").toLowerCase().includes('in')) return;
+
+                // Track monthly count
+                monthlyStats[name] = (monthlyStats[name] || 0) + 1;
+
+                // Track weekly count
+                if(ts >= mon && ts <= sat) {
+                    weeklyStats[name] = (weeklyStats[name] || 0) + 1;
+                }
             });
-            render(stats);
+            render(weeklyStats, monthlyStats);
         });
     }
 
-    function render(stats) {
+    function render(wStats, mStats) {
         const body = document.getElementById('tableBody');
-        const sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]);
+        const sorted = Object.entries(wStats).sort((a,b) => b[1] - a[1]);
         body.innerHTML = "";
         let labels = [], vals = [], colors = [];
 
-        sorted.forEach(([name, count]) => {
-            const per = ((count/GOAL)*100).toFixed(1);
-            let cls = per < 75 ? 'low' : (per < 95 ? 'good' : 'target');
-            let hex = per < 75 ? '#cf222e' : (per < 95 ? '#d29922' : '#1a7f37');
+        sorted.forEach(([name, wCount]) => {
+            const wPer = ((wCount/WEEK_GOAL)*100).toFixed(1);
+            const mCount = mStats[name] || 0;
+            const mPer = ((mCount/MONTH_GOAL)*100).toFixed(1);
+
+            let cls = wPer < 75 ? 'low' : (wPer < 95 ? 'good' : 'target');
+            let hex = wPer < 75 ? '#cf222e' : (wPer < 95 ? '#d29922' : '#1a7f37');
             
-            labels.push(name); vals.push(count); colors.push(hex);
+            labels.push(name); vals.push(wCount); colors.push(hex);
 
             body.innerHTML += `<tr>
                 <td style="text-transform:capitalize; font-weight:800; color:#1a1a1a;">${name}</td>
-                <td style="font-weight:bold;">${count} / 36</td>
+                <td style="font-weight:bold;">${wCount} / 36</td>
                 <td>
-                    <div style="font-size:10px; font-weight:900; color:${hex}">${per}%</div>
-                    <div class="prog-bg"><div class="prog-bar" style="width:${Math.min(per,100)}%; background:${hex}"></div></div>
+                    <div style="font-size:10px; font-weight:900; color:${hex}">${wPer}%</div>
+                    <div class="prog-bg"><div class="prog-bar" style="width:${Math.min(wPer,100)}%; background:${hex}"></div></div>
                 </td>
-                <td><span class="badge ${cls}">${per < 75 ? 'BELOW TARGET' : (per < 95 ? 'GOOD' : 'EXCELLENT')}</span></td>
+                <td style="background:#fdf2f2; text-align:center;">
+                    <strong style="color:var(--red);">${mPer}%</strong>
+                    <div style="font-size:9px; color:#57606a;">(${mCount} / 144)</div>
+                </td>
+                <td><span class="badge ${cls}">${wPer < 75 ? 'BELOW TARGET' : (wPer < 95 ? 'GOOD' : 'EXCELLENT')}</span></td>
             </tr>`;
         });
         
@@ -189,7 +219,7 @@
 
     window.exportData = () => {
         const wb = XLSX.utils.table_to_book(document.getElementById("reportTable"));
-        XLSX.writeFile(wb, `iMerch_Weekly_Performance_${picker.value}.xlsx`);
+        XLSX.writeFile(wb, `iMerch_Performance_${picker.value}.xlsx`);
     };
 
     picker.onchange = load;
