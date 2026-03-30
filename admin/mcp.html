@@ -4,20 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iMerch | Cloud Management Portal</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-        :root { --primary: #d90429; --bg: #f4f7f6; --glass-bg: rgba(255, 255, 255, 0.8); --text-main: #2b2d42; }
-        body { background-color: var(--bg); color: var(--text-main); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; }
-        .glass-card { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 20px; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08); }
-        .navbar { background: #fff !important; border-bottom: 2px solid var(--primary) !important; padding: 0.6rem 1.5rem; }
-        .control-card { padding: 1.5rem; position: sticky; top: 90px; }
-        .calendar-container { padding: 1rem; background: #fff; border-radius: 20px; overflow-x: auto; }
-        #calendar { min-width: 850px; }
-        .fc .fc-daygrid-day-number { font-weight: 800 !important; color: var(--text-main); text-decoration: none; }
-        .fc-daygrid-event { border-radius: 4px !important; font-size: 0.7rem !important; font-weight: 700; border: none !important; padding: 4px 6px !important; margin-bottom: 2px !important; white-space: normal !important; display: block !important; }
-        .sync-indicator { font-size: 0.75rem; font-weight: 800; padding: 10px; border-radius: 10px; margin-top: 15px; }
+        :root { 
+            --primary: #d90429; 
+            --bg: #f4f7f6; 
+            --glass-bg: rgba(255, 255, 255, 0.8); 
+            --text-main: #2b2d42; 
+        }
+
+        body { 
+            background-color: var(--bg); 
+            color: var(--text-main); 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            font-size: 13px; 
+        }
+
+        .glass-card { 
+            background: var(--glass-bg); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+            border-radius: 20px; 
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08); 
+        }
+
+        .navbar { 
+            background: #fff !important; 
+            border-bottom: 2px solid var(--primary) !important; 
+            padding: 0.6rem 1.5rem; 
+        }
+
+        .control-card { 
+            padding: 1.5rem; 
+            position: sticky; 
+            top: 90px; 
+        }
+
+        .calendar-container { 
+            padding: 1rem; 
+            background: #fff; 
+            border-radius: 20px; 
+            overflow-x: auto; 
+        }
+
+        #calendar { 
+            min-width: 850px; 
+        }
+
+        .fc .fc-daygrid-day-number { 
+            font-weight: 800 !important; 
+            color: var(--text-main); 
+            text-decoration: none; 
+        }
+
+        .fc-daygrid-event { 
+            border-radius: 4px !important; 
+            font-size: 0.65rem !important; 
+            font-weight: 700; 
+            border: none !important; 
+            padding: 2px 4px !important; 
+            margin-bottom: 1px !important; 
+            white-space: normal !important; 
+            display: block !important; 
+        }
+
+        .sync-indicator { 
+            font-size: 0.75rem; 
+            font-weight: 800; 
+            padding: 10px; 
+            border-radius: 10px; 
+            margin-top: 15px; 
+        }
     </style>
 </head>
 <body>
@@ -25,7 +86,9 @@
 <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="#">
-            <div style="background: var(--primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 10px;"><i class="fas fa-cloud"></i></div>
+            <div style="background: var(--primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 10px;">
+                <i class="fas fa-cloud"></i>
+            </div>
             <span class="fw-bold">iMerch</span><span style="color:var(--primary)">.Cloud</span>
         </a>
         <div id="clock" class="small fw-bold text-muted"></div>
@@ -37,24 +100,34 @@
         <div class="col-xl-3">
             <div class="glass-card control-card">
                 <div class="mb-3">
-                    <label class="small fw-bold mb-2">Year / Month</label>
+                    <label class="small fw-bold mb-2">Year / Month Selection</label>
                     <div class="d-flex gap-2">
                         <select id="mcpYear" class="form-select form-select-sm" onchange="syncWithCloud()">
-                            <option value="2025">2025</option><option value="2026" selected>2026</option>
+                            <option value="2025">2025</option>
+                            <option value="2026" selected>2026</option>
                         </select>
                         <select id="mcpMonth" class="form-select form-select-sm" onchange="syncWithCloud()">
-                            <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
-                            <option value="04" selected>Apr</option><option value="05">May</option><option value="06">Jun</option>
-                            <option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option>
-                            <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04" selected>April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
                         </select>
                     </div>
                 </div>
+
                 <div class="mb-4">
-                    <label class="small fw-bold mb-2">Coordinator Name</label>
+                    <label class="small fw-bold mb-2">Personnel / Coordinator</label>
                     <select id="userSelect" class="form-select form-select-sm" onchange="syncWithCloud()">
-                        <option value="" disabled>Identify Personnel...</option>
-                        <option value="ELENA YBARITTA" selected>ELENA YBARITTA</option>
+                        <option value="" disabled selected>Identify Personnel...</option>
+                        <option value="ELENA YBARITTA">ELENA YBARITTA</option>
                         <option value="CARL FRANCISCO">CARL FRANCISCO</option>
                         <option value="FERNAND DIGAMON">FERNAND DIGAMON</option>
                         <option value="GERVIE ESPINOSA">GERVIE ESPINOSA</option>
@@ -71,50 +144,55 @@
                         <option value="MARK ENDITA">MARK ENDITA</option>
                     </select>
                 </div>
-                <div id="syncStatus" class="sync-indicator text-center bg-light text-muted">READY</div>
+
+                <div id="syncStatus" class="sync-indicator text-center bg-light text-muted">READY TO SYNC</div>
             </div>
         </div>
-        <div class="col-xl-9"><div class="glass-card calendar-container"><div id="calendar"></div></div></div>
+
+        <div class="col-xl-9">
+            <div class="glass-card calendar-container">
+                <div id="calendar"></div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
     let calendar;
-    // Updated SCRIPT_URL base sa screenshot ng Manage Deployments mo
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ0C_D_T-0uVp_S-l2-C97e7N5wSiaLw6-M-V/exec";
 
     document.addEventListener('DOMContentLoaded', () => {
-        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), { 
+        const calendarEl = document.getElementById('calendar');
+        calendar = new FullCalendar.Calendar(calendarEl, { 
             initialView: 'dayGridMonth', 
             height: 'auto', 
-            headerToolbar: false,
-            dayMaxEventRows: true,
-            eventDidMount: function(info) {
-                info.el.title = info.event.title; // Tooltip para sa mahabang text
-            }
+            headerToolbar: false, 
+            dayMaxEventRows: false 
         });
         calendar.render();
-        setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleString(), 1000);
         
-        // Auto-sync pagbukas para kay Elena
-        syncWithCloud();
+        setInterval(() => {
+            const clock = document.getElementById('clock');
+            clock.innerText = new Date().toLocaleString();
+        }, 1000);
     });
 
     function syncWithCloud() {
         const user = document.getElementById('userSelect').value;
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
+        
         if(!user) return;
-
+        
         calendar.gotoDate(`${year}-${month}-01`);
         const status = document.getElementById('syncStatus');
-        status.innerHTML = "FETCHING APRIL DATA...";
+        status.innerHTML = `<i class="fas fa-spinner fa-spin"></i> SYNCING ${user}...`;
         status.className = "sync-indicator text-center bg-warning-subtle text-warning";
-
+        
         const oldScript = document.getElementById('jsonpLoader');
         if(oldScript) oldScript.remove();
-
+        
         const script = document.createElement('script');
         script.id = 'jsonpLoader';
         script.src = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&callback=handleCloudResponse&t=${Date.now()}`;
@@ -125,43 +203,32 @@
         const status = document.getElementById('syncStatus');
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
-
-        if(data.error) {
-            status.innerHTML = "ERROR: " + data.error;
-            status.className = "sync-indicator text-center bg-danger-subtle text-danger";
-            return;
-        }
-
+        
         calendar.removeAllEvents();
-        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE"];
+        const ignoreList = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE"];
         
         data.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
-                let rawVal = cell.toString().trim();
-                let dateVal = parseInt(rawVal);
+                let dateVal = parseInt(cell);
                 
-                // Kapag nakahanap ng petsa (1-31)
-                if (!isNaN(dateVal) && dateVal >= 1 && dateVal <= 31 && rawVal.length <= 2) {
+                if (cell && !isNaN(dateVal) && dateVal >= 1 && dateVal <= 31 && cell.toString().trim().length <= 2) {
                     
-                    // Mas malalim na scan (15 rows) para mahuli lahat ng "OFF" at "sample" entries
-                    for (let n = 1; n <= 15; n++) {
-                        let nextRow = data[rowIndex + n];
-                        if (nextRow && nextRow[colIndex]) {
-                            let scheduleText = nextRow[colIndex].toString().trim();
+                    for (let n = 1; n <= 30; n++) {
+                        if (data[rowIndex + n] && data[rowIndex + n][colIndex]) {
+                            let val = data[rowIndex + n][colIndex].toString().trim();
                             
-                            // Validasyon: hindi numero at hindi nasa ignore list
-                            if (scheduleText && isNaN(parseInt(scheduleText)) && !ignore.some(ig => scheduleText.toUpperCase().includes(ig))) {
+                            if (val !== "" && !ignoreList.some(ig => val.toUpperCase().includes(ig)) && isNaN(parseInt(val))) {
+                                let eventColor = "#d90429";
                                 
-                                let eventColor = "#d90429"; // Default Red
-                                if (scheduleText.toUpperCase() === "OFF") eventColor = "#6c757d"; // Gray for OFF
-                                if (scheduleText.toUpperCase().includes("CONFERENCE")) eventColor = "#0d6efd";
-                                if (scheduleText.toUpperCase().includes("ADMIN")) eventColor = "#198754";
-
-                                calendar.addEvent({
-                                    title: scheduleText,
-                                    start: `${year}-${month}-${dateVal.toString().padStart(2, '0')}`,
-                                    backgroundColor: eventColor,
-                                    allDay: true
+                                if (val.toUpperCase().includes("OFF")) eventColor = "#6c757d";
+                                if (val.toUpperCase().includes("CONFERENCE")) eventColor = "#0d6efd";
+                                if (val.toUpperCase().includes("ADMIN")) eventColor = "#198754";
+                                
+                                calendar.addEvent({ 
+                                    title: val, 
+                                    start: `${year}-${month}-${dateVal.toString().padStart(2, '0')}`, 
+                                    backgroundColor: eventColor, 
+                                    allDay: true 
                                 });
                             }
                         }
@@ -169,10 +236,15 @@
                 }
             });
         });
-
-        const total = calendar.getEvents().length;
-        status.innerHTML = total > 0 ? `SUCCESS: ${total} ENTRIES LOADED` : "NO DATA FOUND IN SHEET";
-        status.className = total > 0 ? "sync-indicator text-center bg-success-subtle text-success" : "sync-indicator text-center bg-secondary-subtle text-secondary";
+        
+        const count = calendar.getEvents().length;
+        if (count > 0) {
+            status.innerHTML = `<i class="fas fa-check-circle"></i> SUCCESS: ${count} LOADED`;
+            status.className = "sync-indicator text-center bg-success-subtle text-success";
+        } else {
+            status.innerHTML = `<i class="fas fa-exclamation-triangle"></i> NO DATA DETECTED`;
+            status.className = "sync-indicator text-center bg-danger-subtle text-danger";
+        }
     };
 </script>
 </body>
