@@ -101,8 +101,9 @@
         status.className = "sync-indicator text-center bg-warning-subtle text-warning";
 
         try {
-            // Gumamit ng encodeURIComponent para safe ang spaces sa URL
-            const resp = await fetch(`${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&t=${Date.now()}`);
+            const finalUrl = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&t=${Date.now()}`;
+            // FIX: Sinabihan natin ang fetch na sundan ang Google redirect para iwas CORS error
+            const resp = await fetch(finalUrl, { method: 'GET', redirect: 'follow' });
             const data = await resp.json();
             
             if(data.error) {
@@ -136,8 +137,9 @@
             status.innerHTML = "SUCCESS";
             status.className = "sync-indicator text-center bg-success-subtle text-success";
         } catch (e) {
-            status.innerHTML = "CONNECTION ERROR";
+            status.innerHTML = "SYNC ERROR";
             status.className = "sync-indicator text-center bg-danger-subtle text-danger";
+            console.error("CORS/Fetch Error:", e);
         }
     }
 </script>
