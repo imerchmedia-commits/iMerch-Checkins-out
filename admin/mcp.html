@@ -97,7 +97,7 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
     let calendar;
-    // Updated with your latest Web App URL
+    // GINAMIT KO NA YUNG PINAKABAGONG URL NA BINIGAY MO DITO:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ4VIimZPBRLs0Hdu0fcTyDwjUpquDYGKRqICNQ/exec";
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -120,8 +120,10 @@
         status.className = "sync-indicator text-center bg-warning-subtle text-warning";
 
         try {
-            const resp = await fetch(`${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&t=${Date.now()}`);
+            // Added trim() para sigurado sa match ng tab name
+            const resp = await fetch(`${SCRIPT_URL}?sheet=${encodeURIComponent(user.trim())}&t=${Date.now()}`);
             const data = await resp.json();
+            
             if(data.error) throw new Error(data.error);
             
             calendar.removeAllEvents();
@@ -151,7 +153,7 @@
         } catch (e) {
             status.innerHTML = "SHEET NOT FOUND";
             status.className = "sync-indicator text-center bg-danger-subtle text-danger";
-            console.log("Looking for sheet:", user);
+            console.log("Error details:", e);
         }
     }
 </script>
