@@ -81,7 +81,7 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
     let calendar;
-    // SIGURADUHIN NA ITO ANG BAGONG URL MULA SA IYONG LATEST DEPLOYMENT
+    // Gamitin ang bagong Deployment URL mo mula sa Apps Script
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrQdx21dYaVM7QyVM4wlf2OqSwXoiLguDMw-5vr-eQMgdKm8bFTuRvFva_9iDuMNbX_A/exec";
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -103,7 +103,7 @@
 
         calendar.gotoDate(`${year}-${month}-01`);
         const status = document.getElementById('syncStatus');
-        status.innerHTML = "FETCHING DATA FROM SHEET...";
+        status.innerHTML = "FETCHING SCHEDULE...";
         status.className = "sync-indicator text-center bg-warning-subtle text-warning";
 
         const oldScript = document.getElementById('jsonpLoader');
@@ -129,29 +129,30 @@
         calendar.removeAllEvents();
         const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
         
-        data.forEach((row, i) => {
+        data.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
-                // Pinipilit nating maging integer ang cell value para makuha ang petsa
-                let dateVal = parseInt(cell);
+                let rawVal = cell.toString().trim();
+                let dateVal = parseInt(rawVal);
                 
-                if (cell && !isNaN(dateVal) && dateVal >= 1 && dateVal <= 31) {
+                // Kapag nakakita ng petsa (1-31) sa isang cell
+                if (!isNaN(dateVal) && dateVal >= 1 && dateVal <= 31 && rawVal.length <= 2) {
                     
-                    // Scan pababa (hanggang 15 rows) para makuha lahat ng schedules
-                    for (let n = 1; n <= 15; n++) {
-                        if (data[i+n] && data[i+n][colIndex]) {
-                            let val = data[i+n][colIndex].toString().trim();
+                    // Mag-scan pababa sa susunod na 12 rows para makuha ang mga text schedule
+                    for (let n = 1; n <= 12; n++) {
+                        let nextRow = data[rowIndex + n];
+                        if (nextRow && nextRow[colIndex]) {
+                            let scheduleText = nextRow[colIndex].toString().trim();
                             
-                            // Kunin ang val kung hindi ito panibagong petsa at hindi nasa ignore list
-                            if (val && isNaN(parseInt(val)) && !ignore.some(ig => val.toUpperCase().includes(ig))) {
-                                let eventColor = "#d90429"; // Default iMerch Red
-                                
-                                if (val.toUpperCase().includes("OFF") || val.toUpperCase().includes("HOLIDAY")) eventColor = "#6c757d";
-                                if (val.toUpperCase().includes("CONFERENCE")) eventColor = "#0d6efd";
-                                if (val.toUpperCase().includes("ADMIN")) eventColor = "#198754";
+                            // I-filter ang mga text na hindi dapat maging event
+                            if (scheduleText && !ignore.some(ig => scheduleText.toUpperCase().includes(ig)) && isNaN(parseInt(scheduleText))) {
+                                let eventColor = "#d90429"; 
+                                if (scheduleText.toUpperCase().includes("OFF") || scheduleText.toUpperCase().includes("HOLIDAY")) eventColor = "#6c757d";
+                                if (scheduleText.toUpperCase().includes("CONFERENCE")) eventColor = "#0d6efd";
+                                if (scheduleText.toUpperCase().includes("ADMIN")) eventColor = "#198754";
 
                                 calendar.addEvent({
-                                    title: val,
-                                    start: `${year}-${month}-${dateVal.toString().padStart(2,'0')}`,
+                                    title: scheduleText,
+                                    start: `${year}-${month}-${dateVal.toString().padStart(2, '0')}`,
                                     backgroundColor: eventColor,
                                     allDay: true
                                 });
@@ -167,8 +168,8 @@
             status.innerHTML = "SUCCESS: " + total + " ENTRIES LOADED";
             status.className = "sync-indicator text-center bg-success-subtle text-success";
         } else {
-            status.innerHTML = "NO DATA FOUND FOR THIS MONTH";
-            status.className = "sync-indicator text-center bg-secondary-subtle text-secondary";
+            status.innerHTML = "NO DATA FOUND (Check Month/Year)";
+            status.className = "sync-indicator text-center bg-warning-subtle text-warning";
         }
     };
 </script>
