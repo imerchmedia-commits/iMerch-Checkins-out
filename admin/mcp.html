@@ -36,6 +36,7 @@
             background-image: radial-gradient(circle at 10% 20%, rgba(217, 4, 41, 0.03) 0%, transparent 40%);
             min-height: 100vh;
             margin: 0;
+            transition: background-color 0.3s ease;
         }
 
         .glass-card {
@@ -74,15 +75,16 @@
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
             color: var(--text-main);
-            transition: transform 0.2s ease;
+            transition: all 0.2s ease;
         }
-        .theme-toggle:active { transform: scale(0.9); }
+        .theme-toggle:hover { background: var(--primary); color: white; }
 
         .control-card { padding: 2rem; position: sticky; top: 100px; }
 
         .calendar-scroll-container { padding: 1.5rem; overflow-x: auto; }
         #calendar { min-width: 1100px; }
 
+        /* FullCalendar Custom Overrides */
         .fc .fc-daygrid-day-top { justify-content: center !important; padding-top: 10px; }
         .fc .fc-daygrid-day-number {
             font-weight: 800 !important;
@@ -92,16 +94,13 @@
         }
 
         .fc-daygrid-event {
-            border-radius: 4px !important;
-            padding: 2px 6px !important;
+            border-radius: 6px !important;
+            padding: 4px 8px !important;
             font-weight: 700 !important;
-            font-size: 0.68rem !important;
+            font-size: 0.72rem !important;
             border: none !important;
-            margin: 1px 4px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            margin: 2px 5px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .fc .fc-daygrid-day-frame { min-height: 180px !important; }
@@ -124,6 +123,7 @@
             border-radius: 12px;
             padding: 10px;
             font-weight: 600;
+            cursor: pointer;
         }
 
         .sync-indicator {
@@ -133,6 +133,7 @@
             border-radius: 12px;
             background: rgba(0,0,0,0.03);
             margin-top: 15px;
+            transition: all 0.3s ease;
         }
     </style>
 </head>
@@ -164,7 +165,7 @@
             <div class="glass-card control-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="fw-bold m-0">System Matrix</h5>
-                    <span class="badge bg-danger rounded-pill">LIVE</span>
+                    <span class="badge bg-danger rounded-pill pulse">LIVE</span>
                 </div>
                 
                 <div class="mb-3">
@@ -174,7 +175,6 @@
                         <option value="2026">2026</option>
                         <option value="2027">2027</option>
                         <option value="2028">2028</option>
-                        <option value="2029">2029</option>
                     </select>
                 </div>
 
@@ -194,27 +194,26 @@
                     <label class="small fw-extrabold text-muted mb-2 text-uppercase">Coordinator</label>
                     <select id="userSelect" class="form-select" onchange="syncWithCloud()">
                         <option value="" disabled selected>Identify Personnel...</option>
-                        <option value="ELENA">ELENA</option>
-                        <option value="CARL">CARL</option>
-                        <option value="FERNAND">FERNAND</option>
-                        <option value="GERVIE">GERVIE</option>
-                        <option value="JENNIFER">JENNIFER</option>
-                        <option value="PRINCESS">PRINCESS</option>
-                        <option value="JOSEPH">JOSEPH</option>
-                        <option value="MARCO">MARCO</option>
-                        <option value="JESSA">JESSA</option>
-                        <option value="ROMEO">ROMEO</option>
-                        <option value="MANUEL">MANUEL</option>
-                        <option value="ERIC">ERIC</option>
-                        <option value="ROGEL">ROGEL</option>
-                        <option value="ROSALINDA">ROSALINDA</option>
-                        <option value="ANNA MAE">ANNA MAE</option>
-                        <option value="MARK">MARK</option>
-                    </select>
+                        <option value="ELENA YBARITTA">ELENA YBARITTA</option>
+                        <option value="CARL FRANCISCO">CARL FRANCISCO</option>
+                        <option value="FERNAND DIGAMON">FERNAND DIGAMON</option>
+                        <option value="GERVIE ESPINOSA">GERVIE ESPINOSA</option>
+                        <option value="JENNIFER VICTORINO">JENNIFER VICTORINO</option>
+                        <option value="PRINCESS MANANSALA">PRINCESS MANANSALA</option>
+                        <option value="JOSEPH DELOS SANTOS">JOSEPH DELOS SANTOS</option>
+                        <option value="MARCO MOLINA">MARCO MOLINA</option>
+                        <option value="JESSA ABENIR">JESSA ABENIR</option>
+                        <option value="ROMEO ACANTILADO">ROMEO ACANTILADO</option>
+                        <option value="MANUEL ERIC GONZALES">MANUEL ERIC GONZALES</option>
+                        <option value="ROGEL GETARUELAS">ROGEL GETARUELAS</option>
+                        <option value="ROSALINDA NINO">ROSALINDA NINO</option>
+                        <option value="ANNA MAE EDIANEL">ANNA MAE EDIANEL</option>
+                        <option value="MARK ENDITA">MARK ENDITA</option>
+                     </select>
                 </div>
 
                 <div id="syncStatus" class="sync-indicator text-center text-muted">
-                    <i class="fas fa-info-circle me-1"></i> Ready for sync.
+                    <i class="fas fa-info-circle me-1"></i> Ready for cloud sync.
                 </div>
             </div>
         </div>
@@ -231,6 +230,7 @@
 
 <script>
     let calendar;
+    // Updated Script URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ4VIimZPBRLs0Hdu0fcTyDwjUpquDYGKRqICNQ/exec"; 
 
     function updateClock() {
@@ -245,7 +245,6 @@
         const body = document.body;
         const icon = document.getElementById('theme-icon');
         const isDark = body.getAttribute('data-theme') === 'dark';
-        body.style.transition = 'none';
         body.setAttribute('data-theme', isDark ? 'light' : 'dark');
         icon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
     }
@@ -255,7 +254,6 @@
         const currentYear = now.getFullYear();
         const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
 
-        // Automatic set current year and month in dropdowns
         document.getElementById('mcpYear').value = currentYear;
         document.getElementById('mcpMonth').value = currentMonth;
 
@@ -278,15 +276,18 @@
         const month = document.getElementById('mcpMonth').value;
         if(!user) return;
 
+        // Auto-navigate calendar
         calendar.gotoDate(`${year}-${month}-01`);
-        document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle-notch fa-spin me-2 text-primary"></i> Syncing...`;
+        document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle-notch fa-spin me-2 text-primary"></i> Syncing Cloud...`;
 
         try {
-            const response = await fetch(`${SCRIPT_URL}?sheet=${user}`, { method: "GET", redirect: "follow" });
+            // Added cache buster to ensure fresh data
+            const response = await fetch(`${SCRIPT_URL}?sheet=${user}&t=${new Date().getTime()}`, { method: "GET", redirect: "follow" });
             const data = await response.json();
+            if(data.error) throw new Error(data.error);
             processData(data);
         } catch (e) {
-            document.getElementById('syncStatus').innerHTML = `<i class="fas fa-exclamation-triangle text-danger"></i> Failed.`;
+            document.getElementById('syncStatus').innerHTML = `<i class="fas fa-exclamation-triangle text-danger"></i> Error: Check Sheet Name.`;
         }
     }
 
@@ -295,21 +296,35 @@
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
         let events = [];
-        const areaHeaders = ["PARANAQUE", "MUNTINLUPA", "LAS-PINAS", "LAS PINAS", "MAKATI", "TAGUIG", "PASAY", "PAMPANGA", "CAVITE", "MANILA", "CALOOCAN", "QUEZON CITY", "REGION", "AREA"];
+        
+        // Clean headers to ignore
+        const ignoreList = ["PARANAQUE", "MUNTINLUPA", "LAS-PINAS", "LAS PINAS", "MAKATI", "TAGUIG", "PASAY", "PAMPANGA", "CAVITE", "MANILA", "CALOOCAN", "QUEZON CITY", "REGION", "AREA", "WEEK", "TOTAL"];
 
         rows.forEach((row, i) => {
             row.forEach((cell, colIndex) => {
+                // If it's a date cell (1-31)
                 if (cell && !isNaN(cell) && cell >= 1 && cell <= 31) {
                     let dateStr = `${year}-${month}-${cell.toString().padStart(2, '0')}`;
+                    
+                    // Look down for store names (limit search to next 10 rows)
                     for (let n = 1; n <= 10; n++) { 
                         if (rows[i + n]) {
                             let content = rows[i + n][colIndex];
                             if (content) {
                                 let storeName = content.toString().trim();
-                                if (rows[i + n][0] && rows[i + n][0].toString().includes("WEEK")) break;
-                                if (storeName !== "" && !areaHeaders.includes(storeName.toUpperCase()) && storeName !== cell.toString() && isNaN(storeName)) {
-                                    let isOff = storeName.toUpperCase().includes("REST DAY") || storeName.toUpperCase().includes("OFF");
-                                    let isSpecial = storeName.toUpperCase().includes("IMERCH") || storeName.toUpperCase().includes("OFFICE") || storeName.toUpperCase().includes("MEETING");
+                                
+                                // Check if row is not a summary row or a header
+                                if (rows[i + n][0] && rows[i + n][0].toString().toUpperCase().includes("WEEK")) break;
+                                
+                                if (storeName !== "" && 
+                                    !ignoreList.some(h => storeName.toUpperCase().includes(h)) && 
+                                    storeName !== cell.toString() && 
+                                    isNaN(storeName)) {
+                                    
+                                    let upperName = storeName.toUpperCase();
+                                    let isOff = upperName.includes("REST DAY") || upperName.includes("OFF") || upperName.includes("SUNDAY");
+                                    let isSpecial = upperName.includes("IMERCH") || upperName.includes("OFFICE") || upperName.includes("MEETING");
+                                    
                                     events.push({
                                         title: storeName,
                                         start: dateStr,
@@ -326,7 +341,7 @@
         });
 
         calendar.addEventSource(events);
-        document.getElementById('syncStatus').innerHTML = `<i class="fas fa-check-circle text-success me-2"></i> ${events.length} Stores Loaded`;
+        document.getElementById('syncStatus').innerHTML = `<i class="fas fa-check-circle text-success me-2"></i> ${events.length} Deployments Sync'd`;
     }
 </script>
 </body>
