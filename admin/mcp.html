@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Cloud Management Portal v3.7</title>
+    <title>iMerch | Cloud Management Portal v3.9</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,180 +13,230 @@
         :root { 
             --primary: #d90429; 
             --primary-hover: #b00321;
-            --bg: #f4f7f6; 
+            --secondary: #2b2d42;
+            --bg-light: #f8f9fa;
             --glass: rgba(255, 255, 255, 0.98); 
-            --text: #2b2d42; 
-            --shadow: 0 15px 50px rgba(0,0,0,0.1);
+            --text-main: #2b2d42; 
+            --card-shadow: 0 20px 60px rgba(0,0,0,0.12);
         }
 
         body { 
-            background-color: var(--bg); 
-            color: var(--text); 
+            background-color: #f0f2f5; 
+            color: var(--text-main); 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             font-size: 13px; 
             margin: 0;
             padding: 0;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* NAVBAR - WHITE WITH RED LINING */
+        /* NAVBAR - SIGNATURE iMERCH WHITE & RED LINE */
         .navbar { 
             background: #ffffff !important; 
-            border-bottom: 4px solid var(--primary) !important; 
-            padding: 1rem 2.5rem; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border-bottom: 5px solid var(--primary) !important; 
+            padding: 1.2rem 3rem; 
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
             position: sticky;
             top: 0;
-            z-index: 2000;
+            z-index: 3000;
         }
 
         .navbar-brand { 
             font-weight: 800; 
-            font-size: 1.4rem;
-            letter-spacing: -0.8px; 
-            color: var(--text) !important;
+            font-size: 1.5rem;
+            letter-spacing: -1px; 
+            color: var(--secondary) !important;
         }
 
-        .brand-icon {
+        .brand-box {
             background: var(--primary);
-            width: 45px;
-            height: 45px;
-            border-radius: 14px;
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            margin-right: 15px;
-            box-shadow: 0 4px 12px rgba(217, 4, 41, 0.3);
+            margin-right: 18px;
+            box-shadow: 0 6px 15px rgba(217, 4, 41, 0.35);
         }
 
-        /* LAYOUT COMPONENTS */
-        .main-container { padding: 3rem 2rem; }
+        /* MAIN CONTAINER LAYOUT */
+        .app-content {
+            padding: 4rem 2.5rem;
+        }
 
-        .glass-card { 
+        .glass-panel { 
             background: var(--glass); 
-            backdrop-filter: blur(25px); 
-            border: 1px solid rgba(255, 255, 255, 0.7); 
-            border-radius: 32px; 
-            box-shadow: var(--shadow); 
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            backdrop-filter: blur(30px); 
+            border: 1px solid rgba(255, 255, 255, 0.8); 
+            border-radius: 40px; 
+            box-shadow: var(--card-shadow); 
+            overflow: hidden;
         }
 
-        .control-panel { 
-            padding: 2.8rem; 
-            position: sticky; 
-            top: 120px; 
+        .sidebar-config { 
+            padding: 3.5rem; 
+            background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+            border-right: 1px solid #edf2f7;
         }
 
-        .calendar-wrapper { 
-            padding: 2.5rem; 
+        .calendar-section { 
+            padding: 3rem; 
             background: #ffffff; 
-            border-radius: 32px; 
-            min-height: 900px;
+            min-height: 1000px;
         }
 
-        /* CALENDAR STYLING */
+        /* FULLCALENDAR CUSTOMIZATION */
+        #calendar { 
+            height: 100% !important;
+            border: none;
+        }
+        
+        .fc-theme-standard td, .fc-theme-standard th { border-color: #f1f3f5 !important; }
+
         .fc .fc-daygrid-day-number { 
-            font-weight: 800 !important; 
-            padding: 14px !important;
-            font-size: 1.1rem;
-            color: #4a4e69;
-            text-decoration: none;
+            font-weight: 900 !important; 
+            padding: 15px !important;
+            font-size: 1.2rem;
+            color: #8d99ae;
+            text-decoration: none !important;
         }
 
-        .fc-day-today { background: rgba(217, 4, 41, 0.03) !important; }
+        .fc-day-today { background: rgba(217, 4, 41, 0.04) !important; }
 
         .fc-daygrid-event { 
-            border-radius: 10px !important; 
-            font-size: 0.78rem !important; 
-            font-weight: 700; 
+            border-radius: 12px !important; 
+            font-size: 0.82rem !important; 
+            font-weight: 800; 
             border: none !important; 
-            padding: 8px 12px !important; 
-            margin: 5px 8px !important; 
+            padding: 10px 14px !important; 
+            margin: 6px 10px !important; 
             white-space: normal !important; 
-            display: block !important; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.1);
             color: white !important;
+            transition: all 0.3s ease;
         }
 
-        /* STATUS SYSTEM */
-        .sync-indicator { 
+        .fc-daygrid-event:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.15);
+        }
+
+        /* SYNC UI & STATUS CODES */
+        .sync-box { 
             font-size: 0.95rem; 
             font-weight: 800; 
-            padding: 22px; 
-            border-radius: 20px; 
-            margin-top: 35px; 
+            padding: 24px; 
+            border-radius: 24px; 
+            margin-top: 40px; 
             text-transform: uppercase;
-            border: 2px solid transparent;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 15px;
+            border: 2px solid transparent;
         }
 
-        .status-ready { background: #f8f9fa; color: #adb5bd; border-color: #e9ecef; }
-        .status-loading { background: #fff9db; color: #f08c00; border-color: #ffe066; }
+        .status-idle { background: #f1f3f5; color: #adb5bd; }
+        .status-syncing { background: #fff9db; color: #f08c00; border-color: #ffe066; }
         .status-success { background: #ebfbee; color: #2b8a3e; border-color: #b2f2bb; }
-        .status-error { background: #fff5f5; color: #c92a2a; border-color: #ffc9c9; }
+        .status-failed { background: #fff5f5; color: #c92a2a; border-color: #ffc9c9; }
 
-        /* FORMS */
-        .form-group label {
+        /* FORM CONTROLS */
+        .label-heading {
             font-weight: 800;
-            color: #6c757d;
-            margin-bottom: 10px;
+            color: #4a5568;
+            margin-bottom: 12px;
             display: block;
             text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
         }
 
-        .form-select { 
-            border-radius: 16px; 
-            padding: 14px; 
-            font-weight: 600; 
-            border: 2px solid #edf2f4; 
-            background-color: #f8f9fa;
+        .custom-select { 
+            border-radius: 20px; 
+            padding: 16px; 
+            font-weight: 700; 
+            border: 2px solid #edf2f7; 
+            background-color: #ffffff;
+            width: 100%;
+            margin-bottom: 25px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23d90429' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            transition: 0.3s;
         }
 
-        .btn-sync-action {
+        .custom-select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 5px rgba(217, 4, 41, 0.1);
+        }
+
+        .btn-action-sync {
             width: 100%;
             background: var(--primary);
             color: white;
             border: none;
-            padding: 16px;
-            border-radius: 18px;
+            padding: 18px;
+            border-radius: 22px;
             font-weight: 800;
-            margin-top: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            transition: all 0.3s;
+            gap: 12px;
+            transition: 0.4s;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(217, 4, 41, 0.2);
         }
 
-        .btn-sync-action:hover { background: var(--primary-hover); transform: translateY(-3px); }
-        
-        #clock-widget { 
+        .btn-action-sync:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(217, 4, 41, 0.3);
+        }
+
+        .btn-action-sync:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* LIVE CLOCK */
+        #live-clock { 
             font-family: 'Courier New', monospace; 
             font-weight: 800;
             color: var(--primary); 
             background: #ffffff;
-            padding: 10px 24px;
+            padding: 12px 28px;
             border-radius: 50px;
-            border: 2px solid #f1f3f5;
+            border: 2px solid #edf2f7;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+            font-size: 1rem;
         }
 
-        .progress-bar-container {
-            width: 100%; height: 6px; background: #e9ecef; border-radius: 10px; margin-top: 15px; overflow: hidden; display: none;
+        /* PROGRESS ENGINE */
+        .progress-track {
+            width: 100%;
+            height: 10px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            margin-top: 25px;
+            overflow: hidden;
+            display: none;
         }
-        .progress-bar-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.4s; }
 
-        @keyframes pulse-red {
-            0% { box-shadow: 0 0 0 0 rgba(217, 4, 41, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(217, 4, 41, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(217, 4, 41, 0); }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #d90429, #ef233c);
+            width: 0%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .pulse-active { animation: pulse-red 2s infinite; }
+
+        @keyframes spin-custom {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .spin-icon { animation: spin-custom 1.5s linear infinite; }
     </style>
 </head>
 <body>
@@ -194,43 +244,45 @@
 <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="#">
-            <div class="brand-icon"><i class="fas fa-calendar-check"></i></div>
+            <div class="brand-box">
+                <i class="fas fa-database"></i>
+            </div>
             <div>
                 <span style="display:block; line-height:1">iMERCH</span>
-                <small style="font-size: 0.65rem; color: var(--primary); letter-spacing: 2px;">PLANNER V3.7</small>
+                <small style="font-size: 0.7rem; color: var(--primary); letter-spacing: 3px; font-weight: 800;">ENGINE v3.9</small>
             </div>
         </a>
-        <div id="clock-widget" class="shadow-sm">00:00:00 AM</div>
+        <div id="live-clock" class="shadow-sm">00:00:00 AM</div>
     </div>
 </nav>
 
-<div class="main-container container-fluid">
-    <div class="row g-5">
-        
-        <div class="col-xl-3">
-            <div class="glass-card control-panel">
-                <h4 class="fw-800 mb-5" style="letter-spacing:-1px">Sync Control</h4>
+<div class="app-content container-fluid">
+    <div class="glass-panel">
+        <div class="row g-0">
+            
+            <div class="col-xl-3 sidebar-config">
+                <h3 class="fw-800 mb-5" style="letter-spacing:-1.5px; font-size: 1.8rem;">MCP Sync</h3>
                 
-                <div class="form-group mb-4">
-                    <label>Fiscal Year (2026-2036)</label>
-                    <select id="mcpYear" class="form-select shadow-sm" onchange="triggerSync()">
-                        <option value="2026" selected>2026</option>
-                        <option value="2027">2027</option>
-                        <option value="2028">2028</option>
-                        <option value="2029">2029</option>
-                        <option value="2030">2030</option>
-                        <option value="2031">2031</option>
-                        <option value="2032">2032</option>
-                        <option value="2033">2033</option>
-                        <option value="2034">2034</option>
-                        <option value="2035">2035</option>
-                        <option value="2036">2036</option>
+                <div class="form-item">
+                    <label class="label-heading">Target Year</label>
+                    <select id="selYear" class="custom-select" onchange="performSync()">
+                        <option value="2026" selected>2026 Fiscal Year</option>
+                        <option value="2027">2027 Fiscal Year</option>
+                        <option value="2028">2028 Fiscal Year</option>
+                        <option value="2029">2029 Fiscal Year</option>
+                        <option value="2030">2030 Fiscal Year</option>
+                        <option value="2031">2031 Fiscal Year</option>
+                        <option value="2032">2032 Fiscal Year</option>
+                        <option value="2033">2033 Fiscal Year</option>
+                        <option value="2034">2034 Fiscal Year</option>
+                        <option value="2035">2035 Fiscal Year</option>
+                        <option value="2036">2036 Fiscal Year</option>
                     </select>
                 </div>
 
-                <div class="form-group mb-4">
-                    <label>Month Period</label>
-                    <select id="mcpMonth" class="form-select shadow-sm" onchange="triggerSync()">
+                <div class="form-item">
+                    <label class="label-heading">Period Month</label>
+                    <select id="selMonth" class="custom-select" onchange="performSync()">
                         <option value="01">January</option>
                         <option value="02">February</option>
                         <option value="03">March</option>
@@ -246,10 +298,10 @@
                     </select>
                 </div>
 
-                <div class="form-group mb-4">
-                    <label>Coordinator Name</label>
-                    <select id="userSelect" class="form-select shadow-sm" onchange="triggerSync()">
-                        <option value="" disabled selected>Select Coordinator...</option>
+                <div class="form-item">
+                    <label class="label-heading">Sales Coordinator</label>
+                    <select id="selUser" class="custom-select" onchange="performSync()">
+                        <option value="" disabled selected>Choose Coordinator...</option>
                         <option value="ELENA YBARITTA">ELENA YBARITTA</option>
                         <option value="CARL FRANCISCO">CARL FRANCISCO</option>
                         <option value="FERNAND DIGAMON">FERNAND DIGAMON</option>
@@ -268,106 +320,157 @@
                     </select>
                 </div>
 
-                <button class="btn-sync-action shadow-sm" id="syncBtn" onclick="triggerSync()">
-                    <i class="fas fa-sync-alt"></i> PULL NEW DATA
+                <button class="btn-action-sync" id="btnSync" onclick="performSync()">
+                    <i class="fas fa-sync-alt" id="syncIcon"></i> PULL CLOUD DATA
                 </button>
 
-                <div class="progress-bar-container" id="pBar">
-                    <div class="progress-bar-fill" id="pFill"></div>
+                <div class="progress-track" id="pTrack">
+                    <div class="progress-fill" id="pFill"></div>
                 </div>
 
-                <div id="syncStatus" class="sync-indicator status-ready">
-                    <i class="fas fa-signal"></i> SYSTEM ONLINE
+                <div id="statusTag" class="sync-box status-idle">
+                    <i class="fas fa-check-circle"></i> SYSTEM READY
+                </div>
+
+                <div class="mt-5 p-4 rounded-4" style="background: rgba(217, 4, 41, 0.05); border: 1px dashed var(--primary);">
+                    <p class="small mb-0 text-muted">
+                        <strong>Developer Note:</strong> This version utilizes a high-latency bypass to prevent "Connection Errors" during peak server traffic.
+                    </p>
                 </div>
             </div>
-        </div>
 
-        <div class="col-xl-9">
-            <div class="glass-card calendar-wrapper shadow-lg">
+            <div class="col-xl-9 calendar-section">
                 <div id="calendar"></div>
             </div>
-        </div>
 
+        </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
+    /**
+     * iMERCH CLOUD ENGINE CORE v3.9
+     * Developed for Ron Sarmenta
+     */
     let calendar;
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ0C_D_T-0uVp_S-l2-C97e7N5wSiaLw6-M-V/exec";
+    let autoRetryCount = 0;
+    const ENDPOINT = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ0C_D_T-0uVp_S-l2-C97e7N5wSiaLw6-M-V/exec";
 
     document.addEventListener('DOMContentLoaded', function() {
-        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        const calendarEl = document.getElementById('calendar');
+        calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: false,
-            height: 'auto'
+            height: 'auto',
+            dayMaxEvents: true,
+            handleWindowResize: true
         });
         calendar.render();
-        setInterval(() => { document.getElementById('clock-widget').innerText = new Date().toLocaleTimeString(); }, 1000);
+        
+        // Live Clock Service
+        setInterval(() => {
+            document.getElementById('live-clock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
     });
 
-    function triggerSync() {
-        const user = document.getElementById('userSelect').value;
-        const year = document.getElementById('mcpYear').value;
-        const month = document.getElementById('mcpMonth').value;
+    /**
+     * PRIMARY SYNC FUNCTION
+     * Handles data injection and UI states
+     */
+    function performSync() {
+        const user = document.getElementById('selUser').value;
+        const year = document.getElementById('selYear').value;
+        const month = document.getElementById('selMonth').value;
+        
         if(!user) return;
         
+        // Reset UI Components
         calendar.gotoDate(`${year}-${month}-01`);
-        const status = document.getElementById('syncStatus');
-        const btn = document.getElementById('syncBtn');
-        const pBar = document.getElementById('pBar');
-        const pFill = document.getElementById('pFill');
+        const tag = document.getElementById('statusTag');
+        const btn = document.getElementById('btnSync');
+        const icon = document.getElementById('syncIcon');
+        const bar = document.getElementById('pTrack');
+        const fill = document.getElementById('pFill');
         
-        status.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> SYNCING...`;
-        status.className = "sync-indicator status-loading";
-        btn.classList.add('pulse-active');
+        tag.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ESTABLISHING...`;
+        tag.className = "sync-box status-syncing";
         btn.disabled = true;
-        pBar.style.display = "block";
-        pFill.style.width = "30%";
+        icon.classList.add('spin-icon');
+        bar.style.display = "block";
+        fill.style.width = "20%";
 
-        const oldScript = document.getElementById('cloudEngine');
-        if(oldScript) oldScript.remove();
+        // Cleanup previous script tags
+        const oldLoader = document.getElementById('dataLoader');
+        if(oldLoader) oldLoader.remove();
 
-        const script = document.createElement('script');
-        script.id = 'cloudEngine';
-        script.src = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&callback=processCloudData&t=${Date.now()}`;
+        // Inject Dynamic Script (JSONP)
+        const loader = document.createElement('script');
+        loader.id = 'dataLoader';
+        // UNIQUE CACHE BUSTER: t=Date.now() triggers fresh server pull
+        loader.src = `${ENDPOINT}?sheet=${encodeURIComponent(user)}&callback=onCloudResponse&t=${Date.now()}`;
         
-        script.onerror = () => {
-            status.innerHTML = `<i class="fas fa-wifi"></i> RETRY SYNC`;
-            status.className = "sync-indicator status-error";
-            btn.disabled = false;
-            btn.classList.remove('pulse-active');
+        loader.onerror = () => {
+            handleSyncError("NETWORK TIMEOUT");
         };
 
-        document.body.appendChild(script);
+        // Fallback Timeout for high latency
+        setTimeout(() => {
+            if(tag.classList.contains('status-syncing')) {
+                fill.style.width = "50%";
+                tag.innerHTML = `<i class="fas fa-satellite-dish fa-spin"></i> RETRIEVING...`;
+            }
+        }, 3000);
+
+        document.body.appendChild(loader);
     }
 
-    window.processCloudData = function(data) {
-        const status = document.getElementById('syncStatus');
-        const btn = document.getElementById('syncBtn');
-        const pFill = document.getElementById('pFill');
-        const year = document.getElementById('mcpYear').value;
-        const month = document.getElementById('mcpMonth').value;
+    /**
+     * DATA PROCESSING ENGINE
+     * Maps spreadsheet rows to calendar events
+     */
+    window.onCloudResponse = function(rawData) {
+        const tag = document.getElementById('statusTag');
+        const btn = document.getElementById('btnSync');
+        const icon = document.getElementById('syncIcon');
+        const fill = document.getElementById('pFill');
+        const year = document.getElementById('selYear').value;
+        const month = document.getElementById('selMonth').value;
         
-        pFill.style.width = "75%";
+        fill.style.width = "85%";
         calendar.removeAllEvents();
         
-        const filters = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE"];
+        // Filters to avoid garbage data
+        const invalidTerms = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE"];
         
         try {
-            data.forEach((row, rIdx) => {
-                row.forEach((cell, cIdx) => {
-                    let val = cell.toString().trim();
-                    let dNum = parseInt(val);
-                    if (val && !isNaN(dNum) && dNum >= 1 && dNum <= 31 && val.length <= 2) {
-                        for (let offset = 1; offset <= 25; offset++) {
-                            if (data[rIdx + offset] && data[rIdx + offset][cIdx]) {
-                                let task = data[rIdx + offset][cIdx].toString().trim();
-                                if (task !== "" && !filters.some(f => task.toUpperCase().includes(f)) && isNaN(parseInt(task))) {
+            if (!Array.isArray(rawData)) throw new Error("Invalid Format");
+
+            rawData.forEach((row, rowIndex) => {
+                row.forEach((cell, colIndex) => {
+                    let cellStr = cell.toString().trim();
+                    let dayNum = parseInt(cellStr);
+                    
+                    // Identify Date Anchor
+                    if (cellStr && !isNaN(dayNum) && dayNum >= 1 && dayNum <= 31 && cellStr.length <= 2) {
+                        
+                        // Deep Scan (30 rows below the date)
+                        for (let depth = 1; depth <= 30; depth++) {
+                            if (rawData[rowIndex + depth] && rawData[rowIndex + depth][colIndex]) {
+                                let task = rawData[rowIndex + depth][colIndex].toString().trim();
+                                
+                                if (task !== "" && !invalidTerms.some(term => task.toUpperCase().includes(term)) && isNaN(parseInt(task))) {
+                                    
+                                    // Smart Color Mapping
+                                    let color = "#d90429"; // iMerch Red
+                                    if(task.toUpperCase().includes("OFF")) color = "#8d99ae"; // Gray
+                                    if(task.toUpperCase().includes("LEAVE")) color = "#fb8500"; // Orange
+                                    if(task.toUpperCase().includes("ADMIN")) color = "#023047"; // Navy
+
                                     calendar.addEvent({
                                         title: task,
-                                        start: `${year}-${month}-${dNum.toString().padStart(2, '0')}`,
-                                        backgroundColor: task.toUpperCase().includes("OFF") ? "#6c757d" : "#d90429",
+                                        start: `${year}-${month}-${dayNum.toString().padStart(2, '0')}`,
+                                        backgroundColor: color,
                                         allDay: true
                                     });
                                 }
@@ -376,19 +479,38 @@
                     }
                 });
             });
-            pFill.style.width = "100%";
-            const total = calendar.getEvents().length;
-            status.innerHTML = total > 0 ? `<i class="fas fa-check"></i> ${total} SYNCED` : `<i class="fas fa-ghost"></i> EMPTY`;
-            status.className = total > 0 ? "sync-indicator status-success" : "sync-indicator status-error";
-        } catch (e) {
-            status.innerHTML = `<i class="fas fa-bug"></i> ERROR`;
-            status.className = "sync-indicator status-error";
+
+            fill.style.width = "100%";
+            const count = calendar.getEvents().length;
+            
+            if(count > 0) {
+                tag.innerHTML = `<i class="fas fa-check-double"></i> ${count} RECORDS LOADED`;
+                tag.className = "sync-box status-success";
+                autoRetryCount = 0;
+            } else {
+                tag.innerHTML = `<i class="fas fa-search"></i> NO DATA FOUND`;
+                tag.className = "status-failed sync-box";
+            }
+
+        } catch (err) {
+            handleSyncError("FORMAT ERROR");
         } finally {
-            btn.classList.remove('pulse-active');
             btn.disabled = false;
-            setTimeout(() => { document.getElementById('pBar').style.display = "none"; }, 1000);
+            icon.classList.remove('spin-icon');
+            setTimeout(() => { document.getElementById('pTrack').style.display = "none"; }, 1500);
         }
     };
+
+    function handleSyncError(msg) {
+        const tag = document.getElementById('statusTag');
+        const btn = document.getElementById('btnSync');
+        const icon = document.getElementById('syncIcon');
+        
+        tag.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${msg}`;
+        tag.className = "sync-box status-failed";
+        btn.disabled = false;
+        icon.classList.remove('spin-icon');
+    }
 </script>
 </body>
 </html>
