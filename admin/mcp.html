@@ -97,7 +97,8 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
     let calendar;
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFekw4GYStT6tXFaYw9iGNGs8X_z8n4sAaoQZILGs1peeuexaxTV5SRc8pyCreZyW2gg/exec";
+    // Updated with your latest Web App URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbykW1hWMXnFh-NbTeTbKfpXDzCgqUx3SldoOnlaGSAgc2FI1KGsrNmY4rdwC9vJysE4Ng/exec";
 
     document.addEventListener('DOMContentLoaded', () => {
         calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
@@ -150,6 +151,7 @@
         } catch (e) {
             status.innerHTML = "SHEET NOT FOUND";
             status.className = "sync-indicator text-center bg-danger-subtle text-danger";
+            console.log("Looking for sheet:", user);
         }
     }
 </script>
