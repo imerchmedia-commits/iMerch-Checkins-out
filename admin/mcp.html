@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     
     <style>
         :root { 
@@ -33,7 +32,6 @@
             background-color: var(--bg); 
             color: var(--text-main); 
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-image: radial-gradient(circle at 10% 20%, rgba(217, 4, 41, 0.03) 0%, transparent 40%);
             min-height: 100vh;
             margin: 0;
             transition: background-color 0.3s ease;
@@ -42,7 +40,6 @@
         .glass-card {
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
             box-shadow: var(--card-shadow);
@@ -55,8 +52,6 @@
             padding: 0.8rem 2rem;
         }
 
-        .navbar-brand b { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.5px; }
-
         .real-time-box {
             font-size: 0.85rem;
             font-weight: 700;
@@ -64,77 +59,19 @@
             border-radius: 10px;
             background: rgba(217, 4, 41, 0.1);
             color: var(--primary);
-            border: 1px solid rgba(217, 4, 41, 0.2);
         }
-
-        .theme-toggle {
-            cursor: pointer;
-            width: 40px; height: 40px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            transition: all 0.2s ease;
-        }
-        .theme-toggle:hover { background: var(--primary); color: white; }
 
         .control-card { padding: 2rem; position: sticky; top: 100px; }
-
         .calendar-scroll-container { padding: 1.5rem; overflow-x: auto; }
-        #calendar { min-width: 1100px; }
+        #calendar { min-width: 900px; }
 
-        /* FullCalendar Custom Overrides */
-        .fc .fc-daygrid-day-top { justify-content: center !important; padding-top: 10px; }
-        .fc .fc-daygrid-day-number {
-            font-weight: 800 !important;
-            font-size: 1.25rem !important;
-            color: var(--text-main);
-            text-decoration: none !important;
-        }
-
-        .fc-daygrid-event {
-            border-radius: 6px !important;
-            padding: 4px 8px !important;
-            font-weight: 700 !important;
-            font-size: 0.72rem !important;
-            border: none !important;
-            margin: 2px 5px !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .fc .fc-daygrid-day-frame { min-height: 180px !important; }
-
-        .fc .fc-col-header-cell {
-            padding: 15px 0;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 1.5px;
-            font-weight: 800;
-            color: var(--primary);
-        }
-
-        .fc-theme-standard td, .fc-theme-standard th { border: 1px solid var(--glass-border) !important; }
-
-        .form-select {
-            background-color: var(--glass-bg);
-            color: var(--text-main);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            padding: 10px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .sync-indicator {
-            font-size: 0.8rem;
-            font-weight: 700;
-            padding: 10px;
-            border-radius: 12px;
-            background: rgba(0,0,0,0.03);
-            margin-top: 15px;
-            transition: all 0.3s ease;
-        }
+        /* FullCalendar Overrides */
+        .fc .fc-daygrid-day-number { font-weight: 800 !important; color: var(--text-main); text-decoration: none; }
+        .fc-daygrid-event { border-radius: 4px !important; font-size: 0.7rem !important; padding: 2px 5px !important; }
+        .fc .fc-col-header-cell { padding: 10px 0; color: var(--primary); font-weight: 800; }
+        
+        .form-select { border-radius: 12px; font-weight: 600; padding: 10px; }
+        .sync-indicator { font-size: 0.8rem; font-weight: 700; padding: 10px; border-radius: 12px; margin-top: 15px; }
     </style>
 </head>
 <body data-theme="light">
@@ -142,19 +79,13 @@
 <nav class="navbar navbar-expand-lg sticky-top">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="#">
-            <div style="background: var(--primary); width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 12px; box-shadow: 0 4px 12px rgba(217, 4, 41, 0.3);">
+            <div style="background: var(--primary); width: 35px; height: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 10px;">
                 <i class="fas fa-cloud"></i>
             </div>
-            <b>iMerch</b><span style="color:var(--primary)">.Cloud</span>
+            <span class="fw-bold">iMerch</span><span style="color:var(--primary)">.Cloud</span>
         </a>
-        
-        <div class="d-flex align-items-center gap-3">
-            <div id="realTimeClock" class="real-time-box d-none d-md-block">
-                <i class="far fa-clock me-2"></i> Loading...
-            </div>
-            <button class="theme-toggle" onclick="toggleTheme()" title="Switch Theme">
-                <i class="fas fa-moon" id="theme-icon"></i>
-            </button>
+        <div id="realTimeClock" class="real-time-box">
+            <i class="far fa-clock me-2"></i> Loading...
         </div>
     </div>
 </nav>
@@ -163,26 +94,22 @@
     <div class="row g-4">
         <div class="col-xl-3">
             <div class="glass-card control-card">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="fw-bold m-0">System Matrix</h5>
-                    <span class="badge bg-danger rounded-pill pulse">LIVE</span>
-                </div>
+                <h6 class="fw-bold text-muted text-uppercase mb-3" style="font-size: 0.7rem; letter-spacing: 1px;">Cloud Settings</h6>
                 
                 <div class="mb-3">
-                    <label class="small fw-extrabold text-muted mb-2 text-uppercase">Operational Year</label>
+                    <label class="small fw-bold mb-2">Year</label>
                     <select id="mcpYear" class="form-select" onchange="syncWithCloud()">
                         <option value="2025">2025</option>
-                        <option value="2026">2026</option>
+                        <option value="2026" selected>2026</option>
                         <option value="2027">2027</option>
-                        <option value="2028">2028</option>
                     </select>
                 </div>
 
-                <div class="mb-4">
-                    <label class="small fw-extrabold text-muted mb-2 text-uppercase">Deployment Month</label>
+                <div class="mb-3">
+                    <label class="small fw-bold mb-2">Month</label>
                     <select id="mcpMonth" class="form-select" onchange="syncWithCloud()">
                         <option value="01">January</option><option value="02">February</option>
-                        <option value="03">March</option><option value="04">April</option>
+                        <option value="03" selected>March</option><option value="04">April</option>
                         <option value="05">May</option><option value="06">June</option>
                         <option value="07">July</option><option value="08">August</option>
                         <option value="09">September</option><option value="10">October</option>
@@ -191,29 +118,29 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="small fw-extrabold text-muted mb-2 text-uppercase">Coordinator</label>
+                    <label class="small fw-bold mb-2">Coordinator</label>
                     <select id="userSelect" class="form-select" onchange="syncWithCloud()">
-                        <option value="" disabled selected>Identify Personnel...</option>
-                        <option value="ELENA YBARITTA">ELENA YBARITTA</option>
-                        <option value="CARL FRANCISCO">CARL FRANCISCO</option>
-                        <option value="FERNAND DIGAMON">FERNAND DIGAMON</option>
-                        <option value="GERVIE ESPINOSA">GERVIE ESPINOSA</option>
-                        <option value="JENNIFER VICTORINO">JENNIFER VICTORINO</option>
-                        <option value="PRINCESS MANANSALA">PRINCESS MANANSALA</option>
-                        <option value="JOSEPH DELOS SANTOS">JOSEPH DELOS SANTOS</option>
-                        <option value="MARCO MOLINA">MARCO MOLINA</option>
-                        <option value="JESSA ABENIR">JESSA ABENIR</option>
-                        <option value="ROMEO ACANTILADO">ROMEO ACANTILADO</option>
-                        <option value="MANUEL ERIC GONZALES">MANUEL ERIC GONZALES</option>
-                        <option value="ROGEL GETARUELAS">ROGEL GETARUELAS</option>
-                        <option value="ROSALINDA NINO">ROSALINDA NINO</option>
-                        <option value="ANNA MAE EDIANEL">ANNA MAE EDIANEL</option>
-                        <option value="MARK ENDITA">MARK ENDITA</option>
-                     </select>
+                        <option value="" disabled selected>Select Tab Name...</option>
+                        <option value="ELENA">ELENA YBARITTA</option>
+                        <option value="CARL">CARL FRANCISCO</option>
+                        <option value="FERNAND">FERNAND DIGAMON</option>
+                        <option value="GERVIE">GERVIE ESPINOSA</option>
+                        <option value="JENNIFER">JENNIFER VICTORINO</option>
+                        <option value="PRINCESS">PRINCESS MANANSALA</option>
+                        <option value="JOSEPH">JOSEPH DELOS SANTOS</option>
+                        <option value="MARCO">MARCO MOLINA</option>
+                        <option value="JESSA">JESSA ABENIR</option>
+                        <option value="ROMEO">ROMEO ACANTILADO</option>
+                        <option value="MANUEL ERIC">MANUEL ERIC GONZALES</option>
+                        <option value="ROGEL">ROGEL GETARUELAS</option>
+                        <option value="ROSALINDA">ROSALINDA NINO</option>
+                        <option value="ANNA MAE">ANNA MAE EDIANEL</option>
+                        <option value="MARK">MARK ENDITA</option>
+                    </select>
                 </div>
 
-                <div id="syncStatus" class="sync-indicator text-center text-muted">
-                    <i class="fas fa-info-circle me-1"></i> Ready for cloud sync.
+                <div id="syncStatus" class="sync-indicator text-center bg-light">
+                    <i class="fas fa-info-circle me-1"></i> Ready.
                 </div>
             </div>
         </div>
@@ -230,68 +157,52 @@
 
 <script>
     let calendar;
-    // Updated Script URL
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ4VIimZPBRLs0Hdu0fcTyDwjUpquDYGKRqICNQ/exec"; 
 
     function updateClock() {
         const now = new Date();
-        const options = { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-        document.getElementById('realTimeClock').innerHTML = `<i class="far fa-calendar-alt me-2"></i> ${now.toLocaleDateString('en-US', options)}`;
+        document.getElementById('realTimeClock').innerHTML = `<i class="far fa-calendar-alt me-2"></i> ${now.toLocaleString()}`;
     }
     setInterval(updateClock, 1000);
     updateClock();
 
-    function toggleTheme() {
-        const body = document.body;
-        const icon = document.getElementById('theme-icon');
-        const isDark = body.getAttribute('data-theme') === 'dark';
-        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-        icon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
-    }
-
     document.addEventListener('DOMContentLoaded', function() {
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
-
-        document.getElementById('mcpYear').value = currentYear;
-        document.getElementById('mcpMonth').value = currentMonth;
-
         const calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
-            initialDate: `${currentYear}-${currentMonth}-01`,
             height: 'auto',
             headerToolbar: { left: 'today', center: 'title', right: '' },
-            dayMaxEvents: false, 
-            eventDisplay: 'block',
-            lazyFetching: true,
+            eventDisplay: 'block'
         });
         calendar.render();
     });
 
     async function syncWithCloud() {
-        const rawUser = document.getElementById('userSelect').value;
-        const user = rawUser ? rawUser.trim() : ""; // REMOVES SPACES
+        const user = document.getElementById('userSelect').value.trim(); // Fixed: Matches Sheet Tab Name
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
         
         if(!user) return;
 
         calendar.gotoDate(`${year}-${month}-01`);
-        document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle-notch fa-spin me-2 text-primary"></i> Syncing Cloud...`;
+        document.getElementById('syncStatus').className = "sync-indicator text-center text-primary bg-light";
+        document.getElementById('syncStatus').innerHTML = `<i class="fas fa-sync fa-spin me-2"></i> Syncing...`;
 
         try {
-            // encodeURIComponent fixes spaces in between names like "ANNA MAE"
-            const url = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&t=${new Date().getTime()}`;
-            const response = await fetch(url, { method: "GET", redirect: "follow" });
+            // Added encodeURIComponent to handle spaces in names like "MANUEL ERIC"
+            const fetchUrl = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&t=${new Date().getTime()}`;
+            const response = await fetch(fetchUrl);
             const data = await response.json();
             
             if(data.error) throw new Error(data.error);
             processData(data);
+            
+            document.getElementById('syncStatus').className = "sync-indicator text-center text-success bg-light";
+            document.getElementById('syncStatus').innerHTML = `<i class="fas fa-check-circle me-1"></i> Data Loaded!`;
         } catch (e) {
             console.error(e);
-            document.getElementById('syncStatus').innerHTML = `<i class="fas fa-exclamation-triangle text-danger"></i> Error: Check Sheet Name.`;
+            document.getElementById('syncStatus').className = "sync-indicator text-center text-danger bg-light";
+            document.getElementById('syncStatus').innerHTML = `<i class="fas fa-times-circle me-1"></i> Sheet Not Found!`;
         }
     }
 
@@ -301,47 +212,33 @@
         const month = document.getElementById('mcpMonth').value;
         let events = [];
         
-        const ignoreList = ["PARANAQUE", "MUNTINLUPA", "LAS-PINAS", "LAS PINAS", "MAKATI", "TAGUIG", "PASAY", "PAMPANGA", "CAVITE", "MANILA", "CALOOCAN", "QUEZON CITY", "REGION", "AREA", "WEEK", "TOTAL"];
+        const ignore = ["WEEK", "TOTAL", "PARANAQUE", "MUNTINLUPA", "LAS PINAS", "MAKATI", "TAGUIG", "PASAY", "PAMPANGA", "CAVITE", "MANILA", "CALOOCAN", "QUEZON CITY"];
 
         rows.forEach((row, i) => {
             row.forEach((cell, colIndex) => {
+                // Check if cell is a valid day (1-31)
                 if (cell && !isNaN(cell) && cell >= 1 && cell <= 31) {
                     let dateStr = `${year}-${month}-${cell.toString().padStart(2, '0')}`;
                     
-                    for (let n = 1; n <= 10; n++) { 
-                        if (rows[i + n]) {
-                            let content = rows[i + n][colIndex];
-                            if (content) {
-                                let storeName = content.toString().trim();
-                                
-                                if (rows[i + n][0] && rows[i + n][0].toString().toUpperCase().includes("WEEK")) break;
-                                
-                                if (storeName !== "" && 
-                                    !ignoreList.some(h => storeName.toUpperCase().includes(h)) && 
-                                    storeName !== cell.toString() && 
-                                    isNaN(storeName)) {
-                                    
-                                    let upperName = storeName.toUpperCase();
-                                    let isOff = upperName.includes("REST DAY") || upperName.includes("OFF") || upperName.includes("SUNDAY");
-                                    let isSpecial = upperName.includes("IMERCH") || upperName.includes("OFFICE") || upperName.includes("MEETING");
-                                    
-                                    events.push({
-                                        title: storeName,
-                                        start: dateStr,
-                                        backgroundColor: isOff ? "#8d99ae" : (isSpecial ? "#fb8500" : "#d90429"),
-                                        textColor: '#ffffff',
-                                        allDay: true
-                                    });
-                                }
+                    // Look below the date for the store name
+                    for (let n = 1; n <= 6; n++) { 
+                        if (rows[i + n] && rows[i + n][colIndex]) {
+                            let val = rows[i + n][colIndex].toString().trim();
+                            if (val && !ignore.some(ig => val.toUpperCase().includes(ig)) && isNaN(val)) {
+                                let isOff = val.toUpperCase().includes("OFF") || val.toUpperCase().includes("REST");
+                                events.push({
+                                    title: val,
+                                    start: dateStr,
+                                    backgroundColor: isOff ? "#adb5bd" : "#d90429",
+                                    allDay: true
+                                });
                             }
                         }
                     }
                 }
             });
         });
-
         calendar.addEventSource(events);
-        document.getElementById('syncStatus').innerHTML = `<i class="fas fa-check-circle text-success me-2"></i> ${events.length} Deployments Sync'd`;
     }
 </script>
 </body>
