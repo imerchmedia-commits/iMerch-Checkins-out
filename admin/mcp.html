@@ -97,8 +97,7 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
     let calendar;
-    // PASTE MO DITO YUNG URL NA NASA SCREENSHOT MO
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ4VIimZPBRLs0Hdu0fcTyDwjUpquDYGKRqICNQ/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFekw4GYStT6tXFaYw9iGNGs8X_z8n4sAaoQZILGs1peeuexaxTV5SRc8pyCreZyW2gg/exec";
 
     document.addEventListener('DOMContentLoaded', () => {
         calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
@@ -151,7 +150,6 @@
         } catch (e) {
             status.innerHTML = "SHEET NOT FOUND";
             status.className = "sync-indicator text-center bg-danger-subtle text-danger";
-            console.log("Looking for sheet:", user);
         }
     }
 </script>
