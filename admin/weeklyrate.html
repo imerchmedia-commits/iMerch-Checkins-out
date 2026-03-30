@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Weekly Realtime Rate</title>
+    <title>iMerch | Realtime Weekly Rate</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -11,56 +11,55 @@
 
     <style>
         :root { 
-            --imerch-red: #d90429; --dark: #1a1b1e; --border: #30363d; --text: #24292f;
-            --green: #238636; --orange: #d29922;
+            --imerch-red: #d90429; --accent: #58a6ff; --border: #30363d; 
+            --card: #ffffff; --text: #24292f;
         }
         body { font-family: 'Inter', sans-serif; background: #f6f8fa; color: var(--text); padding: 15px; margin: 0; }
-        .card { background: white; border-radius: 12px; border: 1px solid #d0d7de; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .glass-panel { background: var(--card); border: 1px solid #d0d7de; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 0.7rem; color: #57606a; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #d0d7de; }
-        td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: center; font-size: 0.7rem; color: #57606a; text-transform: uppercase; padding: 12px; border-bottom: 2px solid #d0d7de; }
+        td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; text-align: center; }
 
-        .progress-bg { width: 100%; background: #eee; height: 8px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
-        .progress-fill { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
+        .progress-container { width: 100%; background: #eee; height: 10px; border-radius: 10px; overflow: hidden; margin-top: 5px; border: 1px solid #ddd; }
+        .progress-bar { height: 100%; border-radius: 10px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 800; }
-        .bg-low { background: #ffebe9; color: #cf222e; }
-        .bg-good { background: #fff8c5; color: #9a6700; }
-        .bg-ex { background: #dafbe1; color: #1a7f37; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; border: 1px solid transparent; }
+        .ex { background: #dafbe1; color: #1a7f37; border-color: #238636; }
+        .low { background: #ffebe9; color: #cf222e; border-color: #f85149; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="header">
+<div class="glass-panel">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--imerch-red); padding-bottom: 10px;">
         <div>
-            <h3 style="margin:0; font-weight: 900;">WEEKLY PERFORMANCE INDEX</h3>
-            <small id="dateRange" style="color:#57606a;"></small>
+            <h2 style="margin:0; font-weight: 900; color: var(--text);">WEEKLY PERFORMANCE</h2>
+            <small id="status-text" style="color: var(--accent); font-weight: bold;">🛰️ CONNECTING TO LIVE FEED...</small>
         </div>
-        <div style="text-align:right">
-            <span style="font-size: 0.65rem; font-weight: bold; color: var(--imerch-red);">GOAL: 42 VISITS</span>
+        <div style="text-align: right;">
+            <div style="font-size: 0.6rem; color: #57606a;">WEEKLY TARGET</div>
+            <div style="font-size: 1.1rem; font-weight: 900; color: var(--imerch-red);">42 VISITS</div>
         </div>
     </div>
 
-    <table id="mainTable">
+    <table>
         <thead>
             <tr>
-                <th>Field Personnel</th>
+                <th>Personnel</th>
                 <th>Actual Visits</th>
-                <th>Weekly Rate (%)</th>
+                <th>Weekly Progress</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody id="weeklyBody">
-            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;">Waiting for realtime data...</td></tr>
+            <tr><td colspan="4" style="padding: 50px; color: #8b949e;">Searching for check-in records...</td></tr>
         </tbody>
     </table>
 </div>
 
 <script>
-    // Gamitin ang parehong config mula sa monitoring.html mo
+    // 1. CONFIGURATION (Pareho sa monitoring.html mo)
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
@@ -75,28 +74,27 @@
     const TARGET = 42; 
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
-    function startWeeklyMonitoring() {
+    function startLiveWeekly() {
         const today = new Date();
-        const last7Days = new Date();
-        last7Days.setDate(today.getDate() - 7);
-        last7Days.setHours(0,0,0,0);
+        const startOfWeek = new Date();
+        startOfWeek.setDate(today.getDate() - 7); // Last 7 days counting back
+        startOfWeek.setHours(0,0,0,0);
 
-        document.getElementById('dateRange').innerText = `Realtime: ${last7Days.toLocaleDateString()} - Today`;
-
-        // REALTIME LISTENER: Gagamit ng onSnapshot para mag-update agad
+        // 2. REALTIME LISTENER (Gayang-gaya sa monitoring.html)
         db.collection("attendance")
-            .where("timestamp", ">=", firebase.firestore.Timestamp.fromDate(last7Days))
+            .where("timestamp", ">=", firebase.firestore.Timestamp.fromDate(startOfWeek))
             .onSnapshot((snapshot) => {
+                document.getElementById('status-text').innerText = "🟢 LIVE: SYNCED WITH MONITORING";
+                
                 let stats = {};
-
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    const name = data.name || data.staffName || "Unknown";
+                    const name = data.name || data.staffName || "Unknown Staff";
                     const type = data.type || "";
 
                     if (adminExclusion.includes(name)) return;
 
-                    // Bilangin lang ang mga "Check-in" logs
+                    // Bilangin ang bawat "Check-in"
                     if (type.toLowerCase().includes('in')) {
                         stats[name] = (stats[name] || 0) + 1;
                     }
@@ -104,45 +102,51 @@
 
                 renderTable(stats);
             }, (error) => {
-                console.error("Firestore Error:", error);
-                document.getElementById('weeklyBody').innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Error: ${error.message}</td></tr>`;
+                console.error("Firestore Sync Error:", error);
+                document.getElementById('status-text').innerText = "🔴 SYNC ERROR";
             });
     }
 
     function renderTable(stats) {
         const body = document.getElementById('weeklyBody');
         let html = "";
-
         const entries = Object.entries(stats).sort((a, b) => b[1] - a[1]);
 
         if (entries.length === 0) {
-            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No visits recorded in the last 7 days.</td></tr>';
+            body.innerHTML = '<tr><td colspan="4" style="padding:40px;">No visits found in the last 7 days.</td></tr>';
             return;
         }
 
         entries.forEach(([name, count]) => {
-            const rate = ((count / TARGET) * 100).toFixed(1);
-            let statusClass = "bg-ex", statusText = "EXCELLENT", barCol = "#238636";
-
-            if (rate < 60) { statusClass = "bg-low"; statusText = "LOW"; barCol = "#cf222e"; }
-            else if (rate < 90) { statusClass = "bg-good"; statusText = "GOOD"; barCol = "#d29922"; }
+            const percentage = Math.min((count / TARGET) * 100, 100).toFixed(1);
+            const isExcellent = percentage >= 80;
+            const barColor = isExcellent ? "#238636" : "#d90429";
 
             html += `
                 <tr>
-                    <td><strong>${name.toUpperCase()}</strong></td>
-                    <td style="font-weight:700;">${count} <small style="color:#8b949e; font-weight:normal;">/ ${TARGET}</small></td>
-                    <td>
-                        <div style="font-weight:bold; margin-bottom:2px;">${rate}%</div>
-                        <div class="progress-bg"><div class="progress-fill" style="width:${Math.min(rate, 100)}%; background:${barCol};"></div></div>
+                    <td style="text-align: left;">
+                        <div style="font-weight: 900; color: #1a1a1a;">${name.toUpperCase()}</div>
+                        <div style="font-size: 0.65rem; color: #8b949e;">FIELD STAFF</div>
                     </td>
-                    <td><span class="badge ${statusClass}">${statusText}</span></td>
+                    <td style="font-size: 1.1rem; font-weight: 800;">${count} <span style="font-size: 0.7rem; color: #8b949e; font-weight: normal;">/ 42</span></td>
+                    <td>
+                        <div style="font-weight: 900; font-size: 0.8rem; margin-bottom: 3px;">${percentage}%</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${percentage}%; background: ${barColor};"></div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge ${isExcellent ? 'ex' : 'low'}">
+                            ${isExcellent ? 'ON TARGET' : 'BELOW TARGET'}
+                        </span>
+                    </td>
                 </tr>`;
         });
 
         body.innerHTML = html;
     }
 
-    window.onload = startWeeklyMonitoring;
+    window.onload = startLiveWeekly;
 </script>
 
 </body>
