@@ -16,7 +16,7 @@
         .calendar-container { padding: 1rem; background: #fff; border-radius: 20px; overflow-x: auto; }
         #calendar { min-width: 850px; }
         .fc .fc-daygrid-day-number { font-weight: 800 !important; color: var(--text-main); text-decoration: none; }
-        .fc-daygrid-event { border-radius: 4px !important; font-size: 0.7rem !important; font-weight: 700; border: none !important; padding: 2px 4px !important; }
+        .fc-daygrid-event { border-radius: 4px !important; font-size: 0.65rem !important; font-weight: 700; border: none !important; padding: 2px 4px !important; margin-bottom: 1px !important; white-space: normal !important; }
         .sync-indicator { font-size: 0.75rem; font-weight: 800; padding: 10px; border-radius: 10px; margin-top: 15px; }
     </style>
 </head>
@@ -85,12 +85,16 @@
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrQdx21dYaVM7QyVM4wlf2OqSwXoiLguDMw-5vr-eQMgdKm8bFTuRvFva_9iDuMNbX_A/exec";
 
     document.addEventListener('DOMContentLoaded', () => {
-        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), { initialView: 'dayGridMonth', height: 'auto', headerToolbar: false });
+        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), { 
+            initialView: 'dayGridMonth', 
+            height: 'auto', 
+            headerToolbar: false,
+            dayMaxEventRows: true 
+        });
         calendar.render();
         setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleString(), 1000);
     });
 
-    // BAGONG SYNC LOGIC GAMIT ANG JSONP (Iwas CORS Error)
     function syncWithCloud() {
         const user = document.getElementById('userSelect').value;
         const year = document.getElementById('mcpYear').value;
@@ -99,48 +103,56 @@
 
         calendar.gotoDate(`${year}-${month}-01`);
         const status = document.getElementById('syncStatus');
-        status.innerHTML = "SYNCING VIA CLOUD...";
+        status.innerHTML = "FETCHING SCHEDULE...";
         status.className = "sync-indicator text-center bg-warning-subtle text-warning";
 
-        // Alisin ang lumang script loader kung meron
         const oldScript = document.getElementById('jsonpLoader');
         if(oldScript) oldScript.remove();
 
-        // Gumawa ng bagong script tag para sa JSONP
         const script = document.createElement('script');
         script.id = 'jsonpLoader';
         script.src = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&callback=handleCloudResponse&t=${Date.now()}`;
-        
-        // I-append sa body para mag-trigger ang request
         document.body.appendChild(script);
     }
 
-    // ITO ANG TATANGGAP NG DATA GALING SA GOOGLE SCRIPT
     window.handleCloudResponse = function(data) {
         const status = document.getElementById('syncStatus');
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
 
         if(data.error) {
-            status.innerHTML = "NOT FOUND: " + data.error;
+            status.innerHTML = "ERROR: " + data.error;
             status.className = "sync-indicator text-center bg-danger-subtle text-danger";
             return;
         }
 
         calendar.removeAllEvents();
-        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUNDAY"];
+        // Nilinis ang filter para hindi sumama ang labels ng araw
+        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
         
         data.forEach((row, i) => {
             row.forEach((cell, colIndex) => {
-                if (cell && !isNaN(cell) && cell >= 1 && cell <= 31) {
-                    for (let n = 1; n <= 8; n++) {
+                // Hanapin ang cells na may petsa (1-31)
+                if (cell && !isNaN(cell) && cell >= 1 && cell <= 31 && cell !== "") {
+                    
+                    // Scan pababa (hanggang 15 rows) para makuha lahat ng nakasulat sa ilalim ng petsa
+                    for (let n = 1; n <= 15; n++) {
                         if (data[i+n] && data[i+n][colIndex]) {
                             let val = data[i+n][colIndex].toString().trim();
-                            if (val && !ignore.some(ig => val.toUpperCase().includes(ig)) && isNaN(val)) {
+                            
+                            // Validasyon para sigurado na schedule text ang nakukuha
+                            if (val && !ignore.some(ig => val.toUpperCase() === ig) && isNaN(val)) {
+                                let eventColor = "#d90429"; // Default iMerch Red
+                                
+                                // Custom colors para sa specific tags
+                                if (val.toUpperCase().includes("OFF") || val.toUpperCase().includes("HOLIDAY")) eventColor = "#6c757d";
+                                if (val.toUpperCase().includes("CONFERENCE")) eventColor = "#0d6efd"; // Blue for Conference
+                                if (val.toUpperCase().includes("ADMIN")) eventColor = "#198754"; // Green for Admin
+
                                 calendar.addEvent({
                                     title: val,
                                     start: `${year}-${month}-${cell.toString().padStart(2,'0')}`,
-                                    backgroundColor: val.toUpperCase().includes("OFF") ? "#6c757d" : "#d90429",
+                                    backgroundColor: eventColor,
                                     allDay: true
                                 });
                             }
@@ -150,7 +162,7 @@
             });
         });
 
-        status.innerHTML = "SUCCESS";
+        status.innerHTML = "SUCCESS: " + calendar.getEvents().length + " ENTRIES LOADED";
         status.className = "sync-indicator text-center bg-success-subtle text-success";
     };
 </script>
