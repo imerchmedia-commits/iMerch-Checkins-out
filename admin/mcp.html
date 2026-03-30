@@ -24,9 +24,10 @@
             font-size: 13px; 
             margin: 0;
             padding: 0;
+            overflow-x: hidden;
         }
 
-        /* NAVBAR - WHITE WITH RED LINING */
+        /* NAVIGATION - WHITE WITH RED LINING */
         .navbar { 
             background: #ffffff !important; 
             border-bottom: 3px solid var(--primary) !important; 
@@ -37,10 +38,7 @@
             z-index: 1000;
         }
 
-        .navbar-brand { 
-            font-weight: 800; 
-            letter-spacing: -0.5px;
-        }
+        .navbar-brand { font-weight: 800; letter-spacing: -0.5px; }
 
         /* GLASSMORPHISM CARDS */
         .glass-card { 
@@ -65,9 +63,7 @@
         }
 
         /* CALENDAR CUSTOMIZATION */
-        #calendar { 
-            min-height: 800px; 
-        }
+        #calendar { min-height: 800px; }
         
         .fc .fc-daygrid-day-number { 
             font-weight: 800 !important; 
@@ -89,38 +85,31 @@
             color: white !important;
         }
 
-        /* SYNC STATUS COLORS */
+        /* STATUS INDICATORS */
         .sync-indicator { 
             font-size: 0.9rem; 
             font-weight: 800; 
             padding: 18px; 
             border-radius: 18px; 
-            margin-top: 35px; 
+            margin-top: 25px; 
             text-transform: uppercase;
             border: 2px solid transparent;
             transition: all 0.3s ease;
         }
 
         .status-ready { background: #f8f9fa; color: #6c757d; border-color: #e9ecef; }
-        .status-loading { background: #fff9db; color: #f08c00; border-color: #ffe066; }
+        .status-loading { background: #fff3cd; color: #856404; border-color: #ffe066; }
         .status-success { background: #ebfbee; color: #2b8a3e; border-color: #b2f2bb; }
         .status-error { background: #fff5f5; color: #c92a2a; border-color: #ffc9c9; }
 
-        .form-select { 
-            border-radius: 12px; 
-            padding: 12px; 
-            font-weight: 600; 
-            border: 1px solid #dee2e6;
-        }
+        /* BUTTONS & FORMS */
+        .form-select { border-radius: 12px; padding: 12px; font-weight: 600; border: 1px solid #dee2e6; }
+        #clock { font-family: monospace; font-size: 14px; color: var(--primary); }
 
-        #clock { 
-            font-family: 'Courier New', monospace; 
-            font-size: 14px; 
-            color: var(--primary); 
-            background: #f8f9fa;
-            padding: 8px 20px;
-            border-radius: 50px;
-            border: 1px solid #eee;
+        /* RESPONSIVE */
+        @media (max-width: 991.98px) {
+            .control-panel { position: relative; top: 0; margin-bottom: 20px; }
+            .navbar { padding: 0.8rem 1rem; }
         }
     </style>
 </head>
@@ -130,11 +119,11 @@
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="#">
             <div style="background: var(--primary); width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 15px;">
-                <i class="fas fa-microchip"></i>
+                <i class="fas fa-satellite-dish"></i>
             </div>
-            <span>iMERCH <span style="color:var(--primary)">SYNC ENGINE</span></span>
+            <span>iMERCH <span style="color:var(--primary)">SYNC ENGINE V3.0</span></span>
         </a>
-        <div id="clock" class="fw-bold shadow-sm"></div>
+        <div id="clock" class="fw-bold bg-white px-4 py-2 rounded-pill border shadow-sm"></div>
     </div>
 </nav>
 
@@ -142,29 +131,20 @@
     <div class="row g-4">
         
         <div class="col-xl-3">
-            <div class="glass-card control-panel">
-                <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-calendar-alt me-2"></i> PERIOD SETTINGS</h5>
+            <div class="glass-card control-panel shadow-lg">
+                <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-sliders-h me-2"></i> DATA SYNC</h5>
                 
                 <div class="mb-4">
-                    <label class="small fw-bold text-muted mb-2">Year / Month Selection</label>
+                    <label class="small fw-bold text-muted mb-2">Target Period (Year/Month)</label>
                     <div class="d-flex gap-2">
                         <select id="mcpYear" class="form-select shadow-sm" onchange="syncWithCloud()">
                             <option value="2025">2025</option>
                             <option value="2026" selected>2026</option>
                         </select>
                         <select id="mcpMonth" class="form-select shadow-sm" onchange="syncWithCloud()">
-                            <option value="01">Jan</option>
-                            <option value="02">Feb</option>
-                            <option value="03">Mar</option>
-                            <option value="04" selected>Apr</option>
+                            <option value="04" selected>April</option>
                             <option value="05">May</option>
-                            <option value="06">Jun</option>
-                            <option value="07">Jul</option>
-                            <option value="08">Aug</option>
-                            <option value="09">Sep</option>
-                            <option value="10">Oct</option>
-                            <option value="11">Nov</option>
-                            <option value="12">Dec</option>
+                            <option value="12">December</option>
                         </select>
                     </div>
                 </div>
@@ -192,13 +172,13 @@
                 </div>
 
                 <div id="syncStatus" class="sync-indicator text-center status-ready">
-                    <i class="fas fa-wifi me-2"></i> READY TO CONNECT
+                    <i class="fas fa-check-circle me-2"></i> SYSTEM READY
                 </div>
             </div>
         </div>
 
         <div class="col-xl-9">
-            <div class="glass-card calendar-wrapper">
+            <div class="glass-card calendar-wrapper shadow-lg">
                 <div id="calendar"></div>
             </div>
         </div>
@@ -217,30 +197,27 @@
             initialView: 'dayGridMonth',
             headerToolbar: false,
             height: 'auto',
-            dayMaxEventRows: false
+            dayMaxEventRows: false,
+            eventDisplay: 'block'
         });
         calendar.render();
-        
-        setInterval(() => { 
-            document.getElementById('clock').innerText = new Date().toLocaleString(); 
-        }, 1000);
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
     });
 
     function syncWithCloud() {
         const user = document.getElementById('userSelect').value;
-        const year = document.getElementById('mcpYear').value;
-        const month = document.getElementById('mcpMonth').value;
-        
         if(!user) return;
         
-        calendar.gotoDate(`${year}-${month}-01`);
+        calendar.gotoDate(`${document.getElementById('mcpYear').value}-${document.getElementById('mcpMonth').value}-01`);
         const status = document.getElementById('syncStatus');
-        status.innerHTML = `<i class="fas fa-satellite-dish fa-spin me-2"></i> SYNCING...`;
+        status.innerHTML = `<i class="fas fa-sync fa-spin me-2"></i> FAST STREAMING...`;
         status.className = "sync-indicator text-center status-loading";
 
+        // Remove old scripts
         const oldLoader = document.getElementById('jsonpLoader');
         if(oldLoader) oldLoader.remove();
 
+        // Create script tag for JSONP with Cache Busting
         const script = document.createElement('script');
         script.id = 'jsonpLoader';
         script.src = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&callback=handleCloudResponse&t=${Date.now()}`;
@@ -253,15 +230,17 @@
         const month = document.getElementById('mcpMonth').value;
         
         calendar.removeAllEvents();
-        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE"];
+        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE", "MCP"];
         
+        // OPTIMIZED GLOBAL SCAN (Weeks 1 to 5)
         data.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
                 let cellVal = cell.toString().trim();
                 let dateNum = parseInt(cellVal);
                 
                 if (cellVal && !isNaN(dateNum) && dateNum >= 1 && dateNum <= 31 && cellVal.length <= 2) {
-                    for (let i = 1; i <= 25; i++) {
+                    // Mag-scan ng 20 rows sa ilalim ng bawat petsang makikita
+                    for (let i = 1; i <= 20; i++) {
                         if (data[rowIndex + i] && data[rowIndex + i][colIndex]) {
                             let text = data[rowIndex + i][colIndex].toString().trim();
                             if (text !== "" && !ignore.some(ig => text.toUpperCase().includes(ig)) && isNaN(parseInt(text))) {
@@ -278,9 +257,9 @@
             });
         });
 
-        const total = calendar.getEvents().length;
-        status.innerHTML = total > 0 ? `<i class="fas fa-check"></i> LOADED ${total}` : `<i class="fas fa-search"></i> NO DATA`;
-        status.className = total > 0 ? "sync-indicator text-center status-success" : "sync-indicator text-center status-error";
+        const count = calendar.getEvents().length;
+        status.innerHTML = count > 0 ? `<i class="fas fa-check"></i> SYNCED ${count}` : `<i class="fas fa-ghost"></i> NO DATA`;
+        status.className = count > 0 ? "sync-indicator text-center status-success" : "sync-indicator text-center status-error";
     };
 </script>
 </body>
