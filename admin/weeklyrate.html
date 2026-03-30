@@ -17,7 +17,7 @@
         }
         
         body { 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; 
             background: var(--bg); 
             margin: 0; 
             padding: 20px; 
@@ -31,100 +31,69 @@
             background: white; 
             border-radius: 16px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
-            padding: 30px;
+            padding: 40px;
             text-align: center;
         }
 
         .header-section {
-            border-bottom: 2px solid #eee;
-            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 25px;
             margin-bottom: 30px;
         }
 
-        h2 { margin: 0; color: #1a1a1a; letter-spacing: -1px; font-size: 28px; text-transform: uppercase; }
+        h2 { margin: 0; color: #1a1a1a; letter-spacing: -1px; font-size: 32px; font-weight: 900; text-transform: uppercase; }
         
         .controls-row {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 15px;
-            margin-top: 15px;
+            margin-top: 20px;
         }
 
         input[type="date"] {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-weight: bold;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-weight: 800;
             color: #333;
+            outline: none;
         }
 
         .btn-export {
             background: #1a1a1a;
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 12px 25px;
+            border-radius: 10px;
             border: none;
-            font-weight: 700;
+            font-weight: 800;
             cursor: pointer;
-            transition: 0.3s;
-        }
-        .btn-export:hover { background: #444; }
-
-        /* PROFESSIONAL TABLE */
-        table { 
-            width: 100%; 
-            border-collapse: separate; 
-            border-spacing: 0 10px; 
-            margin: 20px 0;
+            font-size: 13px;
         }
 
-        th { 
-            text-transform: uppercase; 
-            font-size: 12px; 
-            color: #666; 
-            padding: 15px;
-            border-bottom: 2px solid #f0f0f0;
-        }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 12px; margin: 20px 0; }
+        th { text-transform: uppercase; font-size: 12px; color: #888; padding: 15px; border-bottom: 2px solid #f8f8f8; }
+        td { padding: 20px; background: #fff; border-top: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0; font-size: 16px; vertical-align: middle; text-align: center; }
+        td:first-child { border-left: 1px solid #f0f0f0; border-top-left-radius: 15px; border-bottom-left-radius: 15px; text-align: left; padding-left: 30px; }
+        td:last-child { border-right: 1px solid #f0f0f0; border-top-right-radius: 15px; border-bottom-right-radius: 15px; }
 
-        td { 
-            padding: 18px; 
-            background: #fff;
-            border-top: 1px solid #f0f0f0;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 15px;
-            vertical-align: middle;
-        }
+        .name-col { font-weight: 900; color: #1a1a1a; font-size: 17px; }
+        .bold-data { font-weight: 800; }
 
-        td:first-child { border-left: 1px solid #f0f0f0; border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
-        td:last-child { border-right: 1px solid #f0f0f0; border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
-
-        .name-col { font-weight: 800; color: #1a1a1a; font-size: 16px; }
-        .bold-data { font-weight: 700; }
-
-        /* COLOR LOGIC CLASSES */
+        /* COLOR CLASSES */
         .txt-green { color: var(--target-green) !important; }
         .txt-orange { color: var(--over-orange) !important; }
         .txt-blue { color: var(--track-blue) !important; }
         .txt-red { color: var(--low-red) !important; }
 
-        .progress-container {
-            width: 120px;
-            background: #eee;
-            height: 8px;
-            border-radius: 10px;
-            margin: 5px auto;
-            overflow: hidden;
-        }
-        .progress-fill { height: 100%; border-radius: 10px; transition: 1s ease-in-out; }
+        .progress-container { width: 140px; background: #f0f0f0; height: 10px; border-radius: 20px; margin: 8px auto; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 20px; transition: 1.5s ease; }
 
-        .chart-wrapper {
-            margin-top: 40px;
-            height: 300px;
-            background: #fafafa;
-            border-radius: 15px;
-            padding: 20px;
-        }
+        .legend-box { display: flex; justify-content: center; gap: 25px; margin: 30px 0; padding: 20px; background: #fdfdfd; border-radius: 12px; border: 1px solid #eee; }
+        .legend-item { display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 800; color: #555; }
+        .dot { width: 14px; height: 14px; border-radius: 4px; }
+
+        .chart-wrapper { margin-top: 20px; height: 350px; background: #ffffff; border: 1px solid #f0f0f0; border-radius: 20px; padding: 30px; }
     </style>
 </head>
 <body>
@@ -132,12 +101,10 @@
 <div class="main-card">
     <div class="header-section">
         <h2>Coverage Analytics Dashboard</h2>
-        <p id="dateRange" style="color: #666; font-weight: 600;"></p>
+        <p id="dateRange" style="color: #888; font-weight: 700; margin-top: 10px; font-size: 14px;"></p>
         <div class="controls-row">
             <input type="date" id="dateSelector">
-            <button class="btn-export" onclick="exportExcel()">
-                <i class="fas fa-file-download"></i> DOWNLOAD REPORT
-            </button>
+            <button class="btn-export" onclick="exportExcel()"><i class="fas fa-file-excel"></i> DOWNLOAD REPORT</button>
         </div>
     </div>
 
@@ -145,24 +112,30 @@
         <thead>
             <tr>
                 <th>Field Personnel</th>
-                <th>Weekly Count</th>
-                <th>Weekly Coverage</th>
+                <th>Weekly Visits</th>
+                <th>Weekly Coverage (%)</th>
                 <th>Monthly Total</th>
-                <th>Monthly Rate</th>
+                <th>Monthly Rate (%)</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            </tbody>
+            <tr><td colspan="5" style="padding: 50px; color: #999; font-weight: 700;">Syncing Data...</td></tr>
+        </tbody>
     </table>
 
-    <div class="chart-wrapper">
-        <canvas id="mainChart"></canvas>
+    <div class="legend-box">
+        <div class="legend-item"><span class="dot" style="background: var(--over-orange);"></span> OVER ACHIEVER (>100%)</div>
+        <div class="legend-item"><span class="dot" style="background: var(--target-green);"></span> TARGET HIT (100%)</div>
+        <div class="legend-item"><span class="dot" style="background: var(--track-blue);"></span> ON TRACK (60-99%)</div>
+        <div class="legend-item"><span class="dot" style="background: var(--low-red);"></span> CRITICAL (<60%)</div>
     </div>
+
+    <div class="chart-wrapper"><canvas id="mainChart"></canvas></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, onSnapshot, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, where, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
@@ -174,50 +147,56 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     
-    const W_GOAL = 36;
-    const M_GOAL = 144;
+    const W_GOAL = 36, M_GOAL = 144;
+    const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Ron Sarmenta", "Arem Gonzales", "Samantha Claire"];
+    
+    let staffMap = {}, myChart = null, unsub = null;
     const picker = document.getElementById('dateSelector');
     picker.valueAsDate = new Date();
 
-    let myChart = null;
-
-    function getColor(per) {
-        if (per >= 101) return 'txt-orange';
-        if (per == 100) return 'txt-green';
-        if (per >= 60) return 'txt-blue';
-        return 'txt-red';
+    // 1. FETCH STAFF NAMES FIRST
+    async function init() {
+        const snap = await getDocs(collection(db, "staff_members"));
+        snap.forEach(doc => {
+            const data = doc.data();
+            if(data.email) staffMap[data.email.toLowerCase().trim()] = data.name || data.staffName;
+        });
+        loadData();
     }
 
-    function getHex(per) {
-        if (per >= 101) return '#f97316';
-        if (per == 100) return '#1a7f37';
-        if (per >= 60) return '#0969da';
-        return '#d1242f';
+    function getTheme(per) {
+        if (per > 100) return { class: 'txt-orange', hex: '#f97316' };
+        if (per === 100) return { class: 'txt-green', hex: '#1a7f37' };
+        if (per >= 60) return { class: 'txt-blue', hex: '#0969da' };
+        return { class: 'txt-red', hex: '#d1242f' };
     }
 
     function loadData() {
+        if(unsub) unsub();
         const d = new Date(picker.value);
         const mon = new Date(d.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1)));
         mon.setHours(0,0,0,0);
         const sat = new Date(mon); sat.setDate(mon.getDate() + 5); sat.setHours(23,59,59,999);
-        
-        const first = new Date(d.getFullYear(), d.getMonth(), 1);
+        const first = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0);
         const last = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
 
-        document.getElementById('dateRange').innerText = `${mon.toLocaleDateString()} to ${sat.toLocaleDateString()}`;
+        document.getElementById('dateRange').innerText = `WEEKLY: ${mon.toLocaleDateString()} - ${sat.toLocaleDateString()}`;
 
         const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(first)), where("timestamp", "<=", Timestamp.fromDate(last)));
 
-        onSnapshot(q, (snap) => {
+        unsub = onSnapshot(q, (snap) => {
             let wStats = {}, mStats = {};
             snap.forEach(doc => {
                 const v = doc.data();
                 const ts = v.timestamp.toDate();
-                const name = v.name || v.staffName || "Unknown";
-                if((v.type||"").toLowerCase().includes('in')) {
-                    mStats[name] = (mStats[name] || 0) + 1;
-                    if(ts >= mon && ts <= sat) wStats[name] = (wStats[name] || 0) + 1;
-                }
+                const mail = (v.email || v.staffEmail || "").toLowerCase().trim();
+                const name = v.name || v.staffName || staffMap[mail] || mail.split('@')[0];
+                
+                if(admins.includes(name)) return;
+                if(!(v.type||"").toLowerCase().includes('in')) return;
+
+                mStats[name] = (mStats[name] || 0) + 1;
+                if(ts >= mon && ts <= sat) wStats[name] = (wStats[name] || 0) + 1;
             });
             render(wStats, mStats);
         });
@@ -227,32 +206,26 @@
         const body = document.getElementById('tableBody');
         const sorted = Object.entries(wStats).sort((a,b) => b[1] - a[1]);
         body.innerHTML = "";
-        
         let labels = [], dataVals = [], bgColors = [];
 
         sorted.forEach(([name, wCount]) => {
             const wPer = Math.round((wCount/W_GOAL)*100);
             const mCount = mStats[name] || 0;
             const mPer = Math.round((mCount/M_GOAL)*100);
-            
-            const wColorClass = getColor(wPer);
-            const mColorClass = getColor(mPer);
-            const hex = getHex(wPer);
+            const wTheme = getTheme(wPer);
+            const mTheme = getTheme(mPer);
 
-            labels.push(name);
-            dataVals.push(wCount);
-            bgColors.push(hex);
+            labels.push(name.split(' ')[0]); dataVals.push(wCount); bgColors.push(wTheme.hex);
 
             body.innerHTML += `
                 <tr>
                     <td class="name-col">${name.toUpperCase()}</td>
                     <td class="bold-data">${wCount} / ${W_GOAL}</td>
-                    <td class="bold-data ${wColorClass}">
-                        ${wPer}%
-                        <div class="progress-container"><div class="progress-fill" style="width:${Math.min(wPer,100)}%; background:${hex}"></div></div>
+                    <td class="bold-data ${wTheme.class}">${wPer}%
+                        <div class="progress-container"><div class="progress-fill" style="width:${Math.min(wPer,100)}%; background:${wTheme.hex}"></div></div>
                     </td>
                     <td class="bold-data">${mCount} / ${M_GOAL}</td>
-                    <td class="bold-data ${mColorClass}">${mPer}%</td>
+                    <td class="bold-data ${mTheme.class}">${mPer}%</td>
                 </tr>`;
         });
 
@@ -270,7 +243,7 @@
     };
 
     picker.onchange = loadData;
-    loadData();
+    init();
 </script>
 </body>
 </html>
