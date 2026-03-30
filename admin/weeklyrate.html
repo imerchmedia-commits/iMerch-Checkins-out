@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Realtime Weekly Rate</title>
+    <title>iMerch | Weekly Performance (Mon-Sat)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -11,35 +11,36 @@
 
     <style>
         :root { 
-            --imerch-red: #d90429; --accent: #58a6ff; --border: #30363d; 
-            --card: #ffffff; --text: #24292f;
+            --imerch-red: #d90429; --border: #d0d7de; --text: #24292f;
+            --green: #238636; --orange: #d29922; --bg: #f6f8fa;
         }
-        body { font-family: 'Inter', sans-serif; background: #f6f8fa; color: var(--text); padding: 15px; margin: 0; }
-        .glass-panel { background: var(--card); border: 1px solid #d0d7de; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; }
+        .card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--imerch-red); padding-bottom: 10px; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th { text-align: center; font-size: 0.7rem; color: #57606a; text-transform: uppercase; padding: 12px; border-bottom: 2px solid #d0d7de; }
-        td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; text-align: center; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; font-size: 0.7rem; color: #57606a; text-transform: uppercase; padding: 10px; border-bottom: 2px solid var(--border); }
+        td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
 
-        .progress-container { width: 100%; background: #eee; height: 10px; border-radius: 10px; overflow: hidden; margin-top: 5px; border: 1px solid #ddd; }
-        .progress-bar { height: 100%; border-radius: 10px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .progress-bg { width: 100%; background: #eee; height: 10px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .progress-bar { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
         
-        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; border: 1px solid transparent; }
-        .ex { background: #dafbe1; color: #1a7f37; border-color: #238636; }
-        .low { background: #ffebe9; color: #cf222e; border-color: #f85149; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+        .bg-low { background: #ffebe9; color: #cf222e; border: 1px solid #f85149; }
+        .bg-good { background: #fff8c5; color: #9a6700; border: 1px solid #d29922; }
+        .bg-ex { background: #dafbe1; color: #1a7f37; border: 1px solid #238636; }
     </style>
 </head>
 <body>
 
-<div class="glass-panel">
-    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--imerch-red); padding-bottom: 10px;">
+<div class="card">
+    <div class="header">
         <div>
-            <h2 style="margin:0; font-weight: 900; color: var(--text);">WEEKLY PERFORMANCE</h2>
-            <small id="status-text" style="color: var(--accent); font-weight: bold;">🛰️ CONNECTING TO LIVE FEED...</small>
+            <h3 style="margin:0; font-weight: 900;">WEEKLY PERFORMANCE (MON-SAT)</h3>
+            <small id="weekRange" style="color:#57606a; font-weight: bold;"></small>
         </div>
-        <div style="text-align: right;">
-            <div style="font-size: 0.6rem; color: #57606a;">WEEKLY TARGET</div>
-            <div style="font-size: 1.1rem; font-weight: 900; color: var(--imerch-red);">42 VISITS</div>
+        <div style="text-align:right">
+            <span style="font-size: 0.65rem; font-weight: bold; color: var(--imerch-red);">GOAL: 36 VISITS (6/DAY)</span>
         </div>
     </div>
 
@@ -48,18 +49,17 @@
             <tr>
                 <th>Personnel</th>
                 <th>Actual Visits</th>
-                <th>Weekly Progress</th>
+                <th>Weekly Rate (%)</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody id="weeklyBody">
-            <tr><td colspan="4" style="padding: 50px; color: #8b949e;">Searching for check-in records...</td></tr>
+            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;">Syncing with live attendance...</td></tr>
         </tbody>
     </table>
 </div>
 
 <script>
-    // 1. CONFIGURATION (Pareho sa monitoring.html mo)
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
@@ -71,39 +71,48 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const TARGET = 42; 
+    const DAILY_TARGET = 6; 
+    const DAYS_ACTIVE = 6; // Monday to Saturday
+    const WEEKLY_TARGET = DAILY_TARGET * DAYS_ACTIVE; // 36 Visits
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
-    function startLiveWeekly() {
-        const today = new Date();
-        const startOfWeek = new Date();
-        startOfWeek.setDate(today.getDate() - 7); // Last 7 days counting back
-        startOfWeek.setHours(0,0,0,0);
+    function getMonday(d) {
+        d = new Date(d);
+        var day = d.getDay(),
+            diff = d.getDate() - day + (day == 0 ? -6 : 1); // Adjust to Monday
+        return new Date(d.setDate(diff));
+    }
 
-        // 2. REALTIME LISTENER (Gayang-gaya sa monitoring.html)
+    function startWeeklyMonitoring() {
+        const monday = getMonday(new Date());
+        monday.setHours(0, 0, 0, 0);
+        
+        const saturday = new Date(monday);
+        saturday.setDate(monday.getDate() + 5);
+        saturday.setHours(23, 59, 59, 999);
+
+        document.getElementById('weekRange').innerText = 
+            `Current Week: ${monday.toLocaleDateString()} - ${saturday.toLocaleDateString()}`;
+
+        // REALTIME LISTENER
         db.collection("attendance")
-            .where("timestamp", ">=", firebase.firestore.Timestamp.fromDate(startOfWeek))
+            .where("timestamp", ">=", firebase.firestore.Timestamp.fromDate(monday))
+            .where("timestamp", "<=", firebase.firestore.Timestamp.fromDate(saturday))
             .onSnapshot((snapshot) => {
-                document.getElementById('status-text').innerText = "🟢 LIVE: SYNCED WITH MONITORING";
-                
                 let stats = {};
                 snapshot.forEach((doc) => {
                     const data = doc.data();
+                    // Name Resolution logic from monitoring.html
                     const name = data.name || data.staffName || "Unknown Staff";
                     const type = data.type || "";
 
                     if (adminExclusion.includes(name)) return;
 
-                    // Bilangin ang bawat "Check-in"
                     if (type.toLowerCase().includes('in')) {
                         stats[name] = (stats[name] || 0) + 1;
                     }
                 });
-
                 renderTable(stats);
-            }, (error) => {
-                console.error("Firestore Sync Error:", error);
-                document.getElementById('status-text').innerText = "🔴 SYNC ERROR";
             });
     }
 
@@ -113,41 +122,32 @@
         const entries = Object.entries(stats).sort((a, b) => b[1] - a[1]);
 
         if (entries.length === 0) {
-            body.innerHTML = '<tr><td colspan="4" style="padding:40px;">No visits found in the last 7 days.</td></tr>';
+            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No records found for this week (Mon-Sat).</td></tr>';
             return;
         }
 
         entries.forEach(([name, count]) => {
-            const percentage = Math.min((count / TARGET) * 100, 100).toFixed(1);
-            const isExcellent = percentage >= 80;
-            const barColor = isExcellent ? "#238636" : "#d90429";
+            const rate = ((count / WEEKLY_TARGET) * 100).toFixed(1);
+            let statusClass = "bg-ex", statusText = "ON TARGET", barCol = "var(--green)";
+
+            if (rate < 70) { statusClass = "bg-low"; statusText = "LOW"; barCol = "var(--imerch-red)"; }
+            else if (rate < 95) { statusClass = "bg-good"; statusText = "GOOD"; barCol = "var(--orange)"; }
 
             html += `
                 <tr>
-                    <td style="text-align: left;">
-                        <div style="font-weight: 900; color: #1a1a1a;">${name.toUpperCase()}</div>
-                        <div style="font-size: 0.65rem; color: #8b949e;">FIELD STAFF</div>
-                    </td>
-                    <td style="font-size: 1.1rem; font-weight: 800;">${count} <span style="font-size: 0.7rem; color: #8b949e; font-weight: normal;">/ 42</span></td>
+                    <td><strong>${name.toUpperCase()}</strong></td>
+                    <td style="font-weight:700;">${count} <small style="color:#8b949e; font-weight:normal;">/ ${WEEKLY_TARGET}</small></td>
                     <td>
-                        <div style="font-weight: 900; font-size: 0.8rem; margin-bottom: 3px;">${percentage}%</div>
-                        <div class="progress-container">
-                            <div class="progress-bar" style="width: ${percentage}%; background: ${barColor};"></div>
-                        </div>
+                        <div style="font-weight:bold; margin-bottom:2px;">${rate}%</div>
+                        <div class="progress-bg"><div class="progress-bar" style="width:${Math.min(rate, 100)}%; background:${barCol};"></div></div>
                     </td>
-                    <td>
-                        <span class="status-badge ${isExcellent ? 'ex' : 'low'}">
-                            ${isExcellent ? 'ON TARGET' : 'BELOW TARGET'}
-                        </span>
-                    </td>
+                    <td><span class="badge ${statusClass}">${statusText}</span></td>
                 </tr>`;
         });
-
         body.innerHTML = html;
     }
 
-    window.onload = startLiveWeekly;
+    window.onload = startWeeklyMonitoring;
 </script>
-
 </body>
 </html>
