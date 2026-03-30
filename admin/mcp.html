@@ -13,7 +13,7 @@
         :root { 
             --primary: #d90429; 
             --bg: #f4f7f6; 
-            --glass: rgba(255, 255, 255, 0.95); 
+            --glass: rgba(255, 255, 255, 0.98); 
             --text: #2b2d42; 
         }
 
@@ -25,7 +25,7 @@
             margin: 0;
         }
 
-        /* TOP NAVIGATION */
+        /* NAVIGATION BAR */
         .navbar { 
             background: #fff !important; 
             border-bottom: 3px solid var(--primary) !important; 
@@ -33,9 +33,9 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         }
 
-        .navbar-brand { font-weight: 800; font-size: 1.2rem; }
+        .navbar-brand { font-weight: 800; }
 
-        /* UI COMPONENTS */
+        /* UI CARDS */
         .glass-card { 
             background: var(--glass); 
             backdrop-filter: blur(20px); 
@@ -96,8 +96,8 @@
         .status-success { background: #ebfbee; color: #2b8a3e; border-color: #b2f2bb; }
         .status-error { background: #fff5f5; color: #c92a2a; border-color: #ffc9c9; }
 
-        .form-select { border-radius: 12px; padding: 12px; font-weight: 600; border: 1px solid #dee2e6; }
-        #clock { font-family: 'Courier New', monospace; font-size: 14px; color: var(--primary); }
+        .form-select { border-radius: 12px; padding: 12px; font-weight: 600; }
+        #clock { font-family: monospace; font-size: 14px; color: var(--primary); }
     </style>
 </head>
 <body>
@@ -106,9 +106,9 @@
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="#">
             <div style="background: var(--primary); width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 15px;">
-                <i class="fas fa-bolt"></i>
+                <i class="fas fa-network-wired"></i>
             </div>
-            <span>iMERCH <span style="color:var(--primary)">V2.6 ENGINE</span></span>
+            <span>iMERCH <span style="color:var(--primary)">SYNC V2.8</span></span>
         </a>
         <div id="clock" class="fw-bold bg-white px-4 py-2 rounded-pill border shadow-sm"></div>
     </div>
@@ -119,19 +119,17 @@
         
         <div class="col-xl-3">
             <div class="glass-card control-panel">
-                <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-filter me-2"></i> DATA SYNC</h5>
+                <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-database me-2"></i> CLOUD DATA</h5>
                 
                 <div class="mb-4">
-                    <label class="small fw-bold text-muted mb-2">Month / Year Period</label>
+                    <label class="small fw-bold text-muted mb-2">Period</label>
                     <div class="d-flex gap-2">
                         <select id="mcpYear" class="form-select shadow-sm" onchange="syncWithCloud()">
-                            <option value="2025">2025</option>
                             <option value="2026" selected>2026</option>
                         </select>
                         <select id="mcpMonth" class="form-select shadow-sm" onchange="syncWithCloud()">
                             <option value="04" selected>April</option>
                             <option value="05">May</option>
-                            <option value="12">December</option>
                         </select>
                     </div>
                 </div>
@@ -159,7 +157,7 @@
                 </div>
 
                 <div id="syncStatus" class="sync-indicator text-center status-ready">
-                    <i class="fas fa-info-circle me-2"></i> Ready to Connect
+                    <i class="fas fa-check-circle me-2"></i> SYSTEM READY
                 </div>
             </div>
         </div>
@@ -176,6 +174,7 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
     let calendar;
+    let syncTimer;
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ0C_D_T-0uVp_S-l2-C97e7N5wSiaLw6-M-V/exec";
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -184,8 +183,7 @@
             initialView: 'dayGridMonth',
             headerToolbar: false,
             height: 'auto',
-            dayMaxEventRows: false,
-            eventDisplay: 'block'
+            dayMaxEventRows: false
         });
         calendar.render();
         setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
@@ -199,44 +197,39 @@
         
         calendar.gotoDate(`${year}-${month}-01`);
         const status = document.getElementById('syncStatus');
-        status.innerHTML = `<i class="fas fa-satellite-dish fa-spin me-2"></i> SYNCING...`;
+        status.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i> DATA FETCHING...`;
         status.className = "sync-indicator text-center status-loading";
 
-        // Remove old scripts
+        // Taasan ang timeout sa 30 SECONDS para hindi mag-error agad
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(() => {
+            if(status.classList.contains('status-loading')) {
+                status.innerHTML = `<i class="fas fa-exclamation-triangle"></i> SERVER BUSY... RE-SYNCING`;
+                status.className = "sync-indicator text-center status-error";
+                // Auto retry once if slow
+                syncWithCloud();
+            }
+        }, 30000);
+
         const oldLoader = document.getElementById('jsonpLoader');
         if(oldLoader) oldLoader.remove();
 
-        // Create script tag for JSONP
         const script = document.createElement('script');
         script.id = 'jsonpLoader';
         script.src = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&callback=handleCloudResponse&t=${Date.now()}`;
-        
-        // Force timeout error after 12 seconds
-        const failTimer = setTimeout(() => {
-            if(status.classList.contains('status-loading')) {
-                status.innerHTML = `<i class="fas fa-wifi"></i> CONNECTION SLOW...`;
-                status.className = "sync-indicator text-center status-error";
-            }
-        }, 12000);
-
         document.body.appendChild(script);
     }
 
     window.handleCloudResponse = function(data) {
+        clearTimeout(syncTimer);
         const status = document.getElementById('syncStatus');
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
         
-        if(data.error) {
-            status.innerHTML = `<i class="fas fa-search"></i> ${data.error}`;
-            status.className = "sync-indicator text-center status-error";
-            return;
-        }
-
         calendar.removeAllEvents();
-        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE"];
+        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE", "17TH"];
         
-        // DEEP GLOBAL SCAN (Weeks 1 to 5)
+        // DEEP SCAN LOGIC
         data.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
                 let cellVal = cell.toString().trim();
@@ -261,7 +254,7 @@
         });
 
         const count = calendar.getEvents().length;
-        status.innerHTML = count > 0 ? `<i class="fas fa-check"></i> LOADED ${count}` : `<i class="fas fa-ghost"></i> NO DATA`;
+        status.innerHTML = `<i class="fas fa-check-circle"></i> ${count} DATA SYNCED`;
         status.className = count > 0 ? "sync-indicator text-center status-success" : "sync-indicator text-center status-error";
     };
 </script>
