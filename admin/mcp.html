@@ -38,7 +38,10 @@
             z-index: 1000;
         }
 
-        .navbar-brand { font-weight: 800; letter-spacing: -0.5px; }
+        .navbar-brand { 
+            font-weight: 800; 
+            letter-spacing: -0.5px;
+        }
 
         /* GLASSMORPHISM CARDS */
         .glass-card { 
@@ -63,7 +66,9 @@
         }
 
         /* CALENDAR CUSTOMIZATION */
-        #calendar { min-height: 800px; }
+        #calendar { 
+            min-height: 850px; 
+        }
         
         .fc .fc-daygrid-day-number { 
             font-weight: 800 !important; 
@@ -85,31 +90,39 @@
             color: white !important;
         }
 
-        /* STATUS INDICATORS */
+        /* SYNC STATUS INDICATORS */
         .sync-indicator { 
             font-size: 0.9rem; 
             font-weight: 800; 
             padding: 18px; 
             border-radius: 18px; 
-            margin-top: 25px; 
+            margin-top: 35px; 
             text-transform: uppercase;
             border: 2px solid transparent;
             transition: all 0.3s ease;
         }
 
         .status-ready { background: #f8f9fa; color: #6c757d; border-color: #e9ecef; }
-        .status-loading { background: #fff3cd; color: #856404; border-color: #ffe066; }
+        .status-loading { background: #fff9db; color: #f08c00; border-color: #ffe066; }
         .status-success { background: #ebfbee; color: #2b8a3e; border-color: #b2f2bb; }
         .status-error { background: #fff5f5; color: #c92a2a; border-color: #ffc9c9; }
 
         /* BUTTONS & FORMS */
-        .form-select { border-radius: 12px; padding: 12px; font-weight: 600; border: 1px solid #dee2e6; }
-        #clock { font-family: monospace; font-size: 14px; color: var(--primary); }
+        .form-select { 
+            border-radius: 12px; 
+            padding: 12px; 
+            font-weight: 600; 
+            border: 1px solid #dee2e6;
+        }
 
-        /* RESPONSIVE */
-        @media (max-width: 991.98px) {
-            .control-panel { position: relative; top: 0; margin-bottom: 20px; }
-            .navbar { padding: 0.8rem 1rem; }
+        #clock { 
+            font-family: 'Courier New', monospace; 
+            font-size: 14px; 
+            color: var(--primary); 
+            background: #f8f9fa;
+            padding: 8px 20px;
+            border-radius: 50px;
+            border: 1px solid #eee;
         }
     </style>
 </head>
@@ -121,9 +134,9 @@
             <div style="background: var(--primary); width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 15px;">
                 <i class="fas fa-satellite-dish"></i>
             </div>
-            <span>iMERCH <span style="color:var(--primary)">SYNC ENGINE V3.0</span></span>
+            <span>iMERCH <span style="color:var(--primary)">SYNC CORE V3.1</span></span>
         </a>
-        <div id="clock" class="fw-bold bg-white px-4 py-2 rounded-pill border shadow-sm"></div>
+        <div id="clock" class="fw-bold shadow-sm"></div>
     </div>
 </nav>
 
@@ -132,27 +145,36 @@
         
         <div class="col-xl-3">
             <div class="glass-card control-panel shadow-lg">
-                <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-sliders-h me-2"></i> DATA SYNC</h5>
+                <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-calendar-alt me-2"></i> MCP SETTINGS</h5>
                 
                 <div class="mb-4">
-                    <label class="small fw-bold text-muted mb-2">Target Period (Year/Month)</label>
+                    <label class="small fw-bold text-muted mb-2">Year / Month Period</label>
                     <div class="d-flex gap-2">
                         <select id="mcpYear" class="form-select shadow-sm" onchange="syncWithCloud()">
                             <option value="2025">2025</option>
                             <option value="2026" selected>2026</option>
                         </select>
                         <select id="mcpMonth" class="form-select shadow-sm" onchange="syncWithCloud()">
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
                             <option value="04" selected>April</option>
                             <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
                             <option value="12">December</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="mb-4">
-                    <label class="small fw-bold text-muted mb-2">Target Personnel</label>
+                    <label class="small fw-bold text-muted mb-2">Identify Personnel</label>
                     <select id="userSelect" class="form-select shadow-sm" onchange="syncWithCloud()">
-                        <option value="" disabled selected>Identify Personnel...</option>
+                        <option value="" disabled selected>Select Coordinator...</option>
                         <option value="ELENA YBARITTA">ELENA YBARITTA</option>
                         <option value="CARL FRANCISCO">CARL FRANCISCO</option>
                         <option value="FERNAND DIGAMON">FERNAND DIGAMON</option>
@@ -172,7 +194,7 @@
                 </div>
 
                 <div id="syncStatus" class="sync-indicator text-center status-ready">
-                    <i class="fas fa-check-circle me-2"></i> SYSTEM READY
+                    <i class="fas fa-check-circle me-2"></i> READY TO SYNC
                 </div>
             </div>
         </div>
@@ -201,25 +223,31 @@
             eventDisplay: 'block'
         });
         calendar.render();
-        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
+        
+        setInterval(() => { 
+            document.getElementById('clock').innerText = new Date().toLocaleString(); 
+        }, 1000);
     });
 
     function syncWithCloud() {
         const user = document.getElementById('userSelect').value;
+        const year = document.getElementById('mcpYear').value;
+        const month = document.getElementById('mcpMonth').value;
+        
         if(!user) return;
         
-        calendar.gotoDate(`${document.getElementById('mcpYear').value}-${document.getElementById('mcpMonth').value}-01`);
+        calendar.gotoDate(`${year}-${month}-01`);
         const status = document.getElementById('syncStatus');
-        status.innerHTML = `<i class="fas fa-sync fa-spin me-2"></i> FAST STREAMING...`;
+        status.innerHTML = `<i class="fas fa-satellite fa-spin me-2"></i> SYNCING DATA...`;
         status.className = "sync-indicator text-center status-loading";
 
-        // Remove old scripts
+        // Remove old script to prevent stacking
         const oldLoader = document.getElementById('jsonpLoader');
         if(oldLoader) oldLoader.remove();
 
-        // Create script tag for JSONP with Cache Busting
         const script = document.createElement('script');
         script.id = 'jsonpLoader';
+        // Add timestamp to bypass cache and force fast reload
         script.src = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&callback=handleCloudResponse&t=${Date.now()}`;
         document.body.appendChild(script);
     }
@@ -230,24 +258,34 @@
         const month = document.getElementById('mcpMonth').value;
         
         calendar.removeAllEvents();
+        // Filters to clean the data from the sheet
         const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE", "MCP"];
         
-        // OPTIMIZED GLOBAL SCAN (Weeks 1 to 5)
+        // SCANNING LOGIC: Fast Stream for Weekly Layout
         data.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
                 let cellVal = cell.toString().trim();
                 let dateNum = parseInt(cellVal);
                 
+                // Identify valid date cells (1-31)
                 if (cellVal && !isNaN(dateNum) && dateNum >= 1 && dateNum <= 31 && cellVal.length <= 2) {
-                    // Mag-scan ng 20 rows sa ilalim ng bawat petsang makikita
-                    for (let i = 1; i <= 20; i++) {
+                    
+                    // Scan deep into rows below the date (up to 25 rows)
+                    for (let i = 1; i <= 25; i++) {
                         if (data[rowIndex + i] && data[rowIndex + i][colIndex]) {
                             let text = data[rowIndex + i][colIndex].toString().trim();
+                            
                             if (text !== "" && !ignore.some(ig => text.toUpperCase().includes(ig)) && isNaN(parseInt(text))) {
+                                
+                                let color = "#d90429"; // Default Red
+                                if (text.toUpperCase().includes("OFF")) color = "#6c757d"; // Gray for Day Off
+                                if (text.toUpperCase().includes("CONF")) color = "#0d6efd"; // Blue for Conf
+                                if (text.toUpperCase().includes("ADMIN")) color = "#198754"; // Green for Admin
+
                                 calendar.addEvent({
                                     title: text,
                                     start: `${year}-${month}-${dateNum.toString().padStart(2, '0')}`,
-                                    backgroundColor: text.toUpperCase().includes("OFF") ? "#6c757d" : "#d90429",
+                                    backgroundColor: color,
                                     allDay: true
                                 });
                             }
@@ -257,9 +295,14 @@
             });
         });
 
-        const count = calendar.getEvents().length;
-        status.innerHTML = count > 0 ? `<i class="fas fa-check"></i> SYNCED ${count}` : `<i class="fas fa-ghost"></i> NO DATA`;
-        status.className = count > 0 ? "sync-indicator text-center status-success" : "sync-indicator text-center status-error";
+        const total = calendar.getEvents().length;
+        if(total > 0) {
+            status.innerHTML = `<i class="fas fa-check-double me-2"></i> SYNC COMPLETE (${total})`;
+            status.className = "sync-indicator text-center status-success";
+        } else {
+            status.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i> NO DATA IN SHEET`;
+            status.className = "sync-indicator text-center status-error";
+        }
     };
 </script>
 </body>
