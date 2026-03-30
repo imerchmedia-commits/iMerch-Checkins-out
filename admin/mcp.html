@@ -23,25 +23,33 @@
             font-family: 'Plus Jakarta Sans', sans-serif; 
             font-size: 13px; 
             margin: 0;
+            padding: 0;
         }
 
-        /* NAVIGATION BAR */
+        /* NAVBAR - WHITE WITH RED LINING */
         .navbar { 
-            background: #fff !important; 
+            background: #ffffff !important; 
             border-bottom: 3px solid var(--primary) !important; 
             padding: 0.8rem 2.5rem; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        .navbar-brand { font-weight: 800; }
+        .navbar-brand { 
+            font-weight: 800; 
+            letter-spacing: -0.5px;
+        }
 
-        /* UI CARDS */
+        /* GLASSMORPHISM CARDS */
         .glass-card { 
             background: var(--glass); 
             backdrop-filter: blur(20px); 
             border: 1px solid rgba(255, 255, 255, 0.6); 
             border-radius: 28px; 
             box-shadow: 0 15px 50px rgba(0,0,0,0.1); 
+            transition: transform 0.3s ease;
         }
 
         .control-panel { 
@@ -52,13 +60,15 @@
 
         .calendar-wrapper { 
             padding: 2rem; 
-            background: #fff; 
+            background: #ffffff; 
             border-radius: 28px; 
         }
 
-        #calendar { min-height: 800px; }
+        /* CALENDAR CUSTOMIZATION */
+        #calendar { 
+            min-height: 800px; 
+        }
         
-        /* CALENDAR EVENT STYLES */
         .fc .fc-daygrid-day-number { 
             font-weight: 800 !important; 
             padding: 12px !important;
@@ -79,7 +89,7 @@
             color: white !important;
         }
 
-        /* DYNAMIC STATUS COLORS */
+        /* SYNC STATUS COLORS */
         .sync-indicator { 
             font-size: 0.9rem; 
             font-weight: 800; 
@@ -96,21 +106,35 @@
         .status-success { background: #ebfbee; color: #2b8a3e; border-color: #b2f2bb; }
         .status-error { background: #fff5f5; color: #c92a2a; border-color: #ffc9c9; }
 
-        .form-select { border-radius: 12px; padding: 12px; font-weight: 600; }
-        #clock { font-family: monospace; font-size: 14px; color: var(--primary); }
+        .form-select { 
+            border-radius: 12px; 
+            padding: 12px; 
+            font-weight: 600; 
+            border: 1px solid #dee2e6;
+        }
+
+        #clock { 
+            font-family: 'Courier New', monospace; 
+            font-size: 14px; 
+            color: var(--primary); 
+            background: #f8f9fa;
+            padding: 8px 20px;
+            border-radius: 50px;
+            border: 1px solid #eee;
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg sticky-top">
+<nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="#">
             <div style="background: var(--primary); width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 15px;">
-                <i class="fas fa-network-wired"></i>
+                <i class="fas fa-microchip"></i>
             </div>
-            <span>iMERCH <span style="color:var(--primary)">SYNC V2.8</span></span>
+            <span>iMERCH <span style="color:var(--primary)">SYNC ENGINE</span></span>
         </a>
-        <div id="clock" class="fw-bold bg-white px-4 py-2 rounded-pill border shadow-sm"></div>
+        <div id="clock" class="fw-bold shadow-sm"></div>
     </div>
 </nav>
 
@@ -119,17 +143,28 @@
         
         <div class="col-xl-3">
             <div class="glass-card control-panel">
-                <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-database me-2"></i> CLOUD DATA</h5>
+                <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-calendar-alt me-2"></i> PERIOD SETTINGS</h5>
                 
                 <div class="mb-4">
-                    <label class="small fw-bold text-muted mb-2">Period</label>
+                    <label class="small fw-bold text-muted mb-2">Year / Month Selection</label>
                     <div class="d-flex gap-2">
                         <select id="mcpYear" class="form-select shadow-sm" onchange="syncWithCloud()">
+                            <option value="2025">2025</option>
                             <option value="2026" selected>2026</option>
                         </select>
                         <select id="mcpMonth" class="form-select shadow-sm" onchange="syncWithCloud()">
-                            <option value="04" selected>April</option>
+                            <option value="01">Jan</option>
+                            <option value="02">Feb</option>
+                            <option value="03">Mar</option>
+                            <option value="04" selected>Apr</option>
                             <option value="05">May</option>
+                            <option value="06">Jun</option>
+                            <option value="07">Jul</option>
+                            <option value="08">Aug</option>
+                            <option value="09">Sep</option>
+                            <option value="10">Oct</option>
+                            <option value="11">Nov</option>
+                            <option value="12">Dec</option>
                         </select>
                     </div>
                 </div>
@@ -157,7 +192,7 @@
                 </div>
 
                 <div id="syncStatus" class="sync-indicator text-center status-ready">
-                    <i class="fas fa-check-circle me-2"></i> SYSTEM READY
+                    <i class="fas fa-wifi me-2"></i> READY TO CONNECT
                 </div>
             </div>
         </div>
@@ -174,7 +209,6 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
     let calendar;
-    let syncTimer;
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ0C_D_T-0uVp_S-l2-C97e7N5wSiaLw6-M-V/exec";
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -186,30 +220,23 @@
             dayMaxEventRows: false
         });
         calendar.render();
-        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleString(); }, 1000);
+        
+        setInterval(() => { 
+            document.getElementById('clock').innerText = new Date().toLocaleString(); 
+        }, 1000);
     });
 
     function syncWithCloud() {
         const user = document.getElementById('userSelect').value;
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
+        
         if(!user) return;
         
         calendar.gotoDate(`${year}-${month}-01`);
         const status = document.getElementById('syncStatus');
-        status.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i> DATA FETCHING...`;
+        status.innerHTML = `<i class="fas fa-satellite-dish fa-spin me-2"></i> SYNCING...`;
         status.className = "sync-indicator text-center status-loading";
-
-        // Taasan ang timeout sa 30 SECONDS para hindi mag-error agad
-        clearTimeout(syncTimer);
-        syncTimer = setTimeout(() => {
-            if(status.classList.contains('status-loading')) {
-                status.innerHTML = `<i class="fas fa-exclamation-triangle"></i> SERVER BUSY... RE-SYNCING`;
-                status.className = "sync-indicator text-center status-error";
-                // Auto retry once if slow
-                syncWithCloud();
-            }
-        }, 30000);
 
         const oldLoader = document.getElementById('jsonpLoader');
         if(oldLoader) oldLoader.remove();
@@ -221,15 +248,13 @@
     }
 
     window.handleCloudResponse = function(data) {
-        clearTimeout(syncTimer);
         const status = document.getElementById('syncStatus');
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
         
         calendar.removeAllEvents();
-        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE", "17TH"];
+        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE"];
         
-        // DEEP SCAN LOGIC
         data.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
                 let cellVal = cell.toString().trim();
@@ -253,9 +278,9 @@
             });
         });
 
-        const count = calendar.getEvents().length;
-        status.innerHTML = `<i class="fas fa-check-circle"></i> ${count} DATA SYNCED`;
-        status.className = count > 0 ? "sync-indicator text-center status-success" : "sync-indicator text-center status-error";
+        const total = calendar.getEvents().length;
+        status.innerHTML = total > 0 ? `<i class="fas fa-check"></i> LOADED ${total}` : `<i class="fas fa-search"></i> NO DATA`;
+        status.className = total > 0 ? "sync-indicator text-center status-success" : "sync-indicator text-center status-error";
     };
 </script>
 </body>
