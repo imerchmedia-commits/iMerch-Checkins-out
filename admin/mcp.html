@@ -271,22 +271,26 @@
     });
 
     async function syncWithCloud() {
-        const user = document.getElementById('userSelect').value;
+        const rawUser = document.getElementById('userSelect').value;
+        const user = rawUser ? rawUser.trim() : ""; // REMOVES SPACES
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
+        
         if(!user) return;
 
-        // Auto-navigate calendar
         calendar.gotoDate(`${year}-${month}-01`);
         document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle-notch fa-spin me-2 text-primary"></i> Syncing Cloud...`;
 
         try {
-            // Added cache buster to ensure fresh data
-            const response = await fetch(`${SCRIPT_URL}?sheet=${user}&t=${new Date().getTime()}`, { method: "GET", redirect: "follow" });
+            // encodeURIComponent fixes spaces in between names like "ANNA MAE"
+            const url = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&t=${new Date().getTime()}`;
+            const response = await fetch(url, { method: "GET", redirect: "follow" });
             const data = await response.json();
+            
             if(data.error) throw new Error(data.error);
             processData(data);
         } catch (e) {
+            console.error(e);
             document.getElementById('syncStatus').innerHTML = `<i class="fas fa-exclamation-triangle text-danger"></i> Error: Check Sheet Name.`;
         }
     }
@@ -297,23 +301,19 @@
         const month = document.getElementById('mcpMonth').value;
         let events = [];
         
-        // Clean headers to ignore
         const ignoreList = ["PARANAQUE", "MUNTINLUPA", "LAS-PINAS", "LAS PINAS", "MAKATI", "TAGUIG", "PASAY", "PAMPANGA", "CAVITE", "MANILA", "CALOOCAN", "QUEZON CITY", "REGION", "AREA", "WEEK", "TOTAL"];
 
         rows.forEach((row, i) => {
             row.forEach((cell, colIndex) => {
-                // If it's a date cell (1-31)
                 if (cell && !isNaN(cell) && cell >= 1 && cell <= 31) {
                     let dateStr = `${year}-${month}-${cell.toString().padStart(2, '0')}`;
                     
-                    // Look down for store names (limit search to next 10 rows)
                     for (let n = 1; n <= 10; n++) { 
                         if (rows[i + n]) {
                             let content = rows[i + n][colIndex];
                             if (content) {
                                 let storeName = content.toString().trim();
                                 
-                                // Check if row is not a summary row or a header
                                 if (rows[i + n][0] && rows[i + n][0].toString().toUpperCase().includes("WEEK")) break;
                                 
                                 if (storeName !== "" && 
