@@ -8,29 +8,58 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --red: #d90429; --border: #30363d; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; }
-        body { font-family: 'Inter', sans-serif; background: transparent; margin: 0; padding: 5px; color: var(--text); font-size: 12px; }
-        .container { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; }
+        :root { --red: #d90429; --border: #d0d7de; --bg: #ffffff; --text: #24292f; --gray: #57606a; }
+        body { font-family: 'Inter', sans-serif; background: transparent; margin: 0; padding: 10px; color: var(--text); font-size: 13px; }
         
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .controls { display: flex; gap: 8px; }
+        .container { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         
-        input[type="date"] { background: #0d1117; color: white; border: 1px solid var(--border); padding: 5px; border-radius: 6px; font-size: 11px; }
-        .btn { background: #238636; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 11px; }
-        .btn:hover { background: #2ea043; }
+        /* CLEAN LIGHT HEADER */
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--red); padding-bottom: 12px; }
+        .controls { display: flex; gap: 10px; align-items: center; }
+        
+        /* MALINAW NA CALENDAR */
+        input[type="date"] { 
+            background: #ffffff; 
+            color: #24292f; 
+            border: 2px solid var(--border); 
+            padding: 6px 10px; 
+            border-radius: 8px; 
+            font-size: 12px; 
+            font-weight: bold;
+            outline: none;
+        }
+        input[type="date"]:focus { border-color: var(--red); }
 
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th { text-align: left; font-size: 10px; color: #8b949e; text-transform: uppercase; padding: 8px; border-bottom: 1px solid var(--border); }
-        td { padding: 8px; border-bottom: 1px solid #21262d; }
+        .btn-excel { 
+            background: #238636; 
+            color: white; 
+            border: none; 
+            padding: 8px 15px; 
+            border-radius: 8px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            font-size: 11px; 
+            display: flex; 
+            align-items: center; 
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .btn-excel:hover { background: #2ea043; transform: translateY(-1px); }
+
+        /* TABLE STYLES */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { text-align: left; font-size: 11px; color: var(--gray); text-transform: uppercase; padding: 12px; border-bottom: 2px solid var(--border); letter-spacing: 1px; }
+        td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
         
-        .prog-bg { width: 100%; background: #30363d; height: 6px; border-radius: 10px; margin-top: 4px; }
-        .prog-bar { height: 100%; border-radius: 10px; transition: 0.5s; }
+        .prog-bg { width: 100%; background: #eff1f3; height: 8px; border-radius: 10px; margin-top: 5px; }
+        .prog-bar { height: 100%; border-radius: 10px; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        .chart-box { height: 180px; margin-top: 10px; }
-        .status { font-size: 9px; padding: 2px 8px; border-radius: 10px; font-weight: 800; }
-        .low { color: #f85149; border: 1px solid #f85149; }
-        .good { color: #d29922; border: 1px solid #d29922; }
-        .target { color: #3fb950; border: 1px solid #238636; }
+        .badge { font-size: 10px; padding: 4px 10px; border-radius: 20px; font-weight: 800; text-transform: uppercase; }
+        .low { background: #ffebe9; color: #cf222e; border: 1px solid #f85149; }
+        .good { background: #fff8c5; color: #9a6700; border: 1px solid #d29922; }
+        .target { background: #dafbe1; color: #1a7f37; border: 1px solid #238636; }
+
+        .chart-box { height: 220px; margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -38,12 +67,13 @@
 <div class="container">
     <div class="header-row">
         <div>
-            <div style="font-weight:900; font-size: 14px; color:white;">WEEKLY PERFORMANCE</div>
-            <div id="dateLabel" style="font-size:10px; color:var(--red); font-weight:bold;"></div>
+            <h3 style="margin:0; font-weight:900; color: #1a1a1a; letter-spacing: -0.5px;">WEEKLY PERFORMANCE</h3>
+            <div id="dateLabel" style="font-size:11px; color:var(--red); font-weight:bold; margin-top: 2px;"></div>
         </div>
         <div class="controls">
+            <span style="font-size: 10px; font-weight: 800; color: var(--gray);">FILTER WEEK:</span>
             <input type="date" id="datePick">
-            <button class="btn" onclick="exportData()"><i class="fas fa-file-excel"></i> EXCEL</button>
+            <button class="btn-excel" onclick="exportData()"><i class="fas fa-file-excel"></i> EXPORT TO EXCEL</button>
         </div>
     </div>
 
@@ -51,13 +81,13 @@
         <thead>
             <tr>
                 <th>Personnel</th>
-                <th>Visits</th>
-                <th style="width:30%">Rate (%)</th>
+                <th>Total Visits</th>
+                <th style="width:35%">Weekly Rate (%)</th>
                 <th>Status</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <tr><td colspan="4" style="text-align:center; padding:20px; color:#8b949e;">Fetching records...</td></tr>
+            <tr><td colspan="4" style="text-align:center; padding:30px; color:var(--gray);">Syncing data from Firebase...</td></tr>
         </tbody>
     </table>
 
@@ -81,7 +111,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const GOAL = 36;
-    const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Ron Sarmenta"];
+    const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Ron Sarmenta", "Arem Gonzales", "Samantha Claire"];
     
     let chart = null, staffMap = {}, unsub = null;
     const picker = document.getElementById('datePick');
@@ -89,7 +119,10 @@
 
     async function start() {
         const snap = await getDocs(collection(db, "staff_members"));
-        snap.forEach(d => { if(d.data().email) staffMap[d.data().email.toLowerCase().trim()] = d.data().name || d.data().staffName; });
+        snap.forEach(d => { 
+            const val = d.data();
+            if(val.email) staffMap[val.email.toLowerCase().trim()] = val.name || val.staffName; 
+        });
         load();
     }
 
@@ -100,18 +133,18 @@
         mon.setHours(0,0,0,0);
         const sat = new Date(mon); sat.setDate(mon.getDate() + 5); sat.setHours(23,59,59,999);
 
-        document.getElementById('dateLabel').innerText = `WEEK: ${mon.toLocaleDateString()} - ${sat.toLocaleDateString()}`;
+        document.getElementById('dateLabel').innerText = `LUNES - SABADO: ${mon.toLocaleDateString()} hanggang ${sat.toLocaleDateString()}`;
 
         const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(mon)), where("timestamp", "<=", Timestamp.fromDate(sat)));
         unsub = onSnapshot(q, (s) => {
-            let data = {};
+            let stats = {};
             s.forEach(doc => {
                 const v = doc.data();
                 const mail = (v.email || v.staffEmail || "").toLowerCase().trim();
-                const name = v.name || v.staffName || staffMap[mail] || mail.split('@')[0];
-                if(!admins.includes(name) && (v.type||"").toLowerCase().includes('in')) data[name] = (data[name] || 0) + 1;
+                const name = v.name || v.staffName || staffMap[mail] || mail.split('@')[0].replace('.', ' ');
+                if(!admins.includes(name) && (v.type||"").toLowerCase().includes('in')) stats[name] = (stats[name] || 0) + 1;
             });
-            render(data);
+            render(stats);
         });
     }
 
@@ -124,32 +157,39 @@
         sorted.forEach(([name, count]) => {
             const per = ((count/GOAL)*100).toFixed(1);
             let cls = per < 75 ? 'low' : (per < 95 ? 'good' : 'target');
-            let hex = per < 75 ? '#f85149' : (per < 95 ? '#d29922' : '#238636');
+            let hex = per < 75 ? '#cf222e' : (per < 95 ? '#d29922' : '#1a7f37');
             
             labels.push(name); vals.push(count); colors.push(hex);
 
             body.innerHTML += `<tr>
-                <td style="text-transform:capitalize; font-weight:bold; color:white;">${name}</td>
+                <td style="text-transform:capitalize; font-weight:800; color:#1a1a1a;">${name}</td>
                 <td style="font-weight:bold;">${count} / 36</td>
                 <td>
-                    <div style="font-size:9px; font-weight:bold; color:${hex}">${per}%</div>
+                    <div style="font-size:10px; font-weight:900; color:${hex}">${per}%</div>
                     <div class="prog-bg"><div class="prog-bar" style="width:${Math.min(per,100)}%; background:${hex}"></div></div>
                 </td>
-                <td><span class="status ${cls}">${per < 75 ? 'LOW' : (per < 95 ? 'GOOD' : 'ON TARGET')}</span></td>
+                <td><span class="badge ${cls}">${per < 75 ? 'BELOW TARGET' : (per < 95 ? 'GOOD' : 'EXCELLENT')}</span></td>
             </tr>`;
         });
         
         if(chart) chart.destroy();
         chart = new Chart(document.getElementById('perfChart'), {
             type: 'bar',
-            data: { labels, datasets: [{ data: vals, backgroundColor: colors, borderRadius: 4 }] },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#30363d' } }, x: { grid: { display: false } } } }
+            data: { labels, datasets: [{ label: 'Visits', data: vals, backgroundColor: colors, borderRadius: 6 }] },
+            options: { 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { 
+                    y: { beginAtZero: true, max: 40, ticks: { stepSize: 6 } },
+                    x: { grid: { display: false }, ticks: { font: { weight: 'bold', size: 10 } } }
+                } 
+            }
         });
     }
 
     window.exportData = () => {
         const wb = XLSX.utils.table_to_book(document.getElementById("reportTable"));
-        XLSX.writeFile(wb, `iMerch_Weekly_${picker.value}.xlsx`);
+        XLSX.writeFile(wb, `iMerch_Weekly_Performance_${picker.value}.xlsx`);
     };
 
     picker.onchange = load;
