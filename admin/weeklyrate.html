@@ -3,50 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Weekly Rate Mon-Sat</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>iMerch | Weekly Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --red: #d90429; --border: #d0d7de; --bg: #f6f8fa; --text: #24292f; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 15px; margin: 0; color: var(--text); }
-        .card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--red); padding-bottom: 10px; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 0.7rem; color: #57606a; text-transform: uppercase; padding: 10px; border-bottom: 2px solid var(--border); }
-        td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
-        .progress-bg { width: 100%; background: #eee; height: 8px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
-        .progress-bar { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; border: 1px solid; }
-        .bg-low { background: #ffebe9; color: #cf222e; border-color: #f85149; }
-        .bg-good { background: #fff8c5; color: #9a6700; border-color: #d29922; }
-        .bg-ex { background: #dafbe1; color: #1a7f37; border-color: #238636; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: var(--text); font-size: 13px; }
+        .container { max-width: 900px; margin: auto; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 15px; }
+        
+        /* Compact Header */
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--red); padding-bottom: 8px; margin-bottom: 12px; }
+        .controls { display: flex; gap: 8px; align-items: center; }
+        input[type="date"] { padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; }
+        
+        button { cursor: pointer; background: #24292f; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 11px; font-weight: bold; transition: 0.2s; }
+        button:hover { background: var(--red); }
+        .btn-excel { background: #238636; }
+
+        /* Compressed Table */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th { text-align: left; background: #f1f1f1; padding: 8px; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid var(--border); }
+        td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; }
+        
+        .progress-bg { width: 100%; background: #eee; height: 6px; border-radius: 5px; overflow: hidden; margin-top: 3px; }
+        .progress-bar { height: 100%; transition: 0.5s; }
+        
+        /* Small Graph */
+        .chart-container { height: 200px; position: relative; }
     </style>
 </head>
 <body>
 
-<div class="card">
+<div class="container">
     <div class="header">
         <div>
-            <h3 style="margin:0; font-weight: 900;">WEEKLY PERFORMANCE (MON-SAT)</h3>
-            <small id="weekRange" style="color:var(--red); font-weight: bold;">Initializing Live Feed...</small>
+            <h4 style="margin:0;">WEEKLY PERFORMANCE</h4>
+            <small id="dateDisplay" style="color:var(--red); font-weight:bold;"></small>
         </div>
-        <div style="text-align:right">
-            <span style="font-size: 0.65rem; font-weight: bold; color: #57606a;">TARGET: 36 VISITS</span>
+        <div class="controls">
+            <input type="date" id="targetDate">
+            <button class="btn-excel" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> EXPORT</button>
         </div>
     </div>
 
-    <table>
+    <table id="performanceTable">
         <thead>
             <tr>
                 <th>Coordinator</th>
-                <th>Actual Visits</th>
-                <th>Performance (%)</th>
-                <th>Status</th>
+                <th>Actual/Goal</th>
+                <th style="width: 30%;">Rate (%)</th>
             </tr>
         </thead>
         <tbody id="weeklyBody">
-            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;" id="loadingStatus">Connecting to staff records...</td></tr>
+            <tr><td colspan="3" style="text-align:center; padding:20px;">Initializing analytics...</td></tr>
         </tbody>
     </table>
+
+    <div class="chart-container">
+        <canvas id="weeklyChart"></canvas>
+    </div>
 </div>
 
 <script type="module">
@@ -63,92 +78,106 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
-    const WEEKLY_TARGET = 36; 
-    const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+    const GOAL = 36;
+    const adminList = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Ron Sarmenta"];
+    
     let staffRegistry = {};
+    let currentChart = null;
+    let unsubscribe = null;
 
-    function getMonday(d) {
-        d = new Date(d);
-        var day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
-        return new Date(d.setDate(diff));
-    }
+    // Calendar Setup
+    const dateInput = document.getElementById('targetDate');
+    dateInput.valueAsDate = new Date();
 
-    async function initDashboard() {
-        try {
-            // STEP 1: Load Staff Names
-            const staffSnap = await getDocs(collection(db, "staff_members"));
-            staffSnap.forEach(doc => {
-                const d = doc.data();
-                const email = (d.email || "").toLowerCase().trim();
-                if(email) staffRegistry[email] = d.name || d.staffName;
-            });
-
-            // STEP 2: Setup Date Filter (Monday to Saturday)
-            const monday = getMonday(new Date());
-            monday.setHours(0, 0, 0, 0);
-            const saturday = new Date(monday);
-            saturday.setDate(monday.getDate() + 5);
-            saturday.setHours(23, 59, 59, 999);
-
-            document.getElementById('weekRange').innerText = `LIVE: ${monday.toLocaleDateString()} - ${saturday.toLocaleDateString()}`;
-
-            // STEP 3: Realtime Listener
-            const q = query(
-                collection(db, "attendance"),
-                where("timestamp", ">=", Timestamp.fromDate(monday)),
-                where("timestamp", "<=", Timestamp.fromDate(saturday))
-            );
-
-            onSnapshot(q, (snapshot) => {
-                let stats = {};
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const email = (data.email || data.staffEmail || "").toLowerCase().trim();
-                    let name = data.name || data.staffName || staffRegistry[email] || email.split('@')[0].replace('.', ' ');
-
-                    if (adminExclusion.includes(name)) return;
-                    if ((data.type || "").toLowerCase().includes('in')) {
-                        stats[name] = (stats[name] || 0) + 1;
-                    }
-                });
-                renderTable(stats);
-            });
-
-        } catch (e) {
-            document.getElementById('loadingStatus').innerText = "Sync Error: Check Rules.";
-        }
-    }
-
-    function renderTable(stats) {
-        const body = document.getElementById('weeklyBody');
-        const sorted = Object.entries(stats).sort((a, b) => b[1] - a[1]);
-        if (sorted.length === 0) {
-            body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No logs recorded for this week yet.</td></tr>';
-            return;
-        }
-
-        let html = "";
-        sorted.forEach(([name, count]) => {
-            const rate = ((count / WEEKLY_TARGET) * 100).toFixed(1);
-            let sClass = "bg-ex", sText = "ON TARGET", barCol = "#1a7f37";
-            if (rate < 75) { sClass = "bg-low"; sText = "LOW RATE"; barCol = "#d90429"; }
-            else if (rate < 95) { sClass = "bg-good"; sText = "GOOD"; barCol = "#d29922"; }
-
-            html += `<tr>
-                <td style="text-transform: capitalize;"><strong>${name}</strong></td>
-                <td style="font-weight:700;">${count} <small style="color:#8b949e">/ 36</small></td>
-                <td>
-                    <div style="font-weight:bold; font-size: 0.8rem;">${rate}%</div>
-                    <div class="progress-bg"><div class="progress-bar" style="width:${Math.min(rate, 100)}%; background:${barCol};"></div></div>
-                </td>
-                <td><span class="badge ${sClass}">${sText}</span></td>
-            </tr>`;
+    async function init() {
+        const staffSnap = await getDocs(collection(db, "staff_members"));
+        staffSnap.forEach(doc => {
+            const d = doc.data();
+            if(d.email) staffRegistry[d.email.toLowerCase().trim()] = d.name || d.staffName;
         });
-        body.innerHTML = html;
+        loadData();
     }
 
-    initDashboard();
+    function loadData() {
+        if(unsubscribe) unsubscribe();
+
+        const selDate = new Date(dateInput.value);
+        const day = selDate.getDay();
+        const diff = selDate.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(selDate.setDate(diff));
+        monday.setHours(0,0,0,0);
+        
+        const saturday = new Date(monday);
+        saturday.setDate(monday.getDate() + 5);
+        saturday.setHours(23,59,59,999);
+
+        document.getElementById('dateDisplay').innerText = `${monday.toLocaleDateString()} - ${saturday.toLocaleDateString()}`;
+
+        const q = query(collection(db, "attendance"), 
+            where("timestamp", ">=", Timestamp.fromDate(monday)),
+            where("timestamp", "<=", Timestamp.fromDate(saturday)));
+
+        unsubscribe = onSnapshot(q, (snap) => {
+            let stats = {};
+            snap.forEach(doc => {
+                const d = doc.data();
+                const email = (d.email || d.staffEmail || "").toLowerCase().trim();
+                const name = d.name || d.staffName || staffRegistry[email] || email.split('@')[0];
+                if(adminList.includes(name)) return;
+                if((d.type || "").toLowerCase().includes('in')) {
+                    stats[name] = (stats[name] || 0) + 1;
+                }
+            });
+            render(stats);
+        });
+    }
+
+    function render(stats) {
+        const body = document.getElementById('weeklyBody');
+        const sorted = Object.entries(stats).sort((a,b) => b[1] - a[1]);
+        
+        body.innerHTML = "";
+        let labels = [], values = [], colors = [];
+
+        sorted.forEach(([name, count]) => {
+            const per = Math.min((count / GOAL) * 100, 100).toFixed(1);
+            const col = per < 70 ? '#d90429' : (per < 90 ? '#d29922' : '#238636');
+            
+            labels.push(name);
+            values.push(count);
+            colors.push(col);
+
+            body.innerHTML += `
+                <tr>
+                    <td style="text-transform:capitalize; font-weight:bold;">${name}</td>
+                    <td>${count} / 36</td>
+                    <td>
+                        <div style="font-size:10px; font-weight:bold;">${per}%</div>
+                        <div class="progress-bg"><div class="progress-bar" style="width:${per}%; background:${col};"></div></div>
+                    </td>
+                </tr>`;
+        });
+        updateChart(labels, values, colors);
+    }
+
+    function updateChart(labels, data, colors) {
+        const ctx = document.getElementById('weeklyChart').getContext('2d');
+        if(currentChart) currentChart.destroy();
+        currentChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Visits', data, backgroundColor: colors }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 40 } } }
+        });
+    }
+
+    window.exportToExcel = () => {
+        const table = document.getElementById("performanceTable");
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `iMerch_Weekly_Report_${dateInput.value}.xlsx`);
+    };
+
+    dateInput.addEventListener('change', loadData);
+    init();
 </script>
 </body>
 </html>
