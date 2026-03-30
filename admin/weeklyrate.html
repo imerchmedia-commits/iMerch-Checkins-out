@@ -3,22 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Weekly Rate (Mon-Sat)</title>
+    <title>iMerch | Weekly Rate (Modular)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
     <style>
-        :root { --imerch-red: #d90429; --border: #d0d7de; --bg: #f6f8fa; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 15px; margin: 0; }
+        :root { --imerch-red: #d90429; --border: #d0d7de; --bg: #f6f8fa; --text: #24292f; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); padding: 15px; margin: 0; color: var(--text); }
         .card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--imerch-red); padding-bottom: 10px; margin-bottom: 20px; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; font-size: 0.7rem; color: #57606a; text-transform: uppercase; padding: 10px; border-bottom: 2px solid var(--border); }
         td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem; }
-        .progress-bg { width: 100%; background: #eee; height: 10px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .progress-bg { width: 100%; background: #eee; height: 8px; border-radius: 10px; overflow: hidden; margin-top: 5px; }
         .progress-bar { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
-        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; border: 1px solid; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.6rem; font-weight: 800; text-transform: uppercase; border: 1px solid; }
         .bg-low { background: #ffebe9; color: #cf222e; border-color: #f85149; }
         .bg-good { background: #fff8c5; color: #9a6700; border-color: #d29922; }
         .bg-ex { background: #dafbe1; color: #1a7f37; border-color: #238636; }
@@ -30,10 +27,10 @@
     <div class="header">
         <div>
             <h3 style="margin:0; font-weight: 900;">WEEKLY PERFORMANCE (MON-SAT)</h3>
-            <small id="weekRange" style="color:#57606a; font-weight: bold;">Loading Staff Registry...</small>
+            <small id="weekRange" style="color:#57606a; font-weight: bold;">Initializing Firebase...</small>
         </div>
         <div style="text-align:right">
-            <span style="font-size: 0.65rem; font-weight: bold; color: var(--imerch-red);">GOAL: 36 VISITS (6/DAY)</span>
+            <span style="font-size: 0.65rem; font-weight: bold; color: var(--imerch-red);">GOAL: 36 VISITS</span>
         </div>
     </div>
 
@@ -47,12 +44,16 @@
             </tr>
         </thead>
         <tbody id="weeklyBody">
-            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;">Syncing staff records...</td></tr>
+            <tr><td colspan="4" style="text-align:center; padding:40px; color:#8b949e;">Fetching staff registry...</td></tr>
         </tbody>
     </table>
 </div>
 
-<script>
+<script type="module">
+    // 1. Gagamit tayo ng Modular SDK para tugma sa monitoring.html mo
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, onSnapshot, where, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
@@ -61,8 +62,8 @@
         appId: "1:842279761036:web:1d3889999612d602f337a9"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
     const WEEKLY_TARGET = 36; 
     const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
@@ -74,17 +75,21 @@
         return new Date(d.setDate(diff));
     }
 
-    // Kinukuha ang listahan ng staff para ma-match ang Email sa Full Name
     async function initWeekly() {
         try {
-            const staffSnap = await db.collection("staff_members").get();
+            // Kunin ang staff masterlist gaya ng ginagawa sa monitoring.html
+            const staffSnap = await getDocs(collection(db, "staff_members"));
             staffSnap.forEach(doc => {
                 const d = doc.data();
                 const email = (d.email || "").toLowerCase().trim();
                 if(email) staffRegistry[email] = d.name || d.staffName;
             });
+            console.log("Registry Loaded:", staffRegistry);
             startMonitoring();
-        } catch (e) { console.error("Registry Load Error:", e); }
+        } catch (e) { 
+            console.error("Error loading registry:", e);
+            document.getElementById('weekRange').innerText = "Error loading staff data.";
+        }
     }
 
     function startMonitoring() {
@@ -94,35 +99,37 @@
         saturday.setDate(monday.getDate() + 5);
         saturday.setHours(23, 59, 59, 999);
 
-        document.getElementById('weekRange').innerText = `Week: ${monday.toLocaleDateString()} - ${saturday.toLocaleDateString()}`;
+        document.getElementById('weekRange').innerText = `Mon-Sat: ${monday.toLocaleDateString()} - ${saturday.toLocaleDateString()}`;
 
-        // Live connection sa attendance records
-        db.collection("attendance")
-            .where("timestamp", ">=", firebase.firestore.Timestamp.fromDate(monday))
-            .where("timestamp", "<=", firebase.firestore.Timestamp.fromDate(saturday))
-            .onSnapshot((snapshot) => {
-                let stats = {};
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const email = (data.email || data.staffEmail || "").toLowerCase().trim();
-                    
-                    // Priority: data.name -> Registry -> Email prefix
-                    let name = data.name || data.staffName || staffRegistry[email];
-                    
-                    if (!name && email) {
-                        name = email.split('@')[0].replace('.', ' ');
-                    } else if (!name) {
-                        name = "Unknown Staff";
-                    }
+        const q = query(
+            collection(db, "attendance"),
+            where("timestamp", ">=", Timestamp.fromDate(monday)),
+            where("timestamp", "<=", Timestamp.fromDate(saturday))
+        );
 
-                    if (adminExclusion.includes(name)) return;
+        onSnapshot(q, (snapshot) => {
+            let stats = {};
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const email = (data.email || data.staffEmail || "").toLowerCase().trim();
+                
+                // Name resolution logic
+                let name = data.name || data.staffName || staffRegistry[email];
+                
+                if (!name && email) {
+                    name = email.split('@')[0].replace('.', ' ');
+                } else if (!name) {
+                    name = "Unknown Staff";
+                }
 
-                    if ((data.type || "").toLowerCase().includes('in')) {
-                        stats[name] = (stats[name] || 0) + 1;
-                    }
-                });
-                renderTable(stats);
+                if (adminExclusion.includes(name)) return;
+
+                if ((data.type || "").toLowerCase().includes('in')) {
+                    stats[name] = (stats[name] || 0) + 1;
+                }
             });
+            renderTable(stats);
+        });
     }
 
     function renderTable(stats) {
@@ -156,7 +163,8 @@
         body.innerHTML = html;
     }
 
-    window.onload = initWeekly;
+    // Initialize
+    initWeekly();
 </script>
 </body>
 </html>
