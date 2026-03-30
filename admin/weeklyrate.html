@@ -133,7 +133,7 @@
         mon.setHours(0,0,0,0);
         const sat = new Date(mon); sat.setDate(mon.getDate() + 5); sat.setHours(23,59,59,999);
 
-        document.getElementById('dateLabel').innerText = `MONDAY - SATURDAY: ${mon.toLocaleDateString()} hanggang ${sat.toLocaleDateString()}`;
+        document.getElementById('dateLabel').innerText = `MONDAY - SATURDAY: ${mon.toLocaleDateString()} - ${sat.toLocaleDateString()}`;
 
         const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(mon)), where("timestamp", "<=", Timestamp.fromDate(sat)));
         unsub = onSnapshot(q, (s) => {
