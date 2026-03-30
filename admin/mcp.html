@@ -16,7 +16,7 @@
         .calendar-container { padding: 1rem; background: #fff; border-radius: 20px; overflow-x: auto; }
         #calendar { min-width: 850px; }
         .fc .fc-daygrid-day-number { font-weight: 800 !important; color: var(--text-main); text-decoration: none; }
-        .fc-daygrid-event { border-radius: 4px !important; font-size: 0.65rem !important; font-weight: 700; border: none !important; padding: 2px 4px !important; margin-bottom: 1px !important; white-space: normal !important; }
+        .fc-daygrid-event { border-radius: 4px !important; font-size: 0.7rem !important; font-weight: 700; border: none !important; padding: 4px 6px !important; margin-bottom: 2px !important; white-space: normal !important; display: block !important; }
         .sync-indicator { font-size: 0.75rem; font-weight: 800; padding: 10px; border-radius: 10px; margin-top: 15px; }
     </style>
 </head>
@@ -43,8 +43,8 @@
                             <option value="2025">2025</option><option value="2026" selected>2026</option>
                         </select>
                         <select id="mcpMonth" class="form-select form-select-sm" onchange="syncWithCloud()">
-                            <option value="01">Jan</option><option value="02">Feb</option><option value="03" selected>Mar</option>
-                            <option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option>
+                            <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
+                            <option value="04" selected>Apr</option><option value="05">May</option><option value="06">Jun</option>
                             <option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option>
                             <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
                         </select>
@@ -53,8 +53,8 @@
                 <div class="mb-4">
                     <label class="small fw-bold mb-2">Coordinator Name</label>
                     <select id="userSelect" class="form-select form-select-sm" onchange="syncWithCloud()">
-                        <option value="" disabled selected>Identify Personnel...</option>
-                        <option value="ELENA YBARITTA">ELENA YBARITTA</option>
+                        <option value="" disabled>Identify Personnel...</option>
+                        <option value="ELENA YBARITTA" selected>ELENA YBARITTA</option>
                         <option value="CARL FRANCISCO">CARL FRANCISCO</option>
                         <option value="FERNAND DIGAMON">FERNAND DIGAMON</option>
                         <option value="GERVIE ESPINOSA">GERVIE ESPINOSA</option>
@@ -81,18 +81,24 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
     let calendar;
-    // Gamitin ang bagong Deployment URL mo mula sa Apps Script
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrQdx21dYaVM7QyVM4wlf2OqSwXoiLguDMw-5vr-eQMgdKm8bFTuRvFva_9iDuMNbX_A/exec";
+    // Updated SCRIPT_URL base sa screenshot ng Manage Deployments mo
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ0C_D_T-0uVp_S-l2-C97e7N5wSiaLw6-M-V/exec";
 
     document.addEventListener('DOMContentLoaded', () => {
         calendar = new FullCalendar.Calendar(document.getElementById('calendar'), { 
             initialView: 'dayGridMonth', 
             height: 'auto', 
             headerToolbar: false,
-            dayMaxEventRows: true 
+            dayMaxEventRows: true,
+            eventDidMount: function(info) {
+                info.el.title = info.event.title; // Tooltip para sa mahabang text
+            }
         });
         calendar.render();
         setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleString(), 1000);
+        
+        // Auto-sync pagbukas para kay Elena
+        syncWithCloud();
     });
 
     function syncWithCloud() {
@@ -103,7 +109,7 @@
 
         calendar.gotoDate(`${year}-${month}-01`);
         const status = document.getElementById('syncStatus');
-        status.innerHTML = "FETCHING SCHEDULE...";
+        status.innerHTML = "FETCHING APRIL DATA...";
         status.className = "sync-indicator text-center bg-warning-subtle text-warning";
 
         const oldScript = document.getElementById('jsonpLoader');
@@ -127,26 +133,27 @@
         }
 
         calendar.removeAllEvents();
-        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE"];
         
         data.forEach((row, rowIndex) => {
             row.forEach((cell, colIndex) => {
                 let rawVal = cell.toString().trim();
                 let dateVal = parseInt(rawVal);
                 
-                // Kapag nakakita ng petsa (1-31) sa isang cell
+                // Kapag nakahanap ng petsa (1-31)
                 if (!isNaN(dateVal) && dateVal >= 1 && dateVal <= 31 && rawVal.length <= 2) {
                     
-                    // Mag-scan pababa sa susunod na 12 rows para makuha ang mga text schedule
-                    for (let n = 1; n <= 12; n++) {
+                    // Mas malalim na scan (15 rows) para mahuli lahat ng "OFF" at "sample" entries
+                    for (let n = 1; n <= 15; n++) {
                         let nextRow = data[rowIndex + n];
                         if (nextRow && nextRow[colIndex]) {
                             let scheduleText = nextRow[colIndex].toString().trim();
                             
-                            // I-filter ang mga text na hindi dapat maging event
-                            if (scheduleText && !ignore.some(ig => scheduleText.toUpperCase().includes(ig)) && isNaN(parseInt(scheduleText))) {
-                                let eventColor = "#d90429"; 
-                                if (scheduleText.toUpperCase().includes("OFF") || scheduleText.toUpperCase().includes("HOLIDAY")) eventColor = "#6c757d";
+                            // Validasyon: hindi numero at hindi nasa ignore list
+                            if (scheduleText && isNaN(parseInt(scheduleText)) && !ignore.some(ig => scheduleText.toUpperCase().includes(ig))) {
+                                
+                                let eventColor = "#d90429"; // Default Red
+                                if (scheduleText.toUpperCase() === "OFF") eventColor = "#6c757d"; // Gray for OFF
                                 if (scheduleText.toUpperCase().includes("CONFERENCE")) eventColor = "#0d6efd";
                                 if (scheduleText.toUpperCase().includes("ADMIN")) eventColor = "#198754";
 
@@ -164,13 +171,8 @@
         });
 
         const total = calendar.getEvents().length;
-        if (total > 0) {
-            status.innerHTML = "SUCCESS: " + total + " ENTRIES LOADED";
-            status.className = "sync-indicator text-center bg-success-subtle text-success";
-        } else {
-            status.innerHTML = "NO DATA FOUND (Check Month/Year)";
-            status.className = "sync-indicator text-center bg-warning-subtle text-warning";
-        }
+        status.innerHTML = total > 0 ? `SUCCESS: ${total} ENTRIES LOADED` : "NO DATA FOUND IN SHEET";
+        status.className = total > 0 ? "sync-indicator text-center bg-success-subtle text-success" : "sync-indicator text-center bg-secondary-subtle text-secondary";
     };
 </script>
 </body>
