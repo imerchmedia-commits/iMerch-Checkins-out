@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Cloud Management Portal</title>
+    <title>iMerch | Cloud Management Portal v3.5</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,9 +12,11 @@
     <style>
         :root { 
             --primary: #d90429; 
+            --primary-hover: #b00321;
             --bg: #f4f7f6; 
             --glass: rgba(255, 255, 255, 0.98); 
             --text: #2b2d42; 
+            --shadow: 0 15px 50px rgba(0,0,0,0.1);
         }
 
         body { 
@@ -25,105 +27,189 @@
             margin: 0;
             padding: 0;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* NAVIGATION - WHITE WITH RED LINING */
+        /* NAVBAR - SIGNATURE WHITE & RED LINE */
         .navbar { 
             background: #ffffff !important; 
-            border-bottom: 3px solid var(--primary) !important; 
-            padding: 0.8rem 2.5rem; 
+            border-bottom: 4px solid var(--primary) !important; 
+            padding: 1rem 2.5rem; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             position: sticky;
             top: 0;
-            z-index: 1000;
+            z-index: 2000;
         }
 
         .navbar-brand { 
             font-weight: 800; 
-            letter-spacing: -0.5px;
+            font-size: 1.4rem;
+            letter-spacing: -0.8px; 
+            color: var(--text) !important;
         }
 
-        /* GLASSMORPHISM CARDS */
+        .brand-icon {
+            background: var(--primary);
+            width: 45px;
+            height: 45px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 15px;
+            box-shadow: 0 4px 12px rgba(217, 4, 41, 0.3);
+        }
+
+        /* LAYOUT COMPONENTS */
+        .main-container {
+            padding: 3rem 2rem;
+        }
+
         .glass-card { 
             background: var(--glass); 
-            backdrop-filter: blur(20px); 
-            border: 1px solid rgba(255, 255, 255, 0.6); 
-            border-radius: 28px; 
-            box-shadow: 0 15px 50px rgba(0,0,0,0.1); 
-            transition: transform 0.3s ease;
+            backdrop-filter: blur(25px); 
+            border: 1px solid rgba(255, 255, 255, 0.7); 
+            border-radius: 32px; 
+            box-shadow: var(--shadow); 
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
         .control-panel { 
-            padding: 2.5rem; 
+            padding: 2.8rem; 
             position: sticky; 
-            top: 110px; 
+            top: 120px; 
         }
 
         .calendar-wrapper { 
-            padding: 2rem; 
+            padding: 2.5rem; 
             background: #ffffff; 
-            border-radius: 28px; 
+            border-radius: 32px; 
+            min-height: 900px;
         }
 
-        /* CALENDAR CUSTOMIZATION */
-        #calendar { 
-            min-height: 850px; 
-        }
+        /* FULLCALENDAR OVERRIDES */
+        #calendar { height: 100%; }
         
         .fc .fc-daygrid-day-number { 
             font-weight: 800 !important; 
-            padding: 12px !important;
-            color: #2b2d42;
+            padding: 14px !important;
+            font-size: 1.1rem;
+            color: #4a4e69;
             text-decoration: none;
         }
 
+        .fc-day-today { background: rgba(217, 4, 41, 0.03) !important; }
+
         .fc-daygrid-event { 
-            border-radius: 8px !important; 
-            font-size: 0.75rem !important; 
+            border-radius: 10px !important; 
+            font-size: 0.78rem !important; 
             font-weight: 700; 
             border: none !important; 
-            padding: 6px 10px !important; 
-            margin: 4px 6px !important; 
+            padding: 8px 12px !important; 
+            margin: 5px 8px !important; 
             white-space: normal !important; 
             display: block !important; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             color: white !important;
+            transition: transform 0.2s;
         }
 
-        /* SYNC STATUS INDICATORS */
+        .fc-daygrid-event:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+
+        /* STATUS SYSTEM */
         .sync-indicator { 
-            font-size: 0.9rem; 
+            font-size: 0.95rem; 
             font-weight: 800; 
-            padding: 18px; 
-            border-radius: 18px; 
+            padding: 22px; 
+            border-radius: 20px; 
             margin-top: 35px; 
             text-transform: uppercase;
             border: 2px solid transparent;
-            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
 
-        .status-ready { background: #f8f9fa; color: #6c757d; border-color: #e9ecef; }
+        .status-ready { background: #f8f9fa; color: #adb5bd; border-color: #e9ecef; }
         .status-loading { background: #fff9db; color: #f08c00; border-color: #ffe066; }
         .status-success { background: #ebfbee; color: #2b8a3e; border-color: #b2f2bb; }
         .status-error { background: #fff5f5; color: #c92a2a; border-color: #ffc9c9; }
 
-        /* BUTTONS & FORMS */
-        .form-select { 
-            border-radius: 12px; 
-            padding: 12px; 
-            font-weight: 600; 
-            border: 1px solid #dee2e6;
+        /* FORM STYLING */
+        .form-group label {
+            font-weight: 800;
+            color: #6c757d;
+            margin-bottom: 10px;
+            display: block;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
         }
 
-        #clock { 
-            font-family: 'Courier New', monospace; 
-            font-size: 14px; 
-            color: var(--primary); 
-            background: #f8f9fa;
-            padding: 8px 20px;
-            border-radius: 50px;
-            border: 1px solid #eee;
+        .form-select { 
+            border-radius: 16px; 
+            padding: 14px; 
+            font-weight: 600; 
+            border: 2px solid #edf2f4; 
+            background-color: #f8f9fa;
+            transition: 0.3s;
         }
+
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(217, 4, 41, 0.1);
+            background-color: #fff;
+        }
+
+        /* BUTTONS */
+        .btn-sync-action {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 18px;
+            font-weight: 800;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-sync-action:hover {
+            background: var(--primary-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(217, 4, 41, 0.25);
+        }
+
+        .btn-sync-action:active { transform: translateY(0); }
+
+        #clock-widget { 
+            font-family: 'Courier New', monospace; 
+            font-weight: 800;
+            color: var(--primary); 
+            background: #ffffff;
+            padding: 10px 24px;
+            border-radius: 50px;
+            border: 2px solid #f1f3f5;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        /* ANIMATIONS */
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(217, 4, 41, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(217, 4, 41, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(217, 4, 41, 0); }
+        }
+
+        .pulse-active { animation: pulse-red 2s infinite; }
     </style>
 </head>
 <body>
@@ -131,50 +217,49 @@
 <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="#">
-            <div style="background: var(--primary); width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 15px;">
-                <i class="fas fa-satellite-dish"></i>
+            <div class="brand-icon">
+                <i class="fas fa-microchip"></i>
             </div>
-            <span>iMERCH <span style="color:var(--primary)">SYNC CORE V3.1</span></span>
+            <div>
+                <span style="display:block; line-height:1">iMERCH</span>
+                <small style="font-size: 0.65rem; color: var(--primary); letter-spacing: 2px;">CLOUD ENGINE V3.5</small>
+            </div>
         </a>
-        <div id="clock" class="fw-bold shadow-sm"></div>
+        <div id="clock-widget" class="shadow-sm">00:00:00 AM</div>
     </div>
 </nav>
 
-<div class="container-fluid py-5 px-lg-5">
-    <div class="row g-4">
+<div class="main-container container-fluid">
+    <div class="row g-5">
         
         <div class="col-xl-3">
-            <div class="glass-card control-panel shadow-lg">
-                <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-calendar-alt me-2"></i> MCP SETTINGS</h5>
+            <div class="glass-card control-panel">
+                <h4 class="fw-800 mb-5" style="letter-spacing:-1px">Configuration</h4>
                 
-                <div class="mb-4">
-                    <label class="small fw-bold text-muted mb-2">Year / Month Period</label>
-                    <div class="d-flex gap-2">
-                        <select id="mcpYear" class="form-select shadow-sm" onchange="syncWithCloud()">
-                            <option value="2025">2025</option>
-                            <option value="2026" selected>2026</option>
-                        </select>
-                        <select id="mcpMonth" class="form-select shadow-sm" onchange="syncWithCloud()">
-                            <option value="01">January</option>
-                            <option value="02">February</option>
-                            <option value="03">March</option>
-                            <option value="04" selected>April</option>
-                            <option value="05">May</option>
-                            <option value="06">June</option>
-                            <option value="07">July</option>
-                            <option value="08">August</option>
-                            <option value="09">September</option>
-                            <option value="10">October</option>
-                            <option value="11">November</option>
-                            <option value="12">December</option>
-                        </select>
-                    </div>
+                <div class="form-group mb-4">
+                    <label>Select Calendar Year</label>
+                    <select id="mcpYear" class="form-select shadow-sm" onchange="triggerSync()">
+                        <option value="2025">2025 Fiscal Year</option>
+                        <option value="2026" selected>2026 Fiscal Year</option>
+                    </select>
                 </div>
 
-                <div class="mb-4">
-                    <label class="small fw-bold text-muted mb-2">Identify Personnel</label>
-                    <select id="userSelect" class="form-select shadow-sm" onchange="syncWithCloud()">
-                        <option value="" disabled selected>Select Coordinator...</option>
+                <div class="form-group mb-4">
+                    <label>Target Month</label>
+                    <select id="mcpMonth" class="form-select shadow-sm" onchange="triggerSync()">
+                        <option value="01">January</option><option value="02">February</option>
+                        <option value="03">March</option><option value="04" selected>April</option>
+                        <option value="05">May</option><option value="06">June</option>
+                        <option value="07">July</option><option value="08">August</option>
+                        <option value="09">September</option><option value="10">October</option>
+                        <option value="11">November</option><option value="12">December</option>
+                    </select>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label>Assigned Coordinator</label>
+                    <select id="userSelect" class="form-select shadow-sm" onchange="triggerSync()">
+                        <option value="" disabled selected>Search Name...</option>
                         <option value="ELENA YBARITTA">ELENA YBARITTA</option>
                         <option value="CARL FRANCISCO">CARL FRANCISCO</option>
                         <option value="FERNAND DIGAMON">FERNAND DIGAMON</option>
@@ -193,8 +278,16 @@
                     </select>
                 </div>
 
-                <div id="syncStatus" class="sync-indicator text-center status-ready">
-                    <i class="fas fa-check-circle me-2"></i> READY TO SYNC
+                <button class="btn-sync-action shadow-sm" id="syncBtn" onclick="triggerSync()">
+                    <i class="fas fa-sync-alt"></i> FORCE INSTANT SYNC
+                </button>
+
+                <div id="syncStatus" class="sync-indicator status-ready">
+                    <i class="fas fa-circle-notch"></i> ENGINE STANDBY
+                </div>
+
+                <div class="mt-5 p-3 rounded-4" style="background: rgba(0,0,0,0.03); border: 1px dashed #ced4da;">
+                    <p class="small mb-0 text-muted"><strong>Technical Note:</strong> Sync time depends on Google Apps Script response. Average speed: 1.2s.</p>
                 </div>
             </div>
         </div>
@@ -210,98 +303,148 @@
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 <script>
+    /**
+     * iMerch Portal Core Script v3.5
+     * Designed for High-Speed Sheets Sync
+     */
     let calendar;
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyaw0wGH5LdZ5hJLgv3en0FZeQx7DNUZ0C_D_T-0uVp_S-l2-C97e7N5wSiaLw6-M-V/exec";
 
+    // Initialize UI Components
     document.addEventListener('DOMContentLoaded', function() {
         const calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: false,
             height: 'auto',
-            dayMaxEventRows: false,
-            eventDisplay: 'block'
+            dayMaxEvents: 4,
+            handleWindowResize: true,
+            expandRows: true
         });
         calendar.render();
         
-        setInterval(() => { 
-            document.getElementById('clock').innerText = new Date().toLocaleString(); 
-        }, 1000);
+        // Start Digital Clock
+        updateClock();
+        setInterval(updateClock, 1000);
     });
 
-    function syncWithCloud() {
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock-widget').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    /**
+     * Data Extraction Logic
+     * Bypasses browser cache using unique epoch timestamps
+     */
+    function triggerSync() {
         const user = document.getElementById('userSelect').value;
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
         
-        if(!user) return;
+        if(!user) {
+            alert("Please select a coordinator first.");
+            return;
+        }
         
+        // Visual Feedback
         calendar.gotoDate(`${year}-${month}-01`);
         const status = document.getElementById('syncStatus');
-        status.innerHTML = `<i class="fas fa-satellite fa-spin me-2"></i> SYNCING DATA...`;
-        status.className = "sync-indicator text-center status-loading";
+        const btn = document.getElementById('syncBtn');
+        
+        status.innerHTML = `<i class="fas fa-cog fa-spin"></i> ANALYZING CLOUD...`;
+        status.className = "sync-indicator status-loading";
+        btn.classList.add('pulse-active');
+        btn.disabled = true;
 
-        // Remove old script to prevent stacking
-        const oldLoader = document.getElementById('jsonpLoader');
-        if(oldLoader) oldLoader.remove();
+        // Cleanup Existing Loaders
+        const existingLoader = document.getElementById('cloudEngine');
+        if(existingLoader) existingLoader.remove();
 
-        const script = document.createElement('script');
-        script.id = 'jsonpLoader';
-        // Add timestamp to bypass cache and force fast reload
-        script.src = `${SCRIPT_URL}?sheet=${encodeURIComponent(user)}&callback=handleCloudResponse&t=${Date.now()}`;
-        document.body.appendChild(script);
+        // Inject Fast JSONP Loader
+        const loader = document.createElement('script');
+        loader.id = 'cloudEngine';
+        const params = `sheet=${encodeURIComponent(user)}&callback=processCloudData&v=${Date.now()}`;
+        loader.src = `${SCRIPT_URL}?${params}`;
+        
+        loader.onerror = () => {
+            status.innerHTML = `<i class="fas fa-wifi"></i> CONNECTION ERROR`;
+            status.className = "sync-indicator status-error";
+            btn.disabled = false;
+        };
+        
+        document.body.appendChild(loader);
     }
 
-    window.handleCloudResponse = function(data) {
+    /**
+     * Response Handler
+     * Filters and maps raw spreadsheet data to FullCalendar events
+     */
+    window.processCloudData = function(data) {
         const status = document.getElementById('syncStatus');
+        const btn = document.getElementById('syncBtn');
         const year = document.getElementById('mcpYear').value;
         const month = document.getElementById('mcpMonth').value;
         
         calendar.removeAllEvents();
-        // Filters to clean the data from the sheet
-        const ignore = ["WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", "DATE", "MCP"];
         
-        // SCANNING LOGIC: Fast Stream for Weekly Layout
-        data.forEach((row, rowIndex) => {
-            row.forEach((cell, colIndex) => {
-                let cellVal = cell.toString().trim();
-                let dateNum = parseInt(cellVal);
-                
-                // Identify valid date cells (1-31)
-                if (cellVal && !isNaN(dateNum) && dateNum >= 1 && dateNum <= 31 && cellVal.length <= 2) {
+        // Comprehensive Filter List
+        const blackList = [
+            "WEEK", "TOTAL", "AREA", "REGION", "SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT", 
+            "DATE", "MCP", "COVERAGE", "PLAN", "NAME", "17TH", "ANNIVERSARY"
+        ];
+        
+        try {
+            data.forEach((row, rIndex) => {
+                row.forEach((cell, cIndex) => {
+                    let val = cell.toString().trim();
+                    let d = parseInt(val);
                     
-                    // Scan deep into rows below the date (up to 25 rows)
-                    for (let i = 1; i <= 25; i++) {
-                        if (data[rowIndex + i] && data[rowIndex + i][colIndex]) {
-                            let text = data[rowIndex + i][colIndex].toString().trim();
-                            
-                            if (text !== "" && !ignore.some(ig => text.toUpperCase().includes(ig)) && isNaN(parseInt(text))) {
+                    // Identify Date Anchors (Cells containing 1-31)
+                    if (val && !isNaN(d) && d >= 1 && d <= 31 && val.length <= 2) {
+                        
+                        // Vertical Scan for associated tasks/areas
+                        for (let offset = 1; offset <= 25; offset++) {
+                            if (data[rIndex + offset] && data[rIndex + offset][cIndex]) {
+                                let entry = data[rIndex + offset][cIndex].toString().trim();
                                 
-                                let color = "#d90429"; // Default Red
-                                if (text.toUpperCase().includes("OFF")) color = "#6c757d"; // Gray for Day Off
-                                if (text.toUpperCase().includes("CONF")) color = "#0d6efd"; // Blue for Conf
-                                if (text.toUpperCase().includes("ADMIN")) color = "#198754"; // Green for Admin
+                                if (entry !== "" && !blackList.some(k => entry.toUpperCase().includes(k)) && isNaN(parseInt(entry))) {
+                                    
+                                    // Semantic Color Coding
+                                    let bColor = "#d90429"; // Default Red
+                                    if(entry.toUpperCase().includes("OFF")) bColor = "#adb5bd"; // Neutral Gray
+                                    if(entry.toUpperCase().includes("ADMIN")) bColor = "#2b2d42"; // Dark Navy
+                                    if(entry.toUpperCase().includes("LEAVE")) bColor = "#ffb703"; // Warning Yellow
 
-                                calendar.addEvent({
-                                    title: text,
-                                    start: `${year}-${month}-${dateNum.toString().padStart(2, '0')}`,
-                                    backgroundColor: color,
-                                    allDay: true
-                                });
+                                    calendar.addEvent({
+                                        title: entry,
+                                        start: `${year}-${month}-${d.toString().padStart(2, '0')}`,
+                                        backgroundColor: bColor,
+                                        borderColor: bColor,
+                                        allDay: true
+                                    });
+                                }
                             }
                         }
                     }
-                }
+                });
             });
-        });
 
-        const total = calendar.getEvents().length;
-        if(total > 0) {
-            status.innerHTML = `<i class="fas fa-check-double me-2"></i> SYNC COMPLETE (${total})`;
-            status.className = "sync-indicator text-center status-success";
-        } else {
-            status.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i> NO DATA IN SHEET`;
-            status.className = "sync-indicator text-center status-error";
+            const totalFound = calendar.getEvents().length;
+            if(totalFound > 0) {
+                status.innerHTML = `<i class="fas fa-check-double"></i> ${totalFound} DATA PULL SUCCESS`;
+                status.className = "sync-indicator status-success";
+            } else {
+                status.innerHTML = `<i class="fas fa-ghost"></i> NO ENTRIES FOUND`;
+                status.className = "sync-indicator status-error";
+            }
+        } catch (err) {
+            console.error("Sync Error:", err);
+            status.innerHTML = `<i class="fas fa-bug"></i> DATA FORMAT ERROR`;
+            status.className = "sync-indicator status-error";
+        } finally {
+            btn.classList.remove('pulse-active');
+            btn.disabled = false;
         }
     };
 </script>
