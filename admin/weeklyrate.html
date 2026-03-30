@@ -3,171 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch | Analytics</title>
+    <title>iMerch | Coverage Analytics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --red: #d90429; --border: #d0d7de; --bg: #ffffff; --text: #24292f; --gray: #57606a; }
-        body { font-family: 'Inter', sans-serif; background: transparent; margin: 0; padding: 10px; color: var(--text); font-size: 13px; }
-        
-        .container { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--red); padding-bottom: 12px; }
-        .controls { display: flex; gap: 10px; align-items: center; }
-        
-        input[type="date"] { 
-            background: #ffffff; 
-            color: #24292f; 
-            border: 2px solid var(--border); 
-            padding: 6px 10px; 
-            border-radius: 8px; 
-            font-size: 12px; 
-            font-weight: bold;
-            outline: none;
+        :root { 
+            --target-green: #1a7f37; 
+            --over-orange: #f97316; 
+            --track-blue: #0969da; 
+            --low-red: #d1242f;
+            --bg: #f6f8fa;
         }
-        input[type="date"]:focus { border-color: var(--red); }
-
-        .btn-excel { 
-            background: #238636; 
-            color: white; 
-            border: none; 
-            padding: 8px 15px; 
-            border-radius: 8px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            font-size: 11px; 
+        
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 20px; 
             display: flex; 
-            align-items: center; 
-            gap: 6px;
-            transition: 0.2s;
+            justify-content: center;
         }
-        .btn-excel:hover { background: #2ea043; transform: translateY(-1px); }
 
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th { text-align: left; font-size: 11px; color: var(--gray); text-transform: uppercase; padding: 12px; border-bottom: 2px solid var(--border); letter-spacing: 1px; }
-        td { padding: 12px; border-bottom: 1px solid #f0f0f0; }
-        
-        .prog-bg { width: 100%; background: #eff1f3; height: 8px; border-radius: 10px; margin-top: 5px; }
-        .prog-bar { height: 100%; border-radius: 10px; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        .badge { font-size: 10px; padding: 4px 10px; border-radius: 20px; font-weight: 800; text-transform: uppercase; }
-        .low { background: #ffebe9; color: #cf222e; border: 1px solid #f85149; }
-        .good { background: #fff8c5; color: #9a6700; border: 1px solid #d29922; }
-        .target { background: #dafbe1; color: #1a7f37; border: 1px solid #238636; }
+        .main-card { 
+            width: 100%; 
+            max-width: 1100px; 
+            background: white; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); 
+            padding: 30px;
+            text-align: center;
+        }
 
-        .chart-box { height: 220px; margin-top: 15px; background: #f8f9fa; padding: 10px; border-radius: 10px; }
+        .header-section {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h2 { margin: 0; color: #1a1a1a; letter-spacing: -1px; font-size: 28px; text-transform: uppercase; }
+        
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .btn-export {
+            background: #1a1a1a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-export:hover { background: #444; }
+
+        /* PROFESSIONAL TABLE */
+        table { 
+            width: 100%; 
+            border-collapse: separate; 
+            border-spacing: 0 10px; 
+            margin: 20px 0;
+        }
+
+        th { 
+            text-transform: uppercase; 
+            font-size: 12px; 
+            color: #666; 
+            padding: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        td { 
+            padding: 18px; 
+            background: #fff;
+            border-top: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 15px;
+            vertical-align: middle;
+        }
+
+        td:first-child { border-left: 1px solid #f0f0f0; border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        td:last-child { border-right: 1px solid #f0f0f0; border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+
+        .name-col { font-weight: 800; color: #1a1a1a; font-size: 16px; }
+        .bold-data { font-weight: 700; }
+
+        /* COLOR LOGIC CLASSES */
+        .txt-green { color: var(--target-green) !important; }
+        .txt-orange { color: var(--over-orange) !important; }
+        .txt-blue { color: var(--track-blue) !important; }
+        .txt-red { color: var(--low-red) !important; }
+
+        .progress-container {
+            width: 120px;
+            background: #eee;
+            height: 8px;
+            border-radius: 10px;
+            margin: 5px auto;
+            overflow: hidden;
+        }
+        .progress-fill { height: 100%; border-radius: 10px; transition: 1s ease-in-out; }
+
+        .chart-wrapper {
+            margin-top: 40px;
+            height: 300px;
+            background: #fafafa;
+            border-radius: 15px;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header-row">
-        <div>
-            <h3 style="margin:0; font-weight:900; color: #1a1a1a; letter-spacing: -0.5px;">iMerch Analytics</h3>
-            <div id="dateLabel" style="font-size:11px; color:var(--red); font-weight:bold; margin-top: 2px;"></div>
-        </div>
-        <div class="controls">
-            <span style="font-size: 10px; font-weight: 800; color: var(--gray);">FILTER:</span>
-            <input type="date" id="datePick">
-            <button class="btn-excel" onclick="exportData()"><i class="fas fa-file-excel"></i> EXPORT TO EXCEL</button>
+<div class="main-card">
+    <div class="header-section">
+        <h2>Coverage Analytics Dashboard</h2>
+        <p id="dateRange" style="color: #666; font-weight: 600;"></p>
+        <div class="controls-row">
+            <input type="date" id="dateSelector">
+            <button class="btn-export" onclick="exportExcel()">
+                <i class="fas fa-file-download"></i> DOWNLOAD REPORT
+            </button>
         </div>
     </div>
 
-    <table id="reportTable">
+    <table id="performanceTable">
         <thead>
             <tr>
-                <th>Personnel</th>
-                <th>Weekly Visits</th>
-                <th style="width:25%">Weekly Rate %</th>
-                <th style="background:#fdf2f2; color:var(--red);">Monthly Coverage %</th>
-                <th>Status</th>
+                <th>Field Personnel</th>
+                <th>Weekly Count</th>
+                <th>Weekly Coverage</th>
+                <th>Monthly Total</th>
+                <th>Monthly Rate</th>
             </tr>
         </thead>
         <tbody id="tableBody">
-            <tr><td colspan="5" style="text-align:center; padding:30px; color:var(--gray);">Syncing data from Firebase...</td></tr>
-        </tbody>
+            </tbody>
     </table>
 
-    <div class="chart-box">
-        <canvas id="perfChart"></canvas>
+    <div class="chart-wrapper">
+        <canvas id="mainChart"></canvas>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, onSnapshot, where, Timestamp, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, onSnapshot, where, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
         projectId: "imerch-checkins-out",
-        storageBucket: "imerch-checkins-out.firebasestorage.app",
         appId: "1:842279761036:web:1d3889999612d602f337a9"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     
-    const WEEK_GOAL = 36;
-    const MONTH_GOAL = 144; // 36 x 4 weeks
-    const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Ron Sarmenta", "Arem Gonzales", "Samantha Claire"];
-    
-    let chart = null, staffMap = {}, unsub = null;
-    const picker = document.getElementById('datePick');
+    const W_GOAL = 36;
+    const M_GOAL = 144;
+    const picker = document.getElementById('dateSelector');
     picker.valueAsDate = new Date();
 
-    async function start() {
-        const snap = await getDocs(collection(db, "staff_members"));
-        snap.forEach(d => { 
-            const val = d.data();
-            if(val.email) staffMap[val.email.toLowerCase().trim()] = val.name || val.staffName; 
-        });
-        load();
+    let myChart = null;
+
+    function getColor(per) {
+        if (per >= 101) return 'txt-orange';
+        if (per == 100) return 'txt-green';
+        if (per >= 60) return 'txt-blue';
+        return 'txt-red';
     }
 
-    function load() {
-        if(unsub) unsub();
+    function getHex(per) {
+        if (per >= 101) return '#f97316';
+        if (per == 100) return '#1a7f37';
+        if (per >= 60) return '#0969da';
+        return '#d1242f';
+    }
+
+    function loadData() {
         const d = new Date(picker.value);
-        
-        // Weekly Range
         const mon = new Date(d.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1)));
         mon.setHours(0,0,0,0);
         const sat = new Date(mon); sat.setDate(mon.getDate() + 5); sat.setHours(23,59,59,999);
+        
+        const first = new Date(d.getFullYear(), d.getMonth(), 1);
+        const last = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
 
-        // Monthly Range
-        const firstDay = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
-        const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+        document.getElementById('dateRange').innerText = `${mon.toLocaleDateString()} to ${sat.toLocaleDateString()}`;
 
-        document.getElementById('dateLabel').innerText = `WEEK: ${mon.toLocaleDateString()} - ${sat.toLocaleDateString()} | MONTH: ${firstDay.toLocaleString('default', { month: 'long' })}`;
+        const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(first)), where("timestamp", "<=", Timestamp.fromDate(last)));
 
-        // Query records for the whole month
-        const q = query(collection(db, "attendance"), 
-                  where("timestamp", ">=", Timestamp.fromDate(firstDay)), 
-                  where("timestamp", "<=", Timestamp.fromDate(lastDay)));
-
-        unsub = onSnapshot(q, (s) => {
-            let weeklyStats = {};
-            let monthlyStats = {};
-
-            s.forEach(doc => {
+        onSnapshot(q, (snap) => {
+            let wStats = {}, mStats = {};
+            snap.forEach(doc => {
                 const v = doc.data();
                 const ts = v.timestamp.toDate();
-                const mail = (v.email || v.staffEmail || "").toLowerCase().trim();
-                const name = v.name || v.staffName || staffMap[mail] || mail.split('@')[0].replace('.', ' ');
-                
-                if(admins.includes(name)) return;
-                if(!(v.type||"").toLowerCase().includes('in')) return;
-
-                // Track monthly count
-                monthlyStats[name] = (monthlyStats[name] || 0) + 1;
-
-                // Track weekly count
-                if(ts >= mon && ts <= sat) {
-                    weeklyStats[name] = (weeklyStats[name] || 0) + 1;
+                const name = v.name || v.staffName || "Unknown";
+                if((v.type||"").toLowerCase().includes('in')) {
+                    mStats[name] = (mStats[name] || 0) + 1;
+                    if(ts >= mon && ts <= sat) wStats[name] = (wStats[name] || 0) + 1;
                 }
             });
-            render(weeklyStats, monthlyStats);
+            render(wStats, mStats);
         });
     }
 
@@ -175,55 +227,50 @@
         const body = document.getElementById('tableBody');
         const sorted = Object.entries(wStats).sort((a,b) => b[1] - a[1]);
         body.innerHTML = "";
-        let labels = [], vals = [], colors = [];
+        
+        let labels = [], dataVals = [], bgColors = [];
 
         sorted.forEach(([name, wCount]) => {
-            const wPer = ((wCount/WEEK_GOAL)*100).toFixed(1);
+            const wPer = Math.round((wCount/W_GOAL)*100);
             const mCount = mStats[name] || 0;
-            const mPer = ((mCount/MONTH_GOAL)*100).toFixed(1);
-
-            let cls = wPer < 75 ? 'low' : (wPer < 95 ? 'good' : 'target');
-            let hex = wPer < 75 ? '#cf222e' : (wPer < 95 ? '#d29922' : '#1a7f37');
+            const mPer = Math.round((mCount/M_GOAL)*100);
             
-            labels.push(name); vals.push(wCount); colors.push(hex);
+            const wColorClass = getColor(wPer);
+            const mColorClass = getColor(mPer);
+            const hex = getHex(wPer);
 
-            body.innerHTML += `<tr>
-                <td style="text-transform:capitalize; font-weight:800; color:#1a1a1a;">${name}</td>
-                <td style="font-weight:bold;">${wCount} / 36</td>
-                <td>
-                    <div style="font-size:10px; font-weight:900; color:${hex}">${wPer}%</div>
-                    <div class="prog-bg"><div class="prog-bar" style="width:${Math.min(wPer,100)}%; background:${hex}"></div></div>
-                </td>
-                <td style="background:#fdf2f2; text-align:center;">
-                    <strong style="color:var(--red);">${mPer}%</strong>
-                    <div style="font-size:9px; color:#57606a;">(${mCount} / 144)</div>
-                </td>
-                <td><span class="badge ${cls}">${wPer < 75 ? 'BELOW TARGET' : (wPer < 95 ? 'GOOD' : 'EXCELLENT')}</span></td>
-            </tr>`;
+            labels.push(name);
+            dataVals.push(wCount);
+            bgColors.push(hex);
+
+            body.innerHTML += `
+                <tr>
+                    <td class="name-col">${name.toUpperCase()}</td>
+                    <td class="bold-data">${wCount} / ${W_GOAL}</td>
+                    <td class="bold-data ${wColorClass}">
+                        ${wPer}%
+                        <div class="progress-container"><div class="progress-fill" style="width:${Math.min(wPer,100)}%; background:${hex}"></div></div>
+                    </td>
+                    <td class="bold-data">${mCount} / ${M_GOAL}</td>
+                    <td class="bold-data ${mColorClass}">${mPer}%</td>
+                </tr>`;
         });
-        
-        if(chart) chart.destroy();
-        chart = new Chart(document.getElementById('perfChart'), {
+
+        if(myChart) myChart.destroy();
+        myChart = new Chart(document.getElementById('mainChart'), {
             type: 'bar',
-            data: { labels, datasets: [{ label: 'Visits', data: vals, backgroundColor: colors, borderRadius: 6 }] },
-            options: { 
-                maintainAspectRatio: false, 
-                plugins: { legend: { display: false } }, 
-                scales: { 
-                    y: { beginAtZero: true, max: 40, ticks: { stepSize: 6 } },
-                    x: { grid: { display: false }, ticks: { font: { weight: 'bold', size: 10 } } }
-                } 
-            }
+            data: { labels, datasets: [{ label: 'Visits', data: dataVals, backgroundColor: bgColors, borderRadius: 8 }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
     }
 
-    window.exportData = () => {
-        const wb = XLSX.utils.table_to_book(document.getElementById("reportTable"));
-        XLSX.writeFile(wb, `iMerch_Performance_${picker.value}.xlsx`);
+    window.exportExcel = () => {
+        const wb = XLSX.utils.table_to_book(document.getElementById("performanceTable"));
+        XLSX.writeFile(wb, `iMerch_Coverage_Report.xlsx`);
     };
 
-    picker.onchange = load;
-    start();
+    picker.onchange = loadData;
+    loadData();
 </script>
 </body>
 </html>
