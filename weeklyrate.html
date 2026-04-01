@@ -23,7 +23,7 @@
             background-color: var(--light-bg); 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             color: var(--dark-navy);
-            padding-top: 110px; /* Adjusted for dual filters */
+            padding-top: 100px;
         }
 
         .navbar { 
@@ -31,7 +31,7 @@
             backdrop-filter: blur(20px); 
             border-bottom: 5px solid var(--primary-red); 
             height: auto;
-            padding: 15px 2rem;
+            padding: 15px 4rem;
         }
 
         .brand-text { font-weight: 900; font-size: 1.8rem; letter-spacing: -2px; text-decoration: none; color: var(--dark-navy); }
@@ -73,18 +73,19 @@
         .monthly-rate-text { font-weight: 900; font-size: 1.2rem; color: #0369a1; letter-spacing: -0.5px; }
 
         .date-filter-box {
-            background: #f1f5f9;
-            padding: 8px 15px;
-            border-radius: 12px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            border: 1px solid #e2e8f0;
+            gap: 10px;
+            box-shadow: var(--glass-shadow);
+            border: 1px solid #f0f0f0;
         }
-        
-        .filter-label { font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
 
-        input[type="date"], input[type="month"] { border: none; font-weight: 800; color: var(--dark-navy); cursor: pointer; outline: none; background: transparent; font-size: 0.9rem; }
+        .filter-label { font-size: 0.65rem; font-weight: 800; color: #888; text-transform: uppercase; margin-bottom: 2px; }
+
+        input[type="date"], input[type="month"] { border: none; font-weight: 800; color: var(--dark-navy); cursor: pointer; outline: none; background: transparent; }
         
         .summary-mini-card {
             background: var(--dark-navy);
@@ -106,20 +107,20 @@
     <a href="#" class="brand-text">iMERCH<span>MEDIA</span></a>
     <div class="d-flex align-items-center gap-3">
         <div>
-            <div class="filter-label text-center">Weekly Coverage</div>
+            <div class="filter-label text-center">Week Selection</div>
             <div class="date-filter-box">
                 <i class="fas fa-calendar-week text-danger"></i>
                 <input type="date" id="weekPicker">
             </div>
         </div>
         <div>
-            <div class="filter-label text-center">Monthly Total</div>
+            <div class="filter-label text-center">Month Focus</div>
             <div class="date-filter-box">
                 <i class="fas fa-calendar-alt text-primary"></i>
                 <input type="month" id="monthPicker">
             </div>
         </div>
-        <button class="btn btn-dark rounded-pill px-4 fw-800 mt-3" onclick="window.print()">
+        <button class="btn btn-dark rounded-pill px-4 fw-800" style="margin-top: 20px;" onclick="window.print()">
             <i class="fas fa-print me-2"></i> PRINT
         </button>
     </div>
@@ -129,7 +130,7 @@
     <div class="row g-4 mb-4 mt-2">
         <div class="col-lg-7">
             <h1 class="fw-900" style="font-size: 3rem; letter-spacing: -3px;">Payroll & Coverage</h1>
-            <p id="rangeDisplay" class="text-muted fw-600">Syncing dates...</p>
+            <p id="weekRangeDisplay" class="text-muted fw-600">Select a date to calculate totals...</p>
         </div>
         <div class="col-lg-5">
             <div class="row g-3">
@@ -181,9 +182,9 @@
     const RATE_PER_STORE = 500; 
     const weekPicker = document.getElementById('weekPicker');
     const monthPicker = document.getElementById('monthPicker');
-    const rangeDisplay = document.getElementById('rangeDisplay');
+    const weekRangeDisplay = document.getElementById('weekRangeDisplay');
     
-    // Set default values
+    // Set default values to current date/month
     const now = new Date();
     weekPicker.valueAsDate = now;
     monthPicker.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -193,24 +194,25 @@
         const grandTotalLabel = document.getElementById('grandTotalLabel');
         const monthlyGrandTotalLabel = document.getElementById('monthlyGrandTotalLabel');
         
-        payrollBody.innerHTML = '<tr><td colspan="5" class="text-center p-5 fw-800">SYNCING DATA...</td></tr>';
+        payrollBody.innerHTML = '<tr><td colspan="5" class="text-center p-5 fw-800">SYNCING REAL-TIME DATA...</td></tr>';
 
-        // --- WEEKLY RANGE CALCULATION ---
-        const selDate = new Date(weekPicker.value);
-        const first = selDate.getDate() - selDate.getDay() + (selDate.getDay() === 0 ? -6 : 1);
+        const selectedDate = new Date(weekPicker.value);
+        
+        // --- WEEKLY RANGE (Mon-Sun) ---
+        const first = selectedDate.getDate() - selectedDate.getDay() + (selectedDate.getDay() === 0 ? -6 : 1);
         const last = first + 6;
         const startOfWeek = new Date(new Date(new Date(weekPicker.value).setDate(first)).setHours(0,0,0,0));
         const endOfWeek = new Date(new Date(new Date(weekPicker.value).setDate(last)).setHours(23,59,59,999));
 
-        // --- MONTHLY RANGE CALCULATION (from monthPicker) ---
+        // --- MONTHLY RANGE (From Month Picker) ---
         const [mYear, mMonth] = monthPicker.value.split('-');
         const startOfMonth = new Date(mYear, mMonth - 1, 1, 0, 0, 0);
         const endOfMonth = new Date(mYear, mMonth, 0, 23, 59, 59);
 
-        rangeDisplay.innerText = `Week: ${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()} | Focus Month: ${startOfMonth.toLocaleString('default', { month: 'long' })} ${mYear}`;
+        weekRangeDisplay.innerText = `Week: ${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()} | Month: ${startOfMonth.toLocaleString('default', { month: 'long' })} ${mYear}`;
 
         try {
-            // Fetch everything from the earliest start date to cover both filters
+            // Find the boundary to fetch both ranges in one query
             const minStart = startOfWeek < startOfMonth ? startOfWeek : startOfMonth;
             const maxEnd = endOfWeek > endOfMonth ? endOfWeek : endOfMonth;
 
@@ -222,6 +224,8 @@
 
             const snapshot = await getDocs(q);
             const stats = {}; 
+            const admins = ["JOY BIAZON", "BRYLLE OCA", "PAULINE OCA", "RON SARMENTA", "AREM GONZALES", "SAMANTHA CLAIRE"];
+            
             let grandWeekly = 0;
             let grandMonthly = 0;
 
@@ -231,15 +235,15 @@
                 const type = (data.type || "").toLowerCase();
                 const ts = data.timestamp.toDate();
 
-                if (type.includes('in')) {
+                if (type.includes('in') && !admins.includes(name)) {
                     if (!stats[name]) stats[name] = { weekly: 0, monthly: 0 };
                     
-                    // Logic for Monthly
+                    // Monthly Logic
                     if (ts >= startOfMonth && ts <= endOfMonth) {
                         stats[name].monthly++;
                     }
                     
-                    // Logic for Weekly
+                    // Weekly Logic
                     if (ts >= startOfWeek && ts <= endOfWeek) {
                         stats[name].weekly++;
                     }
@@ -266,13 +270,13 @@
                 `;
             }).join('');
 
-            payrollBody.innerHTML = rows || '<tr><td colspan="5" class="text-center p-5 fw-800">NO DATA FOUND FOR THIS PERIOD</td></tr>';
+            payrollBody.innerHTML = rows || '<tr><td colspan="5" class="text-center p-5 fw-800">NO DATA FOUND</td></tr>';
             grandTotalLabel.innerText = `₱${grandWeekly.toLocaleString()}`;
             monthlyGrandTotalLabel.innerText = `₱${grandMonthly.toLocaleString()}`;
 
         } catch (e) {
             console.error(e);
-            payrollBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger p-5">Database Error. Check Console.</td></tr>`;
+            payrollBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger p-5">Error loading data.</td></tr>`;
         }
     }
 
