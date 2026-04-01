@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { height: 100vh; width: 100vw; background: #121212; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+        html, body { height: 100vh; width: 100vw; background: #121212; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
 
         /* --- LOGIN OVERLAY --- */
         #login-overlay {
@@ -26,7 +26,6 @@
             border: 1px solid #444; color: white; border-radius: 6px; outline: none;
         }
         
-        /* Remember Me UI */
         .remember-container {
             display: flex; align-items: center; gap: 8px; color: #888; 
             font-size: 13px; margin-bottom: 20px; cursor: pointer; justify-content: flex-start;
@@ -55,11 +54,11 @@
 
         /* IFRAME & LOADING FIX */
         #iframe-container { flex-grow: 1; position: relative; width: 100%; background: #121212; overflow: hidden; }
-        iframe { width: 100%; height: 100%; border: none; opacity: 0; transition: opacity 0.6s ease-in-out; }
+        iframe { width: 100%; height: 100%; border: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
         
         #loading-msg {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: #ffcc00; text-align: center; font-size: 14px;
+            color: #ffcc00; text-align: center; font-size: 14px; z-index: 5;
         }
 
         .logout-btn { margin-top: auto; border-top: 1px solid #333; color: #ff4444 !important; }
@@ -71,7 +70,7 @@
         <div class="login-box">
             <img src="https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/logo1.png">
             <h2>ADMIN PORTAL</h2>
-            <input type="text" id="user" placeholder="Username">
+            <input type="text" id="user" placeholder="Username" autocomplete="off">
             <input type="password" id="pass" placeholder="Password">
             
             <label class="remember-container">
@@ -79,7 +78,7 @@
             </label>
 
             <button onclick="doLogin()">SIGN IN</button>
-            <p id="err" style="color: red; font-size: 12px; margin-top: 10px; display: none;">Invalid credentials</p>
+            <p id="err" style="color: #ff4444; font-size: 12px; margin-top: 10px; display: none;">Invalid credentials</p>
         </div>
     </div>
 
@@ -103,24 +102,41 @@
             <div class="top-bar"><h3 id="title">User Admin Dashboard</h3></div>
             <div id="iframe-container">
                 <div id="loading-msg">
-                    <i class="fas fa-circle-notch fa-spin"></i><br><br>
-                    <span>Synchronizing Secure Connection...</span>
+                    <i class="fas fa-circle-notch fa-spin fa-2x"></i><br><br>
+                    <span>Establishing Secure Link...</span>
                 </div>
-                <iframe id="ifr" src=""></iframe>
+                <iframe id="ifr"></iframe>
             </div>
         </div>
     </div>
 
     <script>
-        // CREDENTIALS
         const AUTH_U = "ron.sarmenta@gmail.com";
         const AUTH_P = "Ron2026@";
 
-        // Check if session is remembered
+        // Performance Fix: Pre-attach iframe listener
+        document.getElementById('ifr').onload = function() {
+            const loader = document.getElementById('loading-msg');
+            const ifr = document.getElementById('ifr');
+            // Mabilisang transition
+            setTimeout(() => {
+                loader.style.display = 'none';
+                ifr.style.opacity = '1';
+            }, 150); 
+        };
+
         window.onload = function() {
+            // Check session
             if (localStorage.getItem('imerch_remembered') === 'true' || sessionStorage.getItem('imerch_active') === 'true') {
                 showDashboard();
             }
+
+            // Keyboard Shortcut for Login
+            document.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && document.getElementById('login-overlay').style.display !== 'none') {
+                    doLogin();
+                }
+            });
         };
 
         function doLogin() {
@@ -133,37 +149,32 @@
                 sessionStorage.setItem('imerch_active', 'true');
                 showDashboard();
             } else {
-                document.getElementById('err').style.display = 'block';
+                const err = document.getElementById('err');
+                err.style.display = 'block';
+                setTimeout(() => { err.style.display = 'none'; }, 3000);
             }
         }
 
         function showDashboard() {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('main-wrapper').style.display = 'flex';
-            // Start loading the first page immediately
-            go('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin', document.querySelector('.nav-item'));
+            const firstNav = document.querySelector('.nav-item');
+            go('https://imerchmedia-commits.github.io/iMerch-Checkins-out/admin/admin', firstNav);
         }
 
         function go(url, el) {
             const ifr = document.getElementById('ifr');
             const loader = document.getElementById('loading-msg');
             
-            // Anti-Glitch: Itago muna ang lumang content
+            // Anti-Lag: Don't reload if same URL
+            if (ifr.src === url) return;
+
             ifr.style.opacity = '0';
             loader.style.display = 'block';
-            
-            // I-load ang bagong URL
             ifr.src = url;
 
-            // Ilitaw lang ang iframe kapag fully loaded na
-            ifr.onload = function() {
-                setTimeout(() => {
-                    loader.style.display = 'none';
-                    ifr.style.opacity = '1';
-                }, 500); // Konting delay para sure na render na ang content
-            };
-
-            document.getElementById('title').innerText = el.innerText;
+            // Update UI
+            document.getElementById('title').innerText = el.innerText.trim();
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             el.classList.add('active');
         }
