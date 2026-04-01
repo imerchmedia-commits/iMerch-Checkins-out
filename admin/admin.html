@@ -145,7 +145,6 @@
                         <button id="archiveBtn" class="btn" style="background: #fb8c00; flex: 1; min-width: 120px;">📦 Backup JSON</button>
                         <button id="importBtn" class="btn" style="background: #8250df; flex: 1; min-width: 120px;">📥 Restore Backup</button>
                         <input type="file" id="importFile" accept=".json" style="display: none;">
-                        
                         <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1; min-width: 120px;">🗑️ Wipe Logs</button>
                     </div>
 
@@ -167,7 +166,7 @@
     import { 
         getFirestore, collection, query, orderBy, onSnapshot, getDocs, 
         writeBatch, addDoc, serverTimestamp, updateDoc, doc, setDoc, 
-        Timestamp, deleteDoc, where, limit // Idinagdag ang where at limit dito
+        Timestamp, deleteDoc, where, limit 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -203,13 +202,9 @@
     const themeBtn = document.getElementById('theme-toggle');
     themeBtn.onclick = () => {
         const body = document.body;
-        if (body.getAttribute('data-theme') === 'dark') {
-            body.setAttribute('data-theme', 'light');
-            themeBtn.innerText = "☀️";
-        } else {
-            body.setAttribute('data-theme', 'dark');
-            themeBtn.innerText = "🌙";
-        }
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        themeBtn.innerText = isDark ? "☀️" : "🌙";
     };
 
     function initMap() {
@@ -263,7 +258,7 @@
     };
 
     window.deleteStaff = async (docId, name) => {
-        if (!confirm(`PERMANENT DELETE: Are you sure you want to remove ${name} from the database? This cannot be undone.`)) return;
+        if (!confirm(`PERMANENT DELETE: Are you sure you want to remove ${name}?`)) return;
         try { 
             await deleteDoc(doc(db, "users", docId)); 
             alert(`${name} deleted.`);
@@ -300,24 +295,17 @@
                         </div>
                     </div>`;
             });
-            updateMasterLogNames();
             applyFilters();
         });
     }
 
-    function updateMasterLogNames() {
-        masterLogs.forEach(log => { log.fullName = staffMap[log.uid]?.name || log.fullName || "Unknown Staff"; });
-    }
-
     function loadAdminLogs() {
-        // Naka-limit na sa 200 records para tipid sa Quota Reads
         const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(200));
         onSnapshot(q, (snap) => {
-            masterLogs = [];
-            snap.forEach(doc => {
+            masterLogs = snap.docs.map(doc => {
                 const data = doc.data();
                 data.fullName = staffMap[data.uid]?.name || data.fullName || "Unknown Staff";
-                masterLogs.push(data);
+                return data;
             });
             updateStats(masterLogs);
             applyFilters();
@@ -337,42 +325,40 @@
             let matchesDate = true;
             if (log.timestamp && log.timestamp.toDate) {
                 const logDate = log.timestamp.toDate();
-                const logDateOnly = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
+                const logTime = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
                 if (dateFromInput) {
-                    const from = new Date(dateFromInput);
-                    if (logDateOnly < new Date(from.getFullYear(), from.getMonth(), from.getDate()).getTime()) matchesDate = false;
+                    const from = new Date(dateFromInput).getTime();
+                    if (logTime < from) matchesDate = false;
                 }
                 if (dateToInput) {
-                    const to = new Date(dateToInput);
-                    if (logDateOnly > new Date(to.getFullYear(), to.getMonth(), to.getDate()).getTime()) matchesDate = false;
+                    const to = new Date(dateToInput).getTime();
+                    if (logTime > to) matchesDate = false;
                 }
-            } else if (dateFromInput || dateToInput) { matchesDate = false; }
+            }
             return matchesName && matchesDate;
         });
         renderAdminLogs(filteredLogs);
     }
 
     document.getElementById('applyFiltersBtn').onclick = (e) => { e.preventDefault(); applyFilters(); };
-    document.getElementById('filter-name').addEventListener('input', applyFilters);
+    document.getElementById('filter-name').oninput = applyFilters;
 
     function renderAdminLogs(data) {
         const list = document.getElementById('admin-master-list');
         list.innerHTML = data.length ? "" : '<p style="text-align:center;color:#8b949e;">No matching logs found.</p>';
         data.forEach(d => {
-            const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString() : "Pending";
-            const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
-            const fullDateTime = `${date} ${time}`;
+            const dt = d.timestamp ? d.timestamp.toDate() : new Date();
+            const displayDate = dt.toLocaleDateString() + " " + dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const displayName = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
-            
             list.innerHTML += `
                 <div class="history-item">
                     <div class="history-row">
                         <span style="font-weight:bold; color:var(--blue);">${displayName}</span>
-                        <span style="font-size:0.75em; color:#8b949e;">${fullDateTime}</span>
+                        <span style="font-size:0.75em; color:#8b949e;">${displayDate}</span>
                     </div>
                     <div class="history-row" style="margin-top:4px; align-items: center;">
                         <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName || 'N/A'}</span>
-                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${displayName}', '${d.type}', '${fullDateTime}')">📍 Show</button>
+                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${displayName}', '${d.type}', '${displayDate}')">📍 Show</button>
                     </div>
                 </div>`;
         });
@@ -387,11 +373,10 @@
 
     const handleExport = () => {
         if (filteredLogs.length === 0) return alert("No results to export.");
-        let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
-        [...filteredLogs].forEach(d => {
+        let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng\n";
+        filteredLogs.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            const name = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
-            csv += `"${name}","${d.email || ''}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${(d.remarks || "").replace(/"/g, '""')}"\n`;
+            csv += `"${staffMap[d.uid]?.name || d.fullName}","${d.email || ''}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const a = document.createElement('a');
@@ -440,35 +425,34 @@
 
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
+    // --- AUTOMATIC MONTHLY WIPE LOGIC ---
     document.getElementById('wipeLogsBtn').onclick = async () => {
-        const confirmation = confirm("WARNING: Buburahin nito ang LAHAT ng logs mula sa NAKARAANG BUWAN. Ang records ngayong Unang Buwan "1" ay MANANATILI. Sigurado ka ba?");
+        const ngayon = new Date();
+        const startOfCurrentMonth = new Date(ngayon.getFullYear(), ngayon.getMonth(), 1);
+        const formatMonth = ngayon.toLocaleString('default', { month: 'long' });
+
+        const confirmation = confirm(`SECURITY ACTION: Buburahin ang LAHAT ng logs bago ang ${formatMonth} 1, ${ngayon.getFullYear()}. Ang matitira lang ay records ngayong buwan. Sigurado ka?`);
         if (!confirmation) return;
+
         const btn = document.getElementById('wipeLogsBtn');
+        btn.disabled = true; btn.innerText = "Cleaning database...";
+
         try {
-            btn.disabled = true;
-            btn.innerText = "Cleaning last Month Logs...";
-            const ngayon = new Date();
-            const startOfApril = new Date(ngayon.getFullYear(), ngayon.getMonth(), 1);
-            const cutoffTimestamp = Timestamp.fromDate(startOfApril);
-            const q = query(collection(db, "attendance"), where("timestamp", "<", cutoffTimestamp));
+            const cutoff = Timestamp.fromDate(startOfCurrentMonth);
+            const q = query(collection(db, "attendance"), where("timestamp", "<", cutoff));
             const snapshot = await getDocs(q);
+
             if (snapshot.empty) {
-                alert("Malinis na ang system! Wala nang last Month logs na nakita.");
-                btn.disabled = false;
-                btn.innerText = "🗑️ Wipe Logs";
-                return;
+                alert("Database is already clean! Walang lumang records.");
+            } else {
+                const batch = writeBatch(db);
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                alert(`Success! ${snapshot.size} lumang records ang nabura.`);
+                location.reload();
             }
-            const batch = writeBatch(db);
-            snapshot.docs.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
-            alert(`Success! ${snapshot.size} Ang records mula sa nakaraan Buwan ay Burado na.);
-            location.reload(); 
-        } catch (e) {
-            console.error("Wipe failed:", e);
-            alert("Error: " + e.message);
-            btn.disabled = false;
-            btn.innerText = "🗑️ Wipe Logs";
-        }
+        } catch (e) { alert("Error: " + e.message); }
+        finally { btn.disabled = false; btn.innerText = "🗑️ Wipe Logs"; }
     };
 
     document.getElementById('archiveBtn').onclick = async () => {
@@ -508,6 +492,7 @@
                 if (!confirm(`Restore ${data.staffDirectory.length} staff?`)) return;
                 importBtn.disabled = true;
                 const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
+                
                 const userChunks = chunk(data.staffDirectory, 400);
                 for (const batchData of userChunks) {
                     const batch = writeBatch(db);
