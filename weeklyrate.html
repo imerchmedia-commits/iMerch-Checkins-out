@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch Media | Weekly Payroll & Coverage Tracker</title>
+    <title>iMerch Media | Weekly & Monthly Coverage Tracker</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
@@ -40,19 +40,20 @@
         .payroll-card {
             background: white;
             border-radius: var(--radius-xl);
-            padding: 3rem;
+            padding: 2.5rem;
             box-shadow: var(--glass-shadow);
             border: 1px solid rgba(0,0,0,0.05);
         }
 
-        .table-custom { width: 100%; border-spacing: 0 15px; border-collapse: separate; }
+        .table-custom { width: 100%; border-spacing: 0 12px; border-collapse: separate; }
         .table-custom thead th { 
             text-transform: uppercase; 
-            font-size: 0.75rem; 
-            letter-spacing: 2px; 
+            font-size: 0.7rem; 
+            letter-spacing: 1.5px; 
             color: #8d99ae; 
-            padding: 1rem 2rem;
+            padding: 1rem;
             border: none;
+            text-align: center;
         }
 
         .table-custom tbody tr { 
@@ -61,33 +62,39 @@
             transition: 0.3s;
         }
 
-        .table-custom tbody tr:hover { transform: scale(1.01); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .table-custom td { padding: 1.2rem 1rem; border: none; vertical-align: middle; text-align: center; }
+        .table-custom td:first-child { border-radius: 20px 0 0 20px; border-left: 5px solid var(--primary-red); text-align: left; }
+        .table-custom td:last-child { border-radius: 0 20px 20px 0; }
 
-        .table-custom td { padding: 1.5rem 2rem; border: none; vertical-align: middle; }
-        .table-custom td:first-child { border-radius: 20px 0 0 20px; border-left: 5px solid var(--primary-red); }
-        .table-custom td:last-child { border-radius: 0 20px 20px 0; text-align: right; }
-
-        .badge-count { background: #fee2e2; color: var(--primary-red); font-weight: 800; padding: 8px 16px; border-radius: 12px; }
-        .rate-text { font-weight: 900; font-size: 1.4rem; color: #166534; letter-spacing: -1px; }
+        .badge-count { background: #fee2e2; color: var(--primary-red); font-weight: 800; padding: 6px 12px; border-radius: 10px; font-size: 0.85rem; }
+        .badge-monthly { background: #e0f2fe; color: #0369a1; font-weight: 800; padding: 6px 12px; border-radius: 10px; font-size: 0.85rem; }
         
+        .rate-text { font-weight: 900; font-size: 1.2rem; color: #166534; letter-spacing: -0.5px; }
+        .monthly-rate-text { font-weight: 900; font-size: 1.2rem; color: #0369a1; letter-spacing: -0.5px; }
+
         .date-filter-box {
             background: white;
-            padding: 15px 25px;
-            border-radius: 20px;
+            padding: 10px 20px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
             box-shadow: var(--glass-shadow);
         }
 
-        input[type="date"] { border: none; font-weight: 800; color: var(--dark-navy); cursor: pointer; }
+        input[type="date"] { border: none; font-weight: 800; color: var(--dark-navy); cursor: pointer; outline: none; }
         
         .summary-mini-card {
             background: var(--dark-navy);
             color: white;
-            padding: 2rem;
-            border-radius: 25px;
+            padding: 1.5rem;
+            border-radius: 20px;
             height: 100%;
+        }
+
+        @media print {
+            .navbar, .btn-dark { display: none !important; }
+            body { padding-top: 20px; }
         }
     </style>
 </head>
@@ -101,21 +108,31 @@
             <input type="date" id="weekPicker">
         </div>
         <button class="btn btn-dark rounded-pill px-4 fw-800" onclick="window.print()">
-            <i class="fas fa-print me-2"></i> PRINT REPORT
+            <i class="fas fa-print me-2"></i> PRINT
         </button>
     </div>
 </nav>
 
-<div class="container mb-5">
-    <div class="row g-4 mb-5">
-        <div class="col-lg-8">
-            <h1 class="fw-900" style="font-size: 3.5rem; letter-spacing: -4px;">Weekly Rate Summary</h1>
-            <p id="weekRangeDisplay" class="text-muted fw-600 fs-5">Select a date to calculate the week...</p>
+<div class="container-fluid px-5 mb-5">
+    <div class="row g-4 mb-4 mt-2">
+        <div class="col-lg-7">
+            <h1 class="fw-900" style="font-size: 3rem; letter-spacing: -3px;">Payroll & Coverage</h1>
+            <p id="weekRangeDisplay" class="text-muted fw-600">Select a date to calculate totals...</p>
         </div>
-        <div class="col-lg-4">
-            <div class="summary-mini-card">
-                <div class="small fw-800 opacity-50 uppercase mb-2">Grand Total Payout (Weekly)</div>
-                <div class="display-5 fw-900" id="grandTotalLabel">₱0.00</div>
+        <div class="col-lg-5">
+            <div class="row g-3">
+                <div class="col-6">
+                    <div class="summary-mini-card">
+                        <div class="small fw-800 opacity-50 mb-1">WEEKLY TOTAL</div>
+                        <div class="h4 fw-900" id="grandTotalLabel">₱0.00</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="summary-mini-card" style="background: #0369a1;">
+                        <div class="small fw-800 opacity-50 mb-1">MONTHLY TOTAL</div>
+                        <div class="h4 fw-900" id="monthlyGrandTotalLabel">₱0.00</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -124,10 +141,11 @@
         <table class="table-custom">
             <thead>
                 <tr>
-                    <th>Coordinator Name</th>
-                    <th>Actual Total Covered</th>
-                    <th>Weekly Rate Calculation</th>
-                    <th>Total Weekly Rate (#)</th>
+                    <th style="text-align: left;">Coordinator Name</th>
+                    <th>Weekly Stores</th>
+                    <th>Weekly Payout</th>
+                    <th style="border-left: 2px solid #f1f5f9;">Monthly Total (Logs)</th>
+                    <th>Monthly Payout (#)</th>
                 </tr>
             </thead>
             <tbody id="payrollBody"></tbody>
@@ -152,81 +170,93 @@
     const weekPicker = document.getElementById('weekPicker');
     const weekRangeDisplay = document.getElementById('weekRangeDisplay');
     
-    // Default to today
     weekPicker.valueAsDate = new Date();
 
-    async function loadWeeklyRates() {
+    async function loadData() {
         const payrollBody = document.getElementById('payrollBody');
         const grandTotalLabel = document.getElementById('grandTotalLabel');
-        payrollBody.innerHTML = '<tr><td colspan="4" class="text-center p-5 fw-800">SYNCING WEEKLY DATA...</td></tr>';
+        const monthlyGrandTotalLabel = document.getElementById('monthlyGrandTotalLabel');
+        
+        payrollBody.innerHTML = '<tr><td colspan="5" class="text-center p-5 fw-800">SYNCING REAL-TIME DATA...</td></tr>';
 
-        // --- WEEKLY LOGIC: Monday to Sunday ---
-        const curr = new Date(weekPicker.value);
-        const first = curr.getDate() - curr.getDay() + (curr.getDay() === 0 ? -6 : 1); // Monday
-        const last = first + 6; // Sunday
+        const selectedDate = new Date(weekPicker.value);
+        
+        // --- WEEKLY RANGE (Mon-Sun) ---
+        const first = selectedDate.getDate() - selectedDate.getDay() + (selectedDate.getDay() === 0 ? -6 : 1);
+        const last = first + 6;
+        const startOfWeek = new Date(new Date(new Date(weekPicker.value).setDate(first)).setHours(0,0,0,0));
+        const endOfWeek = new Date(new Date(new Date(weekPicker.value).setDate(last)).setHours(23,59,59,999));
 
-        const startOfWeek = new Date(new Date(curr.setDate(first)).setHours(0,0,0,0));
-        const endOfWeek = new Date(new Date(curr.setDate(last)).setHours(23,59,59,999));
+        // --- MONTHLY RANGE (Full Month) ---
+        const startOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1, 0, 0, 0);
+        const endOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0, 23, 59, 59);
 
-        weekRangeDisplay.innerText = `Range: ${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}`;
-
-        const q = query(
-            collection(db, "attendance"),
-            where("timestamp", ">=", Timestamp.fromDate(startOfWeek)),
-            where("timestamp", "<=", Timestamp.fromDate(endOfWeek)),
-            orderBy("timestamp", "desc")
-        );
+        weekRangeDisplay.innerText = `Week: ${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()} | Month: ${startOfMonth.toLocaleString('default', { month: 'long' })} ${selectedDate.getFullYear()}`;
 
         try {
+            // Fetch Month Data (Sapat na ito dahil covered na nito ang week)
+            const q = query(
+                collection(db, "attendance"),
+                where("timestamp", ">=", Timestamp.fromDate(startOfMonth)),
+                where("timestamp", "<=", Timestamp.fromDate(endOfMonth))
+            );
+
             const snapshot = await getDocs(q);
-            const stats = {};
-            let grandTotal = 0;
+            const stats = {}; // { "Name": { weekly: 0, monthly: 0 } }
+            let grandWeekly = 0;
+            let grandMonthly = 0;
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const name = data.staffName || data.name || "Unknown Staff";
+                const name = (data.staffName || data.name || "Unknown").toUpperCase();
                 const type = (data.type || "").toLowerCase();
+                const ts = data.timestamp.toDate();
 
-                // Only count "Check-in" types
                 if (type.includes('in')) {
-                    stats[name] = (stats[name] || 0) + 1;
+                    if (!stats[name]) stats[name] = { weekly: 0, monthly: 0 };
+                    
+                    // Add to monthly
+                    stats[name].monthly++;
+                    
+                    // Add to weekly if within range
+                    if (ts >= startOfWeek && ts <= endOfWeek) {
+                        stats[name].weekly++;
+                    }
                 }
             });
 
-            const rows = Object.entries(stats).map(([name, count]) => {
-                const totalRate = count * RATE_PER_STORE;
-                grandTotal += totalRate;
+            const rows = Object.entries(stats).sort().map(([name, data]) => {
+                const weeklyPay = data.weekly * RATE_PER_STORE;
+                const monthlyPay = data.monthly * RATE_PER_STORE;
+                grandWeekly += weeklyPay;
+                grandMonthly += monthlyPay;
 
                 return `
                     <tr>
                         <td>
-                            <div class="fw-800 fs-5">${name.toUpperCase()}</div>
-                            <div class="small text-muted fw-600">iMerch Field Coordinator</div>
+                            <div class="fw-800 fs-6">${name}</div>
+                            <div class="small text-muted fw-600">Field Coordinator</div>
                         </td>
-                        <td>
-                            <span class="badge-count">${count} STORES</span>
-                        </td>
-                        <td>
-                            <div class="fw-700 text-muted small">${count} Visits x ₱${RATE_PER_STORE.toLocaleString()}</div>
-                        </td>
-                        <td>
-                            <div class="rate-text">₱${totalRate.toLocaleString()}</div>
-                        </td>
+                        <td><span class="badge-count">${data.weekly}</span></td>
+                        <td><div class="rate-text">₱${weeklyPay.toLocaleString()}</div></td>
+                        <td style="border-left: 2px solid #f1f5f9;"><span class="badge-monthly">${data.monthly} LOGS</span></td>
+                        <td><div class="monthly-rate-text">₱${monthlyPay.toLocaleString()}</div></td>
                     </tr>
                 `;
             }).join('');
 
-            payrollBody.innerHTML = rows || '<tr><td colspan="4" class="text-center p-5 fw-800">NO LOGS FOUND FOR THIS WEEK</td></tr>';
-            grandTotalLabel.innerText = `₱${grandTotal.toLocaleString()}`;
+            payrollBody.innerHTML = rows || '<tr><td colspan="5" class="text-center p-5 fw-800">NO DATA FOUND</td></tr>';
+            grandTotalLabel.innerText = `₱${grandWeekly.toLocaleString()}`;
+            monthlyGrandTotalLabel.innerText = `₱${grandMonthly.toLocaleString()}`;
 
         } catch (e) {
-            console.error("Firebase Error:", e);
-            payrollBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger p-5 font-monospace">Error: ${e.message}</td></tr>`;
+            console.error(e);
+            payrollBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger p-5">Error loading data.</td></tr>`;
         }
     }
 
-    weekPicker.addEventListener('change', loadWeeklyRates);
-    loadWeeklyRates();
+    weekPicker.addEventListener('change', loadData);
+    loadData();
 </script>
 
 </body>
