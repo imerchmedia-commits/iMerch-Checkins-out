@@ -425,9 +425,10 @@
 
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
-    // --- AUTOMATIC MONTHLY WIPE LOGIC ---
+    // --- AUTOMATIC MONTHLY WIPE LOGIC (Updated to be Dynamic) ---
     document.getElementById('wipeLogsBtn').onclick = async () => {
         const ngayon = new Date();
+        // Set cutoff to the 1st of the CURRENT month at 12:00 AM
         const startOfCurrentMonth = new Date(ngayon.getFullYear(), ngayon.getMonth(), 1);
         const formatMonth = ngayon.toLocaleString('default', { month: 'long' });
 
@@ -443,12 +444,12 @@
             const snapshot = await getDocs(q);
 
             if (snapshot.empty) {
-                alert("Database is already clean! Walang lumang records.");
+                alert(`Database is na-clean na! Walang records bago ang ${formatMonth} 1.`);
             } else {
                 const batch = writeBatch(db);
                 snapshot.docs.forEach(doc => batch.delete(doc.ref));
                 await batch.commit();
-                alert(`Success! ${snapshot.size} lumang records ang nabura.`);
+                alert(`Success! ${snapshot.size} lumang records (bago ang ${formatMonth} 1) ang nabura.`);
                 location.reload();
             }
         } catch (e) { alert("Error: " + e.message); }
@@ -489,10 +490,12 @@
             try {
                 const data = JSON.parse(event.target.result);
                 if (data.system !== "iMerch Secured Attendance") return alert("Invalid format.");
-                if (!confirm(`Restore ${data.staffDirectory.length} staff?`)) return;
+                if (!confirm(`Restore ${data.staffDirectory.length} staff and ${data.attendanceLogs.length} logs?`)) return;
+                
                 importBtn.disabled = true;
                 const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
                 
+                // Restore Staff
                 const userChunks = chunk(data.staffDirectory, 400);
                 for (const batchData of userChunks) {
                     const batch = writeBatch(db);
@@ -503,6 +506,8 @@
                     });
                     await batch.commit();
                 }
+                
+                // Restore Logs
                 const logChunks = chunk(data.attendanceLogs, 400);
                 for (const batchData of logChunks) {
                     const batch = writeBatch(db);
@@ -513,9 +518,10 @@
                     });
                     await batch.commit();
                 }
+                
                 alert("Restore complete!");
                 window.location.reload();
-            } catch (err) { alert("Import failed."); } 
+            } catch (err) { alert("Import failed: " + err.message); } 
             finally { importBtn.disabled = false; importFile.value = ""; }
         };
         reader.readAsText(file);
