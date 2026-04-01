@@ -31,7 +31,7 @@
             backdrop-filter: blur(20px); 
             border-bottom: 5px solid var(--primary-red); 
             height: 90px;
-            padding: 0 4rem;
+            padding: 0 2rem;
         }
 
         .brand-text { font-weight: 900; font-size: 1.8rem; letter-spacing: -2px; text-decoration: none; color: var(--dark-navy); }
@@ -40,7 +40,7 @@
         .payroll-card {
             background: white;
             border-radius: var(--radius-xl);
-            padding: 3rem;
+            padding: 2.5rem;
             box-shadow: var(--glass-shadow);
             border: 1px solid rgba(0,0,0,0.05);
         }
@@ -48,10 +48,10 @@
         .table-custom { width: 100%; border-spacing: 0 15px; border-collapse: separate; }
         .table-custom thead th { 
             text-transform: uppercase; 
-            font-size: 0.75rem; 
-            letter-spacing: 2px; 
+            font-size: 0.7rem; 
+            letter-spacing: 1px; 
             color: #8d99ae; 
-            padding: 1rem 2rem;
+            padding: 1rem 1.5rem;
             border: none;
         }
 
@@ -63,32 +63,37 @@
 
         .table-custom tbody tr:hover { transform: scale(1.01); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 
-        .table-custom td { padding: 1.5rem 2rem; border: none; vertical-align: middle; }
+        .table-custom td { padding: 1.2rem 1.5rem; border: none; vertical-align: middle; }
         .table-custom td:first-child { border-radius: 20px 0 0 20px; border-left: 5px solid var(--primary-red); }
         .table-custom td:last-child { border-radius: 0 20px 20px 0; text-align: right; }
 
-        .badge-count { background: #fee2e2; color: var(--primary-red); font-weight: 800; padding: 8px 16px; border-radius: 12px; }
-        .rate-text { font-weight: 900; font-size: 1.4rem; color: #166534; letter-spacing: -1px; }
+        .badge-count { background: #fee2e2; color: var(--primary-red); font-weight: 800; padding: 6px 12px; border-radius: 10px; font-size: 0.85rem; }
+        .rate-text { font-weight: 900; font-size: 1.3rem; color: #166534; letter-spacing: -1px; }
         
         .date-filter-box {
             background: white;
-            padding: 15px 25px;
-            border-radius: 20px;
+            padding: 10px 20px;
+            border-radius: 15px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             box-shadow: var(--glass-shadow);
         }
 
-        input[type="date"] { border: none; font-weight: 800; color: var(--dark-navy); cursor: pointer; }
+        .date-input-group { display: flex; flex-direction: column; }
+        .date-input-group label { font-size: 9px; font-weight: 800; text-transform: uppercase; color: #8d99ae; margin-bottom: -2px; }
+
+        input[type="date"] { border: none; font-weight: 700; color: var(--dark-navy); cursor: pointer; font-size: 0.9rem; outline: none; }
         
         .summary-mini-card {
             background: var(--dark-navy);
             color: white;
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 25px;
             height: 100%;
+            transition: 0.3s;
         }
+        .summary-red { background: var(--primary-red); }
     </style>
 </head>
 <body>
@@ -98,24 +103,38 @@
     <div class="d-flex align-items-center gap-3">
         <div class="date-filter-box">
             <i class="fas fa-calendar-alt text-danger"></i>
-            <input type="date" id="weekPicker">
+            <div class="date-input-group">
+                <label>Start Date</label>
+                <input type="date" id="startDatePicker">
+            </div>
+            <div style="width: 1px; height: 30px; background: #eee;"></div>
+            <div class="date-input-group">
+                <label>End Date</label>
+                <input type="date" id="endDatePicker">
+            </div>
         </div>
-        <button class="btn btn-dark rounded-pill px-4 fw-800" onclick="window.print()">
-            <i class="fas fa-print me-2"></i> PRINT REPORT
+        <button class="btn btn-dark rounded-pill px-4 fw-800 shadow-sm" onclick="window.print()">
+            <i class="fas fa-print me-2"></i> PRINT
         </button>
     </div>
 </nav>
 
 <div class="container mb-5">
     <div class="row g-4 mb-5">
-        <div class="col-lg-8">
-            <h1 class="fw-900" style="font-size: 3.5rem; letter-spacing: -4px;">Weekly Rate Summary</h1>
-            <p id="weekRangeDisplay" class="text-muted fw-600 fs-5">Select a date to calculate the week...</p>
+        <div class="col-lg-6">
+            <h1 class="fw-900" style="font-size: 3.2rem; letter-spacing: -3px; line-height: 1;">Performance Tracker</h1>
+            <p id="weekRangeDisplay" class="text-muted fw-600 fs-6 mt-2">Initializing report range...</p>
         </div>
-        <div class="col-lg-4">
+        <div class="col-lg-3">
             <div class="summary-mini-card">
-                <div class="small fw-800 opacity-50 uppercase mb-2">Grand Total Payout (Weekly)</div>
-                <div class="display-5 fw-900" id="grandTotalLabel">₱0.00</div>
+                <div class="small fw-800 opacity-50 uppercase mb-1">Total Payout</div>
+                <div class="h2 fw-900 mb-0" id="grandTotalLabel">₱0.00</div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="summary-mini-card summary-red">
+                <div class="small fw-800 opacity-100 uppercase mb-1" style="color: #ffd1d1;">Team Coverage</div>
+                <div class="h2 fw-900 mb-0" id="avgCoverageLabel">0%</div>
             </div>
         </div>
     </div>
@@ -124,10 +143,10 @@
         <table class="table-custom">
             <thead>
                 <tr>
-                    <th>Coordinator Name</th>
-                    <th>Actual Total Covered</th>
-                    <th>Weekly Rate Calculation</th>
-                    <th>Total Weekly Rate (#)</th>
+                    <th>Staff Details</th>
+                    <th>Total Visits</th>
+                    <th>Coverage Analysis</th>
+                    <th>Subtotal Payout</th>
                 </tr>
             </thead>
             <tbody id="payrollBody"></tbody>
@@ -149,31 +168,35 @@
     const db = getFirestore(app);
 
     const RATE_PER_STORE = 500; 
-    const weekPicker = document.getElementById('weekPicker');
+    const TARGET_PER_WEEK = 5; // Expected stores per week per staff
+
+    const startPicker = document.getElementById('startDatePicker');
+    const endPicker = document.getElementById('endDatePicker');
     const weekRangeDisplay = document.getElementById('weekRangeDisplay');
-    
-    // Default to today
-    weekPicker.valueAsDate = new Date();
+    const payrollBody = document.getElementById('payrollBody');
 
-    async function loadWeeklyRates() {
-        const payrollBody = document.getElementById('payrollBody');
-        const grandTotalLabel = document.getElementById('grandTotalLabel');
-        payrollBody.innerHTML = '<tr><td colspan="4" class="text-center p-5 fw-800">SYNCING WEEKLY DATA...</td></tr>';
+    // Default: Set to Current Month (March 1 - March 31 example)
+    const now = new Date();
+    startPicker.valueAsDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    endPicker.valueAsDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-        // --- WEEKLY LOGIC: Monday to Sunday ---
-        const curr = new Date(weekPicker.value);
-        const first = curr.getDate() - curr.getDay() + (curr.getDay() === 0 ? -6 : 1); // Monday
-        const last = first + 6; // Sunday
+    async function loadReport() {
+        payrollBody.innerHTML = '<tr><td colspan="4" class="text-center p-5 fw-800">CALCULATING DATA...</td></tr>';
+        
+        const start = new Date(new Date(startPicker.value).setHours(0,0,0,0));
+        const end = new Date(new Date(endPicker.value).setHours(23,59,59,999));
 
-        const startOfWeek = new Date(new Date(curr.setDate(first)).setHours(0,0,0,0));
-        const endOfWeek = new Date(new Date(curr.setDate(last)).setHours(23,59,59,999));
+        // Compute Weeks in Range
+        const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) || 1;
+        const weeksCount = diffDays / 7;
+        const dynamicTarget = Math.max(1, Math.round(TARGET_PER_WEEK * weeksCount));
 
-        weekRangeDisplay.innerText = `Range: ${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}`;
+        weekRangeDisplay.innerText = `Range: ${start.toLocaleDateString()} to ${end.toLocaleDateString()} (${diffDays} days)`;
 
         const q = query(
             collection(db, "attendance"),
-            where("timestamp", ">=", Timestamp.fromDate(startOfWeek)),
-            where("timestamp", "<=", Timestamp.fromDate(endOfWeek)),
+            where("timestamp", ">=", Timestamp.fromDate(start)),
+            where("timestamp", "<=", Timestamp.fromDate(end)),
             orderBy("timestamp", "desc")
         );
 
@@ -181,13 +204,13 @@
             const snapshot = await getDocs(q);
             const stats = {};
             let grandTotal = 0;
+            let teamCoverageSum = 0;
+            let staffCount = 0;
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const name = data.staffName || data.name || "Unknown Staff";
+                const name = data.staffName || data.fullName || data.name || "Unknown Staff";
                 const type = (data.type || "").toLowerCase();
-
-                // Only count "Check-in" types
                 if (type.includes('in')) {
                     stats[name] = (stats[name] || 0) + 1;
                 }
@@ -195,19 +218,26 @@
 
             const rows = Object.entries(stats).map(([name, count]) => {
                 const totalRate = count * RATE_PER_STORE;
+                const coverage = (count / dynamicTarget) * 100;
+                
                 grandTotal += totalRate;
+                teamCoverageSum += coverage;
+                staffCount++;
 
                 return `
                     <tr>
                         <td>
                             <div class="fw-800 fs-5">${name.toUpperCase()}</div>
-                            <div class="small text-muted fw-600">iMerch Field Coordinator</div>
+                            <div class="small text-muted fw-600">Field Personnel</div>
                         </td>
                         <td>
-                            <span class="badge-count">${count} STORES</span>
+                            <span class="badge-count">${count} VISITS</span>
                         </td>
                         <td>
-                            <div class="fw-700 text-muted small">${count} Visits x ₱${RATE_PER_STORE.toLocaleString()}</div>
+                            <div class="fw-900 ${coverage >= 90 ? 'text-success' : 'text-danger'}">
+                                ${coverage.toFixed(1)}% Rate
+                            </div>
+                            <div class="small text-muted fw-600">Target: ${dynamicTarget} stores</div>
                         </td>
                         <td>
                             <div class="rate-text">₱${totalRate.toLocaleString()}</div>
@@ -216,17 +246,19 @@
                 `;
             }).join('');
 
-            payrollBody.innerHTML = rows || '<tr><td colspan="4" class="text-center p-5 fw-800">NO LOGS FOUND FOR THIS WEEK</td></tr>';
-            grandTotalLabel.innerText = `₱${grandTotal.toLocaleString()}`;
+            payrollBody.innerHTML = rows || '<tr><td colspan="4" class="text-center p-5 fw-800">NO DATA FOUND FOR THIS RANGE</td></tr>';
+            document.getElementById('grandTotalLabel').innerText = `₱${grandTotal.toLocaleString()}`;
+            document.getElementById('avgCoverageLabel').innerText = staffCount > 0 ? `${(teamCoverageSum / staffCount).toFixed(1)}%` : '0%';
 
         } catch (e) {
-            console.error("Firebase Error:", e);
-            payrollBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger p-5 font-monospace">Error: ${e.message}</td></tr>`;
+            console.error(e);
+            payrollBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger p-5">Sync Error: ${e.message}</td></tr>`;
         }
     }
 
-    weekPicker.addEventListener('change', loadWeeklyRates);
-    loadWeeklyRates();
+    startPicker.addEventListener('change', loadReport);
+    endPicker.addEventListener('change', loadReport);
+    loadReport();
 </script>
 
 </body>
