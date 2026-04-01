@@ -461,7 +461,7 @@
             const batch = writeBatch(db);
             snapshot.docs.forEach(doc => batch.delete(doc.ref));
             await batch.commit();
-            alert(`Success! ${snapshot.size} records mula sa March ang nabura. Happy 17th Anniversary iMerch!`);
+            alert(`Success! ${snapshot.size} Ang records mula sa Buong March ay Burado.);
             location.reload(); 
         } catch (e) {
             console.error("Wipe failed:", e);
