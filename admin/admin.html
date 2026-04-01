@@ -441,7 +441,7 @@
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
     document.getElementById('wipeLogsBtn').onclick = async () => {
-        const confirmation = confirm("WARNING: Buburahin nito ang LAHAT ng logs mula sa NAKARAANG BUWAN (March 2026 pababa). Ang records ngayong April 1 ay MANANATILI. Sigurado ka ba?");
+        const confirmation = confirm("WARNING: Buburahin nito ang LAHAT ng logs mula sa NAKARAANG BUWAN. Ang records ngayong Unang Buwan "1" ay MANANATILI. Sigurado ka ba?");
         if (!confirmation) return;
         const btn = document.getElementById('wipeLogsBtn');
         try {
@@ -461,7 +461,7 @@
             const batch = writeBatch(db);
             snapshot.docs.forEach(doc => batch.delete(doc.ref));
             await batch.commit();
-            alert(`Success! ${snapshot.size} Ang records mula sa Buong March ay Burado.);
+            alert(`Success! ${snapshot.size} Ang records mula sa nakaraan Buwan ay Burado na.);
             location.reload(); 
         } catch (e) {
             console.error("Wipe failed:", e);
