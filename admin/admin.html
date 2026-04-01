@@ -446,14 +446,14 @@
         const btn = document.getElementById('wipeLogsBtn');
         try {
             btn.disabled = true;
-            btn.innerText = "Cleaning March Logs...";
+            btn.innerText = "Cleaning last Month Logs...";
             const ngayon = new Date();
             const startOfApril = new Date(ngayon.getFullYear(), ngayon.getMonth(), 1);
             const cutoffTimestamp = Timestamp.fromDate(startOfApril);
             const q = query(collection(db, "attendance"), where("timestamp", "<", cutoffTimestamp));
             const snapshot = await getDocs(q);
             if (snapshot.empty) {
-                alert("Malinis na ang system! Wala nang March logs na nakita.");
+                alert("Malinis na ang system! Wala nang last Month logs na nakita.");
                 btn.disabled = false;
                 btn.innerText = "🗑️ Wipe Logs";
                 return;
