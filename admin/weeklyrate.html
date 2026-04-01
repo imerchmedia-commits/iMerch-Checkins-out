@@ -142,7 +142,7 @@
 
     <div id="loader">
         <div class="loading-ring"></div>
-        <p style="margin-top:20px; font-weight:700; letter-spacing:2px; font-size:0.7rem; color:var(--secondary-text);">INITIALIZING ANALYTICS</p>
+        <p id="loader-text" style="margin-top:20px; font-weight:700; letter-spacing:2px; font-size:0.7rem; color:var(--secondary-text);">INITIALIZING ANALYTICS</p>
     </div>
 
     <div class="header-section">
@@ -265,24 +265,48 @@
 
         async function startApp() {
             try {
+                console.log("System Start: Mapping Personnel...");
                 const sSnap = await getDocs(collection(db, "staff_members"));
+                
+                if (sSnap.empty) {
+                    console.warn("No staff found in DB.");
+                }
+
                 sSnap.forEach(doc => {
                     const d = doc.data();
-                    const name = d.name || d.staffName;
-                    if(!admins.includes(name)) staffMap[d.email?.toLowerCase()] = name;
+                    // Unified Name Detection
+                    const name = d.Personnel || d.name || d.staffName || "Unknown";
+                    const email = (d.email || d.staffEmail || "").toLowerCase();
+                    
+                    if(email && !admins.includes(name)) {
+                        staffMap[email] = name;
+                        console.log(`Map: ${email} -> ${name}`);
+                    }
                 });
+
+                console.log("Syncing Initial Analytics...");
                 await refreshData();
-                document.getElementById('loader').style.display = 'none';
-            } catch (err) { console.error(err); }
+                
+                setTimeout(() => {
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+                }, 800);
+
+            } catch (err) { 
+                console.error("Initialization Failed:", err);
+                document.getElementById('loader-text').innerHTML = "CONNECTION ERROR - REFRESH PAGE";
+                document.getElementById('loader-text').style.color = "var(--red)";
+            }
         }
 
         async function refreshData() {
-            const date = new Date(document.getElementById('dateSelector').value);
+            const dateVal = document.getElementById('dateSelector').value;
+            const date = new Date(dateVal);
             let s, e;
 
             if(activeView === 'daily') {
-                s = new Date(date.setHours(0,0,0,0));
-                e = new Date(date.setHours(23,59,59,999));
+                s = new Date(date); s.setHours(0,0,0,0);
+                e = new Date(date); e.setHours(23,59,59,999);
             } else if(activeView === 'weekly') {
                 const day = date.getDay(), diff = date.getDate() - day + (day === 0 ? -6 : 1);
                 s = new Date(date.setDate(diff)); s.setHours(0,0,0,0);
@@ -292,15 +316,22 @@
                 e = new Date(date.getFullYear(), date.getMonth() + 1, 0); e.setHours(23,59,59,999);
             }
 
+            console.log(`Querying logs for range: ${s.toDateString()} to ${e.toDateString()}`);
+
             const q = query(collection(db, "attendance"), 
                 where("timestamp", ">=", Timestamp.fromDate(s)),
                 where("timestamp", "<=", Timestamp.fromDate(e)),
                 orderBy("timestamp", "asc")
             );
 
-            const snap = await getDocs(q);
-            logs = snap.docs.map(doc => doc.data());
-            processAnalytics();
+            try {
+                const snap = await getDocs(q);
+                logs = snap.docs.map(doc => doc.data());
+                console.log(`Total Logs Fetched: ${logs.length}`);
+                processAnalytics();
+            } catch (error) {
+                console.error("Firebase Retrieval Error:", error);
+            }
         }
 
         window.setView = (v) => {
@@ -315,12 +346,17 @@
             const timeline = {};
             const target = getTarget();
 
-            Object.values(staffMap).forEach(n => stats[n] = { actual: 0, target: target });
+            // Populate all mapped staff to stats
+            Object.values(staffMap).forEach(n => {
+                stats[n] = { actual: 0, target: target };
+            });
 
             logs.forEach(l => {
                 const email = (l.email || l.staffEmail || "").toLowerCase();
                 const name = staffMap[email];
-                if(name && (l.type?.includes("In") || l.type?.includes("Check-in"))) {
+                
+                // Track 'In' and 'Check-in' types
+                if(name && (l.type?.toLowerCase().includes("in") || l.type?.toLowerCase().includes("check"))) {
                     stats[name].actual++;
                     const dKey = l.timestamp.toDate().toDateString();
                     timeline[dKey] = (timeline[dKey] || 0) + 1;
@@ -337,13 +373,16 @@
         }
 
         function updateUI(stats, timeline) {
-            // Table
             const tbody = document.getElementById('rankingTable');
             let h = "", totalR = 0, countS = 0, hitS = 0, totalL = 0;
 
-            Object.entries(stats).sort((a,b) => b[1].actual - a[1].actual).forEach(([name, d]) => {
+            // Sort by actual performance
+            const sortedEntries = Object.entries(stats).sort((a,b) => b[1].actual - a[1].actual);
+
+            sortedEntries.forEach(([name, d]) => {
                 const rate = Math.min(Math.round((d.actual / d.target) * 100), 100);
                 const color = rate >= 100 ? 'var(--green)' : (rate > 50 ? 'var(--orange)' : 'var(--red)');
+                
                 if(rate >= 100) hitS++;
                 totalL += d.actual;
                 totalR += rate;
@@ -365,6 +404,8 @@
 
             tbody.innerHTML = h;
             const avg = countS > 0 ? Math.round(totalR / countS) : 0;
+            
+            // Stats Panel Update
             document.getElementById('kpi-rate').innerText = avg + "%";
             document.getElementById('kpi-bar').style.width = avg + "%";
             document.getElementById('kpi-logs').innerText = totalL;
@@ -379,13 +420,15 @@
             if(mainChart) mainChart.destroy();
 
             const isLight = document.body.getAttribute('data-theme') === 'light';
+            const labels = Object.keys(timeline).map(k => k.split(' ').slice(1,3).join(' '));
+            const data = Object.values(timeline);
 
             mainChart = new Chart(ctx, {
                 type: activeView === 'monthly' ? 'line' : 'bar',
                 data: {
-                    labels: Object.keys(timeline).map(k => k.split(' ').slice(1,3).join(' ')),
+                    labels: labels,
                     datasets: [{
-                        data: Object.values(timeline),
+                        data: data,
                         backgroundColor: isLight ? 'rgba(9, 105, 218, 0.1)' : 'rgba(88, 166, 255, 0.1)',
                         borderColor: isLight ? '#0969da' : '#58a6ff',
                         borderWidth: 3,
@@ -407,7 +450,8 @@
 
         function renderCalendar(timeline) {
             const grid = document.getElementById('cal-body');
-            const date = new Date(document.getElementById('dateSelector').value);
+            const dateSelector = document.getElementById('dateSelector');
+            const date = new Date(dateSelector.value);
             const m = date.getMonth(), y = date.getFullYear();
             
             document.getElementById('cal-month-year').innerText = `${date.toLocaleString('default', { month: 'long' }).toUpperCase()} ${y}`;
@@ -417,27 +461,46 @@
             const offset = first === 0 ? 6 : first - 1;
 
             grid.innerHTML = "";
-            for(let i=0; i<offset; i++) grid.innerHTML += `<div class="cal-cell" style="opacity:0; pointer-events:none;"></div>`;
+            
+            // Create placeholders for offset
+            for(let i=0; i<offset; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "cal-cell";
+                emptyCell.style.opacity = "0";
+                emptyCell.style.pointerEvents = "none";
+                grid.appendChild(emptyCell);
+            }
 
             for(let d=1; d<=last; d++) {
                 const dayStr = new Date(y, m, d).toDateString();
                 const val = timeline[dayStr] || 0;
-                let bg = 'var(--bg)', color = 'inherit';
+                let bg = 'var(--bg)';
                 
                 if(val > 25) bg = 'rgba(35, 134, 54, 0.8)';
                 else if(val > 10) bg = 'rgba(210, 153, 34, 0.6)';
                 else if(val > 0) bg = 'rgba(248, 81, 73, 0.4)';
 
-                grid.innerHTML += `<div class="cal-cell" style="background:${bg}; border-color:${val > 0 ? 'transparent' : 'var(--border)'}">${d}</div>`;
+                const dayCell = document.createElement('div');
+                dayCell.className = "cal-cell";
+                dayCell.style.background = bg;
+                dayCell.style.borderColor = val > 0 ? 'transparent' : 'var(--border)';
+                dayCell.innerText = d;
+                grid.appendChild(dayCell);
             }
         }
 
         window.downloadExcel = () => {
+            console.log("Generating Excel Report...");
             const wb = XLSX.utils.table_to_book(document.querySelector("table"));
-            XLSX.writeFile(wb, `iMerch_Analytics_${activeView}.xlsx`);
+            XLSX.writeFile(wb, `iMerch_Coverage_${activeView}_Report.xlsx`);
         };
 
-        document.getElementById('dateSelector').addEventListener('change', refreshData);
+        document.getElementById('dateSelector').addEventListener('change', () => {
+            console.log("Date changed, refreshing view...");
+            refreshData();
+        });
+
+        // Initialize Application
         startApp();
     </script>
 </body>
