@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="iMerch Media Weekly and Monthly Payroll Tracker">
+    
     <title>iMerch Media | Weekly & Monthly Coverage Tracker</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,30 +15,36 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
+        /* CSS VARIABLES */
         :root { 
             --primary-red: #d90429; 
             --dark-navy: #2b2d42;
             --light-bg: #f8fafc;
+            --white: #ffffff;
             --glass-shadow: 0 10px 40px rgba(0,0,0,0.06);
             --radius-xl: 30px;
+            --transition-smooth: all 0.3s ease;
         }
 
+        /* GLOBAL STYLES */
         body { 
             background-color: var(--light-bg); 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             color: var(--dark-navy);
             padding-top: 120px;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* NAVIGATION STYLES */
+        /* NAVIGATION BAR SECTION */
         .navbar { 
             background: rgba(255, 255, 255, 0.98); 
             backdrop-filter: blur(20px); 
             border-bottom: 5px solid var(--primary-red); 
-            height: 100px;
+            height: 105px;
             padding: 0 4rem;
             z-index: 2000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
         .brand-text { 
@@ -45,13 +53,14 @@
             letter-spacing: -2px; 
             text-decoration: none; 
             color: var(--dark-navy); 
+            transition: var(--transition-smooth);
         }
 
         .brand-text span { color: var(--primary-red); }
 
-        /* CARD & TABLE STYLES */
+        /* MAIN CARD CONTAINER */
         .payroll-card {
-            background: white;
+            background: var(--white);
             border-radius: var(--radius-xl);
             padding: 3rem;
             box-shadow: var(--glass-shadow);
@@ -59,6 +68,7 @@
             margin-bottom: 80px;
         }
 
+        /* TABLE CUSTOMIZATION */
         .table-custom { 
             width: 100%; 
             border-spacing: 0 15px; 
@@ -68,7 +78,7 @@
         .table-custom thead th { 
             text-transform: uppercase; 
             font-size: 0.75rem; 
-            letter-spacing: 1.5px; 
+            letter-spacing: 1.8px; 
             color: #94a3b8; 
             padding: 1rem;
             border: none;
@@ -76,12 +86,16 @@
         }
 
         .table-custom tbody tr { 
-            background: #fff; 
+            background: var(--white); 
             box-shadow: 0 5px 20px rgba(0,0,0,0.02);
-            transition: all 0.3s ease;
+            transition: var(--transition-smooth);
+            cursor: pointer;
         }
 
-        .table-custom tbody tr:hover { transform: translateY(-3px); }
+        .table-custom tbody tr:hover { 
+            transform: translateY(-4px) scale(1.01); 
+            box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+        }
 
         .table-custom td { 
             padding: 1.5rem 1rem; 
@@ -97,16 +111,33 @@
             padding-left: 2.5rem; 
         }
 
-        .table-custom td:last-child { border-radius: 0 20px 20px 0; }
+        .table-custom td:last-child { 
+            border-radius: 0 20px 20px 0; 
+        }
 
-        /* BADGES & TEXT */
-        .badge-count { background: #fee2e2; color: var(--primary-red); font-weight: 800; padding: 8px 16px; border-radius: 12px; font-size: 0.9rem; }
-        .badge-monthly { background: #e0f2fe; color: #0369a1; font-weight: 800; padding: 8px 16px; border-radius: 12px; font-size: 0.9rem; }
+        /* BADGES & CURRENCY STYLES */
+        .badge-count { 
+            background: #fee2e2; 
+            color: var(--primary-red); 
+            font-weight: 800; 
+            padding: 8px 16px; 
+            border-radius: 12px; 
+            font-size: 0.9rem; 
+        }
+
+        .badge-monthly { 
+            background: #e0f2fe; 
+            color: #0369a1; 
+            font-weight: 800; 
+            padding: 8px 16px; 
+            border-radius: 12px; 
+            font-size: 0.9rem; 
+        }
         
-        .rate-text { font-weight: 900; font-size: 1.3rem; color: #166534; letter-spacing: -0.5px; }
-        .monthly-rate-text { font-weight: 900; font-size: 1.3rem; color: #0369a1; letter-spacing: -0.5px; }
+        .rate-text { font-weight: 900; font-size: 1.4rem; color: #166534; letter-spacing: -0.5px; }
+        .monthly-rate-text { font-weight: 900; font-size: 1.4rem; color: #0369a1; letter-spacing: -0.5px; }
 
-        /* FILTER CONTROLS */
+        /* FILTER CONTROLS STYLING */
         .date-filter-box {
             background: #ffffff;
             padding: 10px 18px;
@@ -116,6 +147,12 @@
             gap: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             border: 1px solid #edf2f7;
+            transition: var(--transition-smooth);
+        }
+
+        .date-filter-box:focus-within {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 3px rgba(217, 4, 41, 0.1);
         }
 
         .filter-group { display: flex; flex-direction: column; align-items: center; }
@@ -133,19 +170,22 @@
         
         .summary-mini-card {
             background: var(--dark-navy);
-            color: white;
-            padding: 1.8rem;
+            color: var(--white);
+            padding: 2rem;
             border-radius: 28px;
             height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            box-shadow: 0 10px 25px rgba(43, 45, 66, 0.15);
         }
 
+        /* PRINT SETTINGS */
         @media print {
             .navbar, .btn-dark, .date-filter-box, .filter-label { display: none !important; }
             body { padding-top: 30px; background: white; }
             .payroll-card { box-shadow: none; border: none; padding: 0; }
+            .container-fluid { padding: 0 !important; }
         }
     </style>
 </head>
@@ -156,7 +196,7 @@
     
     <div class="d-flex align-items-center gap-4">
         <div class="filter-group">
-            <span class="filter-label">Weekly Coverage</span>
+            <span class="filter-label">Weekly Coverage Range</span>
             <div class="date-filter-box">
                 <i class="fas fa-calendar-week text-danger"></i>
                 <input type="date" id="weekPicker">
@@ -164,14 +204,14 @@
         </div>
 
         <div class="filter-group">
-            <span class="filter-label">Monthly Total</span>
+            <span class="filter-label">Monthly Payout Focus</span>
             <div class="date-filter-box">
                 <i class="fas fa-calendar-alt text-primary"></i>
                 <input type="month" id="monthPicker">
             </div>
         </div>
 
-        <button class="btn btn-dark rounded-pill px-4 fw-800" style="height: 48px; margin-top: 18px;" onclick="window.print()">
+        <button class="btn btn-dark rounded-pill px-4 fw-800" style="height: 50px; margin-top: 18px;" onclick="window.print()">
             <i class="fas fa-print me-2"></i> PRINT REPORT
         </button>
     </div>
@@ -180,22 +220,22 @@
 <div class="container-fluid px-5">
     <div class="row g-4 mb-5 mt-2">
         <div class="col-lg-7">
-            <h1 class="fw-900" style="font-size: 3.5rem; letter-spacing: -3px; margin-bottom: 5px;">Payroll Dashboard</h1>
-            <p id="weekRangeDisplay" class="text-muted fw-600 fs-5">Initializing secure connection to Firebase...</p>
+            <h1 class="fw-900" style="font-size: 3.8rem; letter-spacing: -4px; margin-bottom: 5px;">Payroll Portal</h1>
+            <p id="weekRangeDisplay" class="text-muted fw-600 fs-5">Initialzing connection to iMerch Cloud...</p>
         </div>
         
         <div class="col-lg-5">
             <div class="row g-3 h-100">
                 <div class="col-6">
                     <div class="summary-mini-card">
-                        <div class="small fw-800 opacity-50 mb-1">WEEKLY TOTAL PAYOUT</div>
-                        <div class="h3 fw-900" id="grandTotalLabel">₱0.00</div>
+                        <div class="small fw-800 opacity-50 mb-1">WEEKLY TOTAL (NET)</div>
+                        <div class="h2 fw-900" id="grandTotalLabel">₱0.00</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="summary-mini-card" style="background: #0369a1;">
-                        <div class="small fw-800 opacity-50 mb-1">MONTHLY TOTAL PAYOUT</div>
-                        <div class="h3 fw-900" id="monthlyGrandTotalLabel">₱0.00</div>
+                        <div class="small fw-800 opacity-50 mb-1">MONTHLY TOTAL (NET)</div>
+                        <div class="h2 fw-900" id="monthlyGrandTotalLabel">₱0.00</div>
                     </div>
                 </div>
             </div>
@@ -206,17 +246,18 @@
         <table class="table-custom" id="payrollTable">
             <thead>
                 <tr>
-                    <th style="text-align: left; padding-left: 2.5rem;">Field Personnel</th>
-                    <th>Weekly Stores</th>
-                    <th>Weekly Amount</th>
-                    <th style="border-left: 2px solid #f8f9fa;">Monthly Logs</th>
-                    <th>Monthly Amount</th>
+                    <th style="text-align: left; padding-left: 2.5rem;">Personnel Name</th>
+                    <th>Weekly Count</th>
+                    <th>Weekly Payout</th>
+                    <th style="border-left: 3px solid #f1f5f9;">Monthly Records</th>
+                    <th>Monthly Payout</th>
                 </tr>
             </thead>
             <tbody id="payrollBody">
                 <tr>
                     <td colspan="5" class="text-center p-5 fw-800 opacity-50">
-                        <i class="fas fa-spinner fa-spin me-2"></i> FETCHING LATEST ATTENDANCE...
+                        <div class="spinner-border text-danger me-3" role="status"></div>
+                        LOADING FIREBASE RECORDS...
                     </td>
                 </tr>
             </tbody>
@@ -225,9 +266,11 @@
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, where, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    // Import SDKs with Version Tags to bypass cache
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js?v=2.5";
+    import { getFirestore, collection, query, where, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js?v=2.5";
 
+    // CORE CONFIGURATION
     const firebaseConfig = {
         apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
         authDomain: "imerch-checkins-out.firebaseapp.com",
@@ -237,87 +280,125 @@
         appId: "1:842279761036:web:1d3889999612d602f337a9"
     };
 
+    // INITIALIZE APP
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const RATE = 500; 
+    const PAY_RATE = 500; 
 
+    // DOM ELEMENTS
     const weekPicker = document.getElementById('weekPicker');
     const monthPicker = document.getElementById('monthPicker');
     const weekRangeDisplay = document.getElementById('weekRangeDisplay');
+    const payrollBody = document.getElementById('payrollBody');
     
-    // Initial State
-    const today = new Date();
-    weekPicker.valueAsDate = today;
-    monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    // Set Current Date Defaults
+    const currentDate = new Date();
+    weekPicker.valueAsDate = currentDate;
+    monthPicker.value = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
+    /**
+     * loadData()
+     * Fetches and calculates attendance data for both ranges
+     */
     async function loadData() {
-        const payrollBody = document.getElementById('payrollBody');
-        payrollBody.innerHTML = '<tr><td colspan="5" class="text-center p-5 fw-800">SYNCING REAL-TIME DATA...</td></tr>';
+        payrollBody.innerHTML = '<tr><td colspan="5" class="text-center p-5 fw-800">SYNCING DATA...</td></tr>';
 
-        // Weekly Logic
+        // 1. Calculate Weekly Logic (Mon to Sun)
         const selectedDate = new Date(weekPicker.value);
-        const day = selectedDate.getDay();
-        const diff = selectedDate.getDate() - day + (day === 0 ? -6 : 1);
-        const startW = new Date(new Date(selectedDate.setDate(diff)).setHours(0,0,0,0));
-        const endW = new Date(new Date(startW).setDate(startW.getDate() + 6));
-        endW.setHours(23,59,59,999);
+        const dayNum = selectedDate.getDay();
+        const diffDays = selectedDate.getDate() - dayNum + (dayNum === 0 ? -6 : 1);
+        const startOfWeek = new Date(new Date(selectedDate.setDate(diffDays)).setHours(0,0,0,0));
+        const endOfWeek = new Date(new Date(startOfWeek).setDate(startOfWeek.getDate() + 6));
+        endOfWeek.setHours(23,59,59,999);
 
-        // Monthly Logic
-        const [mYear, mMonth] = monthPicker.value.split('-');
-        const startM = new Date(mYear, mMonth - 1, 1, 0, 0, 0);
-        const endM = new Date(mYear, mMonth, 0, 23, 59, 59);
+        // 2. Calculate Monthly Logic
+        const [yearPart, monthPart] = monthPicker.value.split('-');
+        const startOfMonth = new Date(yearPart, monthPart - 1, 1, 0, 0, 0);
+        const endOfMonth = new Date(yearPart, monthPart, 0, 23, 59, 59);
 
-        weekRangeDisplay.innerText = `Range: ${startW.toLocaleDateString()} to ${endW.toLocaleDateString()} | Focus: ${startM.toLocaleString('default', { month: 'long' })} ${mYear}`;
+        // UI Update for user
+        weekRangeDisplay.innerText = `Week: ${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()} | Month: ${startOfMonth.toLocaleString('default', { month: 'long' })} ${yearPart}`;
 
         try {
-            const minS = startW < startM ? startW : startM;
-            const maxE = endW > endM ? endW : endM;
+            // Optimized Range to cover both Weekly and Monthly in one fetch
+            const finalStart = startOfWeek < startOfMonth ? startOfWeek : startOfMonth;
+            const finalEnd = endOfWeek > endOfMonth ? endOfWeek : endOfMonth;
 
-            const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(minS)), where("timestamp", "<=", Timestamp.fromDate(maxE)));
-            const snapshot = await getDocs(q);
+            const q = query(
+                collection(db, "attendance"), 
+                where("timestamp", ">=", Timestamp.fromDate(finalStart)), 
+                where("timestamp", "<=", Timestamp.fromDate(finalEnd))
+            );
             
-            let stats = {};
-            let totalW = 0, totalM = 0;
+            const querySnapshot = await getDocs(q);
+            let statsMap = {};
+            let grandTotalWeekly = 0;
+            let grandTotalMonthly = 0;
+
             const admins = ["JOY BIAZON", "BRYLLE OCA", "PAULINE OCA", "RON SARMENTA", "AREM GONZALES", "SAMANTHA CLAIRE"];
 
-            snapshot.forEach(doc => {
+            querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                const name = (data.staffName || data.name || "Unknown").toUpperCase();
-                const type = (data.type || "").toLowerCase();
-                const ts = data.timestamp.toDate();
+                const staffName = (data.staffName || data.name || "Unknown").toUpperCase();
+                const logType = (data.type || "").toLowerCase();
+                const logTime = data.timestamp.toDate();
 
-                if (type.includes('in') && !admins.includes(name)) {
-                    if (!stats[name]) stats[name] = { w: 0, m: 0 };
-                    if (ts >= startW && ts <= endW) stats[name].w++;
-                    if (ts >= startM && ts <= endM) stats[name].m++;
+                // Validation: Only "IN" logs and not Admin
+                if (logType.includes('in') && !admins.includes(staffName)) {
+                    if (!statsMap[staffName]) {
+                        statsMap[staffName] = { weekCount: 0, monthCount: 0 };
+                    }
+                    
+                    // Increment Counts based on Range
+                    if (logTime >= startOfWeek && logTime <= endOfWeek) {
+                        statsMap[staffName].weekCount++;
+                    }
+                    if (logTime >= startOfMonth && logTime <= endOfMonth) {
+                        statsMap[staffName].monthCount++;
+                    }
                 }
             });
 
-            const rows = Object.entries(stats).sort().map(([name, data]) => {
-                const wPay = data.w * RATE;
-                const mPay = data.m * RATE;
-                totalW += wPay; totalM += mPay;
-                return `<tr>
-                    <td><div class="fw-800 fs-6">${name}</div><div class="small text-muted fw-700">FIELD COORDINATOR</div></td>
-                    <td><span class="badge-count">${data.w} STORES</span></td>
-                    <td><div class="rate-text">₱${wPay.toLocaleString()}</div></td>
-                    <td style="border-left: 2px solid #f8f9fa;"><span class="badge-monthly">${data.m} LOGS</span></td>
-                    <td><div class="monthly-rate-text">₱${mPay.toLocaleString()}</div></td>
-                </tr>`;
+            // GENERATE TABLE ROWS
+            const htmlRows = Object.entries(statsMap).sort().map(([name, counts]) => {
+                const wAmount = counts.weekCount * PAY_RATE;
+                const mAmount = counts.monthCount * PAY_RATE;
+                
+                grandTotalWeekly += wAmount;
+                grandTotalMonthly += mAmount;
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="fw-800 fs-6">${name}</div>
+                            <div class="small text-muted fw-700">COORDINATOR / STAFF</div>
+                        </td>
+                        <td><span class="badge-count">${counts.weekCount} STORES</span></td>
+                        <td><div class="rate-text">₱${wAmount.toLocaleString()}</div></td>
+                        <td style="border-left: 3px solid #f1f5f9;"><span class="badge-monthly">${counts.monthCount} LOGS</span></td>
+                        <td><div class="monthly-rate-text">₱${mAmount.toLocaleString()}</div></td>
+                    </tr>
+                `;
             }).join('');
 
-            payrollBody.innerHTML = rows || '<tr><td colspan="5" class="text-center p-5 fw-800 opacity-50">NO ATTENDANCE RECORDS FOUND</td></tr>';
-            document.getElementById('grandTotalLabel').innerText = `₱${totalW.toLocaleString()}`;
-            document.getElementById('monthlyGrandTotalLabel').innerText = `₱${totalM.toLocaleString()}`;
-        } catch (e) {
-            console.error(e);
-            payrollBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger p-5">CONNECTION ERROR</td></tr>';
+            // UPDATE UI LABELS
+            payrollBody.innerHTML = htmlRows || '<tr><td colspan="5" class="text-center p-5 fw-800 opacity-50">NO LOGS FOUND FOR SELECTED PERIOD</td></tr>';
+            document.getElementById('grandTotalLabel').innerText = `₱${grandTotalWeekly.toLocaleString()}`;
+            document.getElementById('monthlyGrandTotalLabel').innerText = `₱${grandTotalMonthly.toLocaleString()}`;
+
+        } catch (error) {
+            console.error("Firebase Read Error: ", error);
+            payrollBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger p-5">ERROR LOADING DATABASE. CHECK CONSOLE.</td></tr>';
         }
     }
 
+    // EVENT LISTENERS
     weekPicker.onchange = loadData;
     monthPicker.onchange = loadData;
+    
+    // Initial Load execution
     loadData();
+
 </script>
 </body>
 </html>
