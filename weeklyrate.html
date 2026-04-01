@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>iMerch Media | Weekly & Monthly Coverage Tracker</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -24,37 +25,51 @@
             background-color: var(--light-bg); 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             color: var(--dark-navy);
-            padding-top: 110px;
-            overflow-x: hidden;
+            padding-top: 120px;
+            min-height: 100vh;
         }
 
+        /* NAVIGATION STYLES */
         .navbar { 
             background: rgba(255, 255, 255, 0.98); 
             backdrop-filter: blur(20px); 
             border-bottom: 5px solid var(--primary-red); 
             height: 100px;
             padding: 0 4rem;
-            z-index: 1050;
+            z-index: 2000;
         }
 
-        .brand-text { font-weight: 900; font-size: 1.8rem; letter-spacing: -2px; text-decoration: none; color: var(--dark-navy); }
+        .brand-text { 
+            font-weight: 900; 
+            font-size: 1.8rem; 
+            letter-spacing: -2px; 
+            text-decoration: none; 
+            color: var(--dark-navy); 
+        }
+
         .brand-text span { color: var(--primary-red); }
 
+        /* CARD & TABLE STYLES */
         .payroll-card {
             background: white;
             border-radius: var(--radius-xl);
-            padding: 2.5rem;
+            padding: 3rem;
             box-shadow: var(--glass-shadow);
             border: 1px solid rgba(0,0,0,0.05);
-            margin-bottom: 50px;
+            margin-bottom: 80px;
         }
 
-        .table-custom { width: 100%; border-spacing: 0 12px; border-collapse: separate; }
+        .table-custom { 
+            width: 100%; 
+            border-spacing: 0 15px; 
+            border-collapse: separate; 
+        }
+
         .table-custom thead th { 
             text-transform: uppercase; 
-            font-size: 0.7rem; 
+            font-size: 0.75rem; 
             letter-spacing: 1.5px; 
-            color: #8d99ae; 
+            color: #94a3b8; 
             padding: 1rem;
             border: none;
             text-align: center;
@@ -62,50 +77,75 @@
 
         .table-custom tbody tr { 
             background: #fff; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
-            transition: 0.3s transform ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
         }
-        .table-custom tbody tr:hover { transform: scale(1.005); }
 
-        .table-custom td { padding: 1.2rem 1rem; border: none; vertical-align: middle; text-align: center; }
-        .table-custom td:first-child { border-radius: 20px 0 0 20px; border-left: 5px solid var(--primary-red); text-align: left; padding-left: 2rem; }
+        .table-custom tbody tr:hover { transform: translateY(-3px); }
+
+        .table-custom td { 
+            padding: 1.5rem 1rem; 
+            border: none; 
+            vertical-align: middle; 
+            text-align: center; 
+        }
+
+        .table-custom td:first-child { 
+            border-radius: 20px 0 0 20px; 
+            border-left: 6px solid var(--primary-red); 
+            text-align: left; 
+            padding-left: 2.5rem; 
+        }
+
         .table-custom td:last-child { border-radius: 0 20px 20px 0; }
 
-        .badge-count { background: #fee2e2; color: var(--primary-red); font-weight: 800; padding: 6px 12px; border-radius: 10px; font-size: 0.85rem; }
-        .badge-monthly { background: #e0f2fe; color: #0369a1; font-weight: 800; padding: 6px 12px; border-radius: 10px; font-size: 0.85rem; }
+        /* BADGES & TEXT */
+        .badge-count { background: #fee2e2; color: var(--primary-red); font-weight: 800; padding: 8px 16px; border-radius: 12px; font-size: 0.9rem; }
+        .badge-monthly { background: #e0f2fe; color: #0369a1; font-weight: 800; padding: 8px 16px; border-radius: 12px; font-size: 0.9rem; }
         
-        .rate-text { font-weight: 900; font-size: 1.2rem; color: #166534; letter-spacing: -0.5px; }
-        .monthly-rate-text { font-weight: 900; font-size: 1.2rem; color: #0369a1; letter-spacing: -0.5px; }
+        .rate-text { font-weight: 900; font-size: 1.3rem; color: #166534; letter-spacing: -0.5px; }
+        .monthly-rate-text { font-weight: 900; font-size: 1.3rem; color: #0369a1; letter-spacing: -0.5px; }
 
+        /* FILTER CONTROLS */
         .date-filter-box {
-            background: #fff;
-            padding: 8px 15px;
-            border-radius: 15px;
+            background: #ffffff;
+            padding: 10px 18px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border: 1px solid #eee;
+            border: 1px solid #edf2f7;
         }
 
         .filter-group { display: flex; flex-direction: column; align-items: center; }
-        .filter-label { font-size: 0.65rem; font-weight: 800; color: #adb5bd; text-transform: uppercase; margin-bottom: 2px; }
+        .filter-label { font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
 
-        input[type="date"], input[type="month"] { border: none; font-weight: 800; color: var(--dark-navy); cursor: pointer; outline: none; background: transparent; font-size: 0.85rem; }
+        input[type="date"], input[type="month"] { 
+            border: none; 
+            font-weight: 800; 
+            color: var(--dark-navy); 
+            cursor: pointer; 
+            outline: none; 
+            background: transparent; 
+            font-size: 0.9rem; 
+        }
         
         .summary-mini-card {
             background: var(--dark-navy);
             color: white;
-            padding: 1.5rem;
-            border-radius: 25px;
+            padding: 1.8rem;
+            border-radius: 28px;
             height: 100%;
-            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         @media print {
-            .navbar, .btn-dark, .date-filter-box { display: none !important; }
-            body { padding-top: 20px; }
-            .payroll-card { box-shadow: none; border: none; }
+            .navbar, .btn-dark, .date-filter-box, .filter-label { display: none !important; }
+            body { padding-top: 30px; background: white; }
+            .payroll-card { box-shadow: none; border: none; padding: 0; }
         }
     </style>
 </head>
@@ -113,44 +153,48 @@
 
 <nav class="navbar fixed-top d-flex align-items-center justify-content-between">
     <a href="#" class="brand-text">iMERCH<span>MEDIA</span></a>
-    <div class="d-flex align-items-center gap-3">
+    
+    <div class="d-flex align-items-center gap-4">
         <div class="filter-group">
-            <span class="filter-label">Weekly Range</span>
+            <span class="filter-label">Weekly Coverage</span>
             <div class="date-filter-box">
                 <i class="fas fa-calendar-week text-danger"></i>
                 <input type="date" id="weekPicker">
             </div>
         </div>
+
         <div class="filter-group">
-            <span class="filter-label">Monthly Focus</span>
+            <span class="filter-label">Monthly Total</span>
             <div class="date-filter-box">
                 <i class="fas fa-calendar-alt text-primary"></i>
                 <input type="month" id="monthPicker">
             </div>
         </div>
-        <button class="btn btn-dark rounded-pill px-4 fw-800" style="height: 45px; margin-top: 15px;" onclick="window.print()">
-            <i class="fas fa-print me-2"></i> PRINT
+
+        <button class="btn btn-dark rounded-pill px-4 fw-800" style="height: 48px; margin-top: 18px;" onclick="window.print()">
+            <i class="fas fa-print me-2"></i> PRINT REPORT
         </button>
     </div>
 </nav>
 
-<div class="container-fluid px-5 mb-5">
-    <div class="row g-4 mb-4 mt-2">
+<div class="container-fluid px-5">
+    <div class="row g-4 mb-5 mt-2">
         <div class="col-lg-7">
-            <h1 class="fw-900" style="font-size: 3.2rem; letter-spacing: -3px; margin-bottom: 0;">Payroll & Coverage</h1>
-            <p id="weekRangeDisplay" class="text-muted fw-600 fs-5">Calculating records from Firebase...</p>
+            <h1 class="fw-900" style="font-size: 3.5rem; letter-spacing: -3px; margin-bottom: 5px;">Payroll Dashboard</h1>
+            <p id="weekRangeDisplay" class="text-muted fw-600 fs-5">Initializing secure connection to Firebase...</p>
         </div>
+        
         <div class="col-lg-5">
-            <div class="row g-3">
+            <div class="row g-3 h-100">
                 <div class="col-6">
                     <div class="summary-mini-card">
-                        <div class="small fw-800 opacity-50 mb-1">WEEKLY PAYOUT TOTAL</div>
+                        <div class="small fw-800 opacity-50 mb-1">WEEKLY TOTAL PAYOUT</div>
                         <div class="h3 fw-900" id="grandTotalLabel">₱0.00</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="summary-mini-card" style="background: #0369a1;">
-                        <div class="small fw-800 opacity-50 mb-1">MONTHLY PAYOUT TOTAL</div>
+                        <div class="small fw-800 opacity-50 mb-1">MONTHLY TOTAL PAYOUT</div>
                         <div class="h3 fw-900" id="monthlyGrandTotalLabel">₱0.00</div>
                     </div>
                 </div>
@@ -162,15 +206,19 @@
         <table class="table-custom" id="payrollTable">
             <thead>
                 <tr>
-                    <th style="text-align: left; padding-left: 2rem;">Field Coordinator</th>
-                    <th>Weekly Visits</th>
-                    <th>Weekly Payout</th>
-                    <th style="border-left: 2px solid #f8f9fa;">Monthly Total (Logs)</th>
-                    <th>Monthly Payout (#)</th>
+                    <th style="text-align: left; padding-left: 2.5rem;">Field Personnel</th>
+                    <th>Weekly Stores</th>
+                    <th>Weekly Amount</th>
+                    <th style="border-left: 2px solid #f8f9fa;">Monthly Logs</th>
+                    <th>Monthly Amount</th>
                 </tr>
             </thead>
             <tbody id="payrollBody">
-                <tr><td colspan="5" class="text-center p-5 fw-800">SYNCING REAL-TIME DATA...</td></tr>
+                <tr>
+                    <td colspan="5" class="text-center p-5 fw-800 opacity-50">
+                        <i class="fas fa-spinner fa-spin me-2"></i> FETCHING LATEST ATTENDANCE...
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -191,52 +239,46 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const RATE = 500; 
 
-    const RATE_PER_STORE = 500; 
     const weekPicker = document.getElementById('weekPicker');
     const monthPicker = document.getElementById('monthPicker');
     const weekRangeDisplay = document.getElementById('weekRangeDisplay');
     
-    // Set current date as default
-    const now = new Date();
-    weekPicker.valueAsDate = now;
-    monthPicker.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    // Initial State
+    const today = new Date();
+    weekPicker.valueAsDate = today;
+    monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
     async function loadData() {
         const payrollBody = document.getElementById('payrollBody');
-        const grandTotalLabel = document.getElementById('grandTotalLabel');
-        const monthlyGrandTotalLabel = document.getElementById('monthlyGrandTotalLabel');
-        
-        // Calculate Weekly Range (Mon-Sun)
+        payrollBody.innerHTML = '<tr><td colspan="5" class="text-center p-5 fw-800">SYNCING REAL-TIME DATA...</td></tr>';
+
+        // Weekly Logic
         const selectedDate = new Date(weekPicker.value);
         const day = selectedDate.getDay();
         const diff = selectedDate.getDate() - day + (day === 0 ? -6 : 1);
-        const startOfWeek = new Date(new Date(selectedDate.setDate(diff)).setHours(0,0,0,0));
-        const endOfWeek = new Date(new Date(startOfWeek).setDate(startOfWeek.getDate() + 6));
-        endOfWeek.setHours(23,59,59,999);
+        const startW = new Date(new Date(selectedDate.setDate(diff)).setHours(0,0,0,0));
+        const endW = new Date(new Date(startW).setDate(startW.getDate() + 6));
+        endW.setHours(23,59,59,999);
 
-        // Calculate Monthly Range (Full Month from Picker)
+        // Monthly Logic
         const [mYear, mMonth] = monthPicker.value.split('-');
-        const startOfMonth = new Date(mYear, mMonth - 1, 1, 0, 0, 0);
-        const endOfMonth = new Date(mYear, mMonth, 0, 23, 59, 59);
+        const startM = new Date(mYear, mMonth - 1, 1, 0, 0, 0);
+        const endM = new Date(mYear, mMonth, 0, 23, 59, 59);
 
-        weekRangeDisplay.innerText = `Week: ${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()} | Month Focus: ${startOfMonth.toLocaleString('default', { month: 'long' })} ${mYear}`;
+        weekRangeDisplay.innerText = `Range: ${startW.toLocaleDateString()} to ${endW.toLocaleDateString()} | Focus: ${startM.toLocaleString('default', { month: 'long' })} ${mYear}`;
 
         try {
-            const minStart = startOfWeek < startOfMonth ? startOfWeek : startOfMonth;
-            const maxEnd = endOfWeek > endOfMonth ? endOfWeek : endOfMonth;
+            const minS = startW < startM ? startW : startM;
+            const maxE = endW > endM ? endW : endM;
 
-            const q = query(
-                collection(db, "attendance"),
-                where("timestamp", ">=", Timestamp.fromDate(minStart)),
-                where("timestamp", "<=", Timestamp.fromDate(maxEnd))
-            );
-
+            const q = query(collection(db, "attendance"), where("timestamp", ">=", Timestamp.fromDate(minS)), where("timestamp", "<=", Timestamp.fromDate(maxE)));
             const snapshot = await getDocs(q);
-            const stats = {}; 
-            const admins = ["JOY BIAZON", "BRYLLE OCA", "PAULINE OCA", "RON SARMENTA", "AREM GONZALES", "SAMANTHA CLAIRE"];
             
+            let stats = {};
             let totalW = 0, totalM = 0;
+            const admins = ["JOY BIAZON", "BRYLLE OCA", "PAULINE OCA", "RON SARMENTA", "AREM GONZALES", "SAMANTHA CLAIRE"];
 
             snapshot.forEach(doc => {
                 const data = doc.data();
@@ -245,45 +287,37 @@
                 const ts = data.timestamp.toDate();
 
                 if (type.includes('in') && !admins.includes(name)) {
-                    if (!stats[name]) stats[name] = { weekly: 0, monthly: 0 };
-                    if (ts >= startOfWeek && ts <= endOfWeek) stats[name].weekly++;
-                    if (ts >= startOfMonth && ts <= endOfMonth) stats[name].monthly++;
+                    if (!stats[name]) stats[name] = { w: 0, m: 0 };
+                    if (ts >= startW && ts <= endW) stats[name].w++;
+                    if (ts >= startM && ts <= endM) stats[name].m++;
                 }
             });
 
             const rows = Object.entries(stats).sort().map(([name, data]) => {
-                const wPay = data.weekly * RATE_PER_STORE;
-                const mPay = data.monthly * RATE_PER_STORE;
+                const wPay = data.w * RATE;
+                const mPay = data.m * RATE;
                 totalW += wPay; totalM += mPay;
-
-                return `
-                    <tr>
-                        <td>
-                            <div class="fw-800 fs-6">${name}</div>
-                            <div class="small text-muted fw-700">FIELD COORDINATOR</div>
-                        </td>
-                        <td><span class="badge-count">${data.weekly} STORES</span></td>
-                        <td><div class="rate-text">₱${wPay.toLocaleString()}</div></td>
-                        <td style="border-left: 2px solid #f8f9fa;"><span class="badge-monthly">${data.monthly} LOGS</span></td>
-                        <td><div class="monthly-rate-text">₱${mPay.toLocaleString()}</div></td>
-                    </tr>
-                `;
+                return `<tr>
+                    <td><div class="fw-800 fs-6">${name}</div><div class="small text-muted fw-700">FIELD COORDINATOR</div></td>
+                    <td><span class="badge-count">${data.w} STORES</span></td>
+                    <td><div class="rate-text">₱${wPay.toLocaleString()}</div></td>
+                    <td style="border-left: 2px solid #f8f9fa;"><span class="badge-monthly">${data.m} LOGS</span></td>
+                    <td><div class="monthly-rate-text">₱${mPay.toLocaleString()}</div></td>
+                </tr>`;
             }).join('');
 
-            payrollBody.innerHTML = rows || '<tr><td colspan="5" class="text-center p-5 fw-800 opacity-50">NO RECORDS FOUND FOR THIS PERIOD</td></tr>';
-            grandTotalLabel.innerText = `₱${totalW.toLocaleString()}`;
-            monthlyGrandTotalLabel.innerText = `₱${totalM.toLocaleString()}`;
-
+            payrollBody.innerHTML = rows || '<tr><td colspan="5" class="text-center p-5 fw-800 opacity-50">NO ATTENDANCE RECORDS FOUND</td></tr>';
+            document.getElementById('grandTotalLabel').innerText = `₱${totalW.toLocaleString()}`;
+            document.getElementById('monthlyGrandTotalLabel').innerText = `₱${totalM.toLocaleString()}`;
         } catch (e) {
-            console.error("Firebase Error:", e);
-            payrollBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger p-5">Database sync error. Please refresh.</td></tr>`;
+            console.error(e);
+            payrollBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger p-5">CONNECTION ERROR</td></tr>';
         }
     }
 
-    weekPicker.addEventListener('change', loadData);
-    monthPicker.addEventListener('change', loadData);
+    weekPicker.onchange = loadData;
+    monthPicker.onchange = loadData;
     loadData();
 </script>
-
 </body>
 </html>
