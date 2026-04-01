@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch - Professional Coverage Analytics</title>
+    <title>iMerch - Coverage Analytics v2.826 Stable</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -143,13 +143,13 @@
     <div class="header-section">
         <div>
             <h1 style="margin:0; font-weight:800; font-size:1.5rem; letter-spacing:-1px;">Coverage Intelligence</h1>
-            <p style="margin:5px 0 0; font-size:0.75rem; color:var(--secondary-text); font-weight:600;">iMerch Media CCPI Performance Tracker</p>
+            <p style="margin:5px 0 0; font-size:0.75rem; color:var(--secondary-text); font-weight:600;">iMerch Media Stable Architecture</p>
         </div>
 
         <div class="view-switcher">
-            <button class="switch-btn" onclick="setView('daily')">Daily</button>
-            <button class="switch-btn active" onclick="setView('weekly')">Weekly</button>
-            <button class="switch-btn" onclick="setView('monthly')">Monthly</button>
+            <button class="switch-btn" id="btn-daily" onclick="setView('daily')">Daily</button>
+            <button class="switch-btn active" id="btn-weekly" onclick="setView('weekly')">Weekly</button>
+            <button class="switch-btn" id="btn-monthly" onclick="setView('monthly')">Monthly</button>
         </div>
 
         <div class="action-group">
@@ -182,7 +182,7 @@
     <div class="analytics-grid">
         <div class="glass-panel">
             <div class="panel-header">
-                <span class="panel-title" id="chart-head">Activity Distribution</span>
+                <span class="panel-title" id="chart-head">WEEKLY PERFORMANCE</span>
                 <div style="font-size:0.7rem; color:var(--secondary-text); font-weight:700;" id="chart-sub">TREND ANALYSIS</div>
             </div>
             <div class="chart-wrap">
@@ -252,7 +252,7 @@
 
         document.getElementById('dateSelector').valueAsDate = new Date();
 
-        // Theme Control with Safety Check for Chart
+        // Theme Control
         window.toggleTheme = () => {
             const body = document.body;
             const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -266,7 +266,7 @@
                 console.log("System Start: Mapping Personnel...");
                 const sSnap = await getDocs(collection(db, "staff_members"));
                 
-                staffMap = {}; // Reset Map
+                staffMap = {}; 
 
                 if (sSnap.empty) {
                     console.warn("DB Alert: No staff records found in 'staff_members' collection.");
@@ -274,20 +274,19 @@
 
                 sSnap.forEach(doc => {
                     const d = doc.data();
-                    // Advanced Field Mapping to solve 'No staff' issue
-                    const name = d.Personnel || d.name || d.staffName || "Unknown Staff";
-                    const email = (d.email || d.staffEmail || "").toLowerCase();
+                    // Advanced Multi-field detection
+                    const name = d.Personnel || d.name || d.staffName || d.Fullname || "Unnamed Staff";
+                    const email = (d.email || d.staffEmail || "").toLowerCase().trim();
                     
                     if(email && !admins.includes(name)) {
                         staffMap[email] = name;
-                        console.log(`Success Mapping: ${email} -> ${name}`);
+                        console.log(`Mapped: ${email} -> ${name}`);
                     }
                 });
 
                 console.log("Syncing Initial Analytics Data...");
                 await refreshData();
                 
-                // Graceful UI Reveal
                 setTimeout(() => {
                     const loader = document.getElementById('loader');
                     loader.style.opacity = '0';
@@ -295,20 +294,16 @@
                 }, 800);
 
             } catch (err) { 
-                console.error("Critical System Failure:", err);
-                const lt = document.getElementById('loader-text');
-                lt.innerHTML = "DATABASE CONNECTION ERROR - REFRESH REQUIRED";
-                lt.style.color = "var(--red)";
+                console.error("Critical Failure:", err);
             }
         }
 
-        // Data Fetching Logic
+        // Data Fetching
         async function refreshData() {
             const dateInput = document.getElementById('dateSelector').value;
             const date = new Date(dateInput);
             let s, e;
 
-            // Date Range Configuration
             if(activeView === 'daily') {
                 s = new Date(date); s.setHours(0,0,0,0);
                 e = new Date(date); e.setHours(23,59,59,999);
@@ -321,7 +316,7 @@
                 e = new Date(date.getFullYear(), date.getMonth() + 1, 0); e.setHours(23,59,59,999);
             }
 
-            console.log(`Executing query: ${s.toLocaleDateString()} to ${e.toLocaleDateString()}`);
+            console.log(`Query Range: ${s.toDateString()} to ${e.toDateString()}`);
 
             const q = query(collection(db, "attendance"), 
                 where("timestamp", ">=", Timestamp.fromDate(s)),
@@ -332,16 +327,16 @@
             try {
                 const snap = await getDocs(q);
                 logs = snap.docs.map(doc => doc.data());
-                console.log(`Processing ${logs.length} retrieved logs...`);
+                console.log(`Total Logs Fetched: ${logs.length}`);
                 processAnalytics();
             } catch (error) {
-                console.error("Query Execution Error:", error);
+                console.error("Query Error:", error);
             }
         }
 
         window.setView = (v) => {
             activeView = v;
-            document.querySelectorAll('.switch-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase() === v));
+            document.querySelectorAll('.switch-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${v}`));
             document.getElementById('chart-head').innerText = `${v.toUpperCase()} PERFORMANCE`;
             refreshData();
         };
@@ -350,19 +345,25 @@
         function processAnalytics() {
             const stats = {};
             const timeline = {};
-            const target = getTarget();
+            
+            let target;
+            if(activeView === 'daily') target = TARGET_PER_DAY;
+            else if(activeView === 'weekly') target = TARGET_PER_DAY * 6;
+            else target = TARGET_PER_DAY * 26;
 
-            // Initialize Stats from Map (Ensures zero-log staff still appear)
+            // Pre-fill stats
             Object.values(staffMap).forEach(n => {
                 stats[n] = { actual: 0, target: target };
             });
 
             logs.forEach(l => {
-                const email = (l.email || l.staffEmail || "").toLowerCase();
-                const name = staffMap[email];
+                const email = (l.email || l.staffEmail || "").toLowerCase().trim();
+                const name = staffMap[email] || email.split('@')[0]; // Fallback to email prefix
                 
-                if(name && (l.type?.toLowerCase().includes("in") || l.type?.toLowerCase().includes("check"))) {
+                if(email && (l.type?.toLowerCase().includes("in") || l.type?.toLowerCase().includes("check"))) {
+                    if(!stats[name]) stats[name] = { actual: 0, target: target };
                     stats[name].actual++;
+                    
                     const dKey = l.timestamp.toDate().toDateString();
                     timeline[dKey] = (timeline[dKey] || 0) + 1;
                 }
@@ -370,12 +371,6 @@
 
             currentTimeline = timeline;
             updateUI(stats, timeline);
-        }
-
-        function getTarget() {
-            if(activeView === 'daily') return TARGET_PER_DAY;
-            if(activeView === 'weekly') return TARGET_PER_DAY * 6;
-            return TARGET_PER_DAY * 26;
         }
 
         // Interface Rendering
@@ -386,7 +381,7 @@
             const sortedEntries = Object.entries(stats).sort((a,b) => b[1].actual - a[1].actual);
 
             sortedEntries.forEach(([name, d]) => {
-                const rate = Math.min(Math.round((d.actual / d.target) * 100), 100);
+                const rate = d.target > 0 ? Math.min(Math.round((d.actual / d.target) * 100), 100) : 0;
                 const color = rate >= 100 ? 'var(--green)' : (rate > 50 ? 'var(--orange)' : 'var(--red)');
                 
                 if(rate >= 100) hitS++;
@@ -395,7 +390,7 @@
                 countS++;
 
                 h += `<tr>
-                    <td><div class="staff-profile"><div class="staff-avatar">${name.charAt(0)}</div><b>${name}</b></div></td>
+                    <td><div class="staff-profile"><div class="staff-avatar">${name.charAt(0).toUpperCase()}</div><b>${name}</b></div></td>
                     <td>${d.target}</td>
                     <td style="color:var(--accent); font-weight:800;">${d.actual}</td>
                     <td style="width:200px;">
@@ -404,7 +399,7 @@
                         </div>
                         <div class="p-bar-bg"><div class="p-bar-fill" style="width:${rate}%; background:${color}"></div></div>
                     </td>
-                    <td><span style="color:${color}; font-size:0.7rem; font-weight:800; letter-spacing:1px;">${rate >= 100 ? 'OPTIMAL' : 'BELOW TARGET'}</span></td>
+                    <td><span style="color:${color}; font-size:0.7rem; font-weight:800;">${rate >= 100 ? 'OPTIMAL' : 'PENDING'}</span></td>
                 </tr>`;
             });
 
@@ -420,18 +415,15 @@
             renderCalendar(timeline);
         }
 
-        function renderChart(timelineData) {
+        function renderChart(data) {
             const ctx = document.getElementById('analyticsChart')?.getContext('2d');
             if(!ctx) return;
-            
             if(mainChart) mainChart.destroy();
 
             const isLight = document.body.getAttribute('data-theme') === 'light';
-            
-            // Fix for TypeErrors: Ensure data is valid before processing keys
-            const safeData = timelineData || {};
-            const labels = Object.keys(safeData).map(k => k.split(' ').slice(1,3).join(' '));
-            const values = Object.values(safeData);
+            const keys = Object.keys(data || {});
+            const labels = keys.map(k => k.split(' ').slice(1,3).join(' '));
+            const values = Object.values(data || {});
 
             mainChart = new Chart(ctx, {
                 type: activeView === 'monthly' ? 'line' : 'bar',
@@ -477,9 +469,10 @@
                 const val = timeline[dayStr] || 0;
                 let bg = 'var(--bg)';
                 
-                if(val > 25) bg = 'rgba(35, 134, 54, 0.8)';
-                else if(val > 10) bg = 'rgba(210, 153, 34, 0.6)';
-                else if(val > 0) bg = 'rgba(248, 81, 73, 0.4)';
+                if(val > 40) bg = 'rgba(35, 134, 54, 0.9)';
+                else if(val > 20) bg = 'rgba(35, 134, 54, 0.6)';
+                else if(val > 5) bg = 'rgba(35, 134, 54, 0.3)';
+                else if(val > 0) bg = 'rgba(248, 81, 73, 0.3)';
 
                 grid.innerHTML += `<div class="cal-cell" style="background:${bg}; border-color:${val > 0 ? 'transparent' : 'var(--border)'}">${d}</div>`;
             }
@@ -487,12 +480,10 @@
 
         window.downloadExcel = () => {
             const wb = XLSX.utils.table_to_book(document.querySelector("table"));
-            XLSX.writeFile(wb, `iMerch_Coverage_Report_${activeView}.xlsx`);
+            XLSX.writeFile(wb, `iMerch_Coverage_${activeView}_${new Date().toLocaleDateString()}.xlsx`);
         };
 
         document.getElementById('dateSelector').addEventListener('change', refreshData);
-        
-        // Boot System
         startApp();
     </script>
 </body>
