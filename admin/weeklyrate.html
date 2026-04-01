@@ -50,6 +50,7 @@
             align-items: center;
             gap: 15px;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
 
         input[type="date"] {
@@ -64,7 +65,6 @@
         input[type="date"]:focus { border-color: var(--track-blue); }
 
         .btn-export {
-            background: #238636; 
             color: white;
             padding: 12px 25px;
             border-radius: 10px;
@@ -77,7 +77,13 @@
             align-items: center;
             gap: 8px;
         }
-        .btn-export:hover { background: #2ea043; transform: translateY(-2px); }
+        
+        /* Specific Button Colors */
+        #exportBtn { background: #238636; }
+        #exportBtn:hover { background: #2ea043; transform: translateY(-2px); }
+        
+        #exportMonthlyBtn { background: #0969da; }
+        #exportMonthlyBtn:hover { background: #0b78f8; transform: translateY(-2px); }
 
         table { width: 100%; border-collapse: separate; border-spacing: 0 12px; margin: 20px 0; }
         th { text-transform: uppercase; font-size: 11px; color: #888; padding: 15px; border-bottom: 2px solid #f8f8f8; letter-spacing: 1px; }
@@ -111,7 +117,8 @@
         <p id="dateRange" style="color: #888; font-weight: 700; margin-top: 10px; font-size: 13px;"></p>
         <div class="controls-row">
             <input type="date" id="dateSelector">
-            <button class="btn-export" id="exportBtn"><i class="fas fa-file-excel"></i> EXPORT TO EXCEL</button>
+            <button class="btn-export" id="exportBtn"><i class="fas fa-file-excel"></i> WEEKLY EXPORT</button>
+            <button class="btn-export" id="exportMonthlyBtn"><i class="fas fa-file-medical"></i> MONTHLY EXPORT</button>
         </div>
     </div>
 
@@ -160,6 +167,8 @@
     const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Ron Sarmenta", "Arem Gonzales", "Samantha Claire"];
     
     let staffMap = {}, myChart = null, unsub = null;
+    let currentDataForExport = { w: {}, m: {} }; // Helper for Excel
+
     const picker = document.getElementById('dateSelector');
     picker.valueAsDate = new Date();
 
@@ -175,17 +184,16 @@
     }
 
     function getTheme(per) {
-        if (per > 100) return { class: 'txt-orange', hex: '#f97316' };
-        if (per === 100) return { class: 'txt-green', hex: '#1a7f37' };
-        if (per >= 60) return { class: 'txt-blue', hex: '#0969da' };
-        return { class: 'txt-red', hex: '#d1242f' };
+        if (per > 100) return { class: 'txt-orange', hex: '#f97316', label: 'OVER ACHIEVER' };
+        if (per === 100) return { class: 'txt-green', hex: '#1a7f37', label: 'TARGET HIT' };
+        if (per >= 60) return { class: 'txt-blue', hex: '#0969da', label: 'ON TRACK' };
+        return { class: 'txt-red', hex: '#d1242f', label: 'CRITICAL' };
     }
 
     function loadData() {
         if(unsub) unsub();
         const d = new Date(picker.value);
         
-        // Monday Logic
         const mon = new Date(d);
         const day = mon.getDay();
         const diff = mon.getDate() - day + (day === 0 ? -6 : 1);
@@ -223,6 +231,8 @@
                 mStats[name] = (mStats[name] || 0) + 1;
                 if(ts >= mon && ts <= sat) wStats[name] = (wStats[name] || 0) + 1;
             });
+            
+            currentDataForExport = { w: wStats, m: mStats };
             render(wStats, mStats);
         });
     }
@@ -294,11 +304,35 @@
         });
     }
 
+    // Original Weekly Export
     document.getElementById('exportBtn').addEventListener('click', () => {
         const table = document.getElementById("performanceTable");
-        const wb = XLSX.utils.table_to_book(table, { sheet: "iMerch Coverage" });
-        const dateStr = new Date().toISOString().split('T')[0];
-        XLSX.writeFile(wb, `iMerch_Analytics_${dateStr}.xlsx`);
+        const wb = XLSX.utils.table_to_book(table, { sheet: "iMerch Weekly Coverage" });
+        const dateStr = picker.value;
+        XLSX.writeFile(wb, `iMerch_Weekly_Analytics_${dateStr}.xlsx`);
+    });
+
+    // Bago: Monthly Export na may detailed columns
+    document.getElementById('exportMonthlyBtn').addEventListener('click', () => {
+        const { m } = currentDataForExport;
+        const d = new Date(picker.value);
+        const monthName = d.toLocaleString('default', { month: 'long' });
+        
+        const dataRows = Object.entries(m).map(([name, count]) => {
+            const per = Math.round((count / M_GOAL) * 100);
+            return {
+                "FIELD PERSONNEL": name,
+                "MONTHLY TOTAL": count,
+                "TARGET GOAL": M_GOAL,
+                "MONTHLY RATE (%)": per + "%",
+                "STATUS": getTheme(per).label
+            };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(dataRows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Monthly Report");
+        XLSX.writeFile(wb, `iMerch_Monthly_Report_${monthName}_${d.getFullYear()}.xlsx`);
     });
 
     picker.onchange = loadData;
