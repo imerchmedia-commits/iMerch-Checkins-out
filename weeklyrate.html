@@ -3,302 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch - Weekly Coverage Rate</title>
+    <title>iMerch Media | Weekly Payroll & Coverage Tracker</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-        :root {
-            --bg: #0d1117;
-            --card: #161b22;
-            --text: #c9d1d9;
-            --accent: #58a6ff;
-            --green: #238636;
-            --border: #30363d;
-            --primary-red: #d90429;
-            --secondary-text: #8b949e;
+        :root { 
+            --primary-red: #d90429; 
+            --dark-navy: #2b2d42;
+            --light-bg: #f8fafc;
+            --glass-shadow: 0 10px 40px rgba(0,0,0,0.06);
+            --radius-xl: 30px;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            overflow-x: hidden;
+        body { 
+            background-color: var(--light-bg); 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            color: var(--dark-navy);
+            padding-top: 100px;
         }
 
-        .header-section {
+        .navbar { 
+            background: rgba(255, 255, 255, 0.98); 
+            backdrop-filter: blur(20px); 
+            border-bottom: 5px solid var(--primary-red); 
+            height: 90px;
+            padding: 0 4rem;
+        }
+
+        .brand-text { font-weight: 900; font-size: 1.8rem; letter-spacing: -2px; text-decoration: none; color: var(--dark-navy); }
+        .brand-text span { color: var(--primary-red); }
+
+        .payroll-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 3rem;
+            box-shadow: var(--glass-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .table-custom { width: 100%; border-spacing: 0 15px; border-collapse: separate; }
+        .table-custom thead th { 
+            text-transform: uppercase; 
+            font-size: 0.75rem; 
+            letter-spacing: 2px; 
+            color: #8d99ae; 
+            padding: 1rem 2rem;
+            border: none;
+        }
+
+        .table-custom tbody tr { 
+            background: #fff; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+            transition: 0.3s;
+        }
+
+        .table-custom tbody tr:hover { transform: scale(1.01); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+
+        .table-custom td { padding: 1.5rem 2rem; border: none; vertical-align: middle; }
+        .table-custom td:first-child { border-radius: 20px 0 0 20px; border-left: 5px solid var(--primary-red); }
+        .table-custom td:last-child { border-radius: 0 20px 20px 0; text-align: right; }
+
+        .badge-count { background: #fee2e2; color: var(--primary-red); font-weight: 800; padding: 8px 16px; border-radius: 12px; }
+        .rate-text { font-weight: 900; font-size: 1.4rem; color: #166534; letter-spacing: -1px; }
+        
+        .date-filter-box {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 20px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 15px;
+            gap: 15px;
+            box-shadow: var(--glass-shadow);
         }
 
-        .header-title h2 {
-            margin: 0;
-            font-size: 1.4rem;
-            color: var(--accent);
-        }
-
-        .header-title p {
-            margin: 5px 0 0;
-            font-size: 0.75rem;
-            color: var(--secondary-text);
-            letter-spacing: 1px;
-        }
-
-        .weekly-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 20px;
-        }
-
-        .glass-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .metric-card {
-            text-align: center;
-            padding: 15px;
-            border-left: 4px solid var(--primary-red);
-        }
-
-        .metric-val {
-            font-size: 2rem;
-            font-weight: 900;
-            display: block;
-        }
-
-        .metric-label {
-            font-size: 0.65rem;
-            color: var(--secondary-text);
-            text-transform: uppercase;
-        }
-
-        .chart-container {
-            height: 300px;
-            position: relative;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 0.85rem;
-        }
-
-        th {
-            text-align: left;
-            padding: 12px;
-            border-bottom: 2px solid var(--border);
-            color: var(--accent);
-            text-transform: uppercase;
-            font-size: 0.7rem;
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .rate-badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 0.75rem;
-        }
-
-        .high { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
-        .mid { background: rgba(210, 153, 34, 0.2); color: #d29922; }
-        .low { background: rgba(248, 81, 73, 0.2); color: #f85149; }
-
-        #loading {
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
+        input[type="date"] { border: none; font-weight: 800; color: var(--dark-navy); cursor: pointer; }
+        
+        .summary-mini-card {
+            background: var(--dark-navy);
+            color: white;
+            padding: 2rem;
+            border-radius: 25px;
+            height: 100%;
         }
     </style>
 </head>
 <body>
 
-    <div id="loading"><i class="fas fa-circle-notch fa-spin fa-2x" style="color: var(--accent);"></i></div>
-
-    <div class="header-section">
-        <div class="header-title">
-            <h2>7-Day Coverage Analysis</h2>
-            <p id="dateRangeText">LAST 7 DAYS PERFORMANCE DATA</p>
+<nav class="navbar fixed-top d-flex align-items-center justify-content-between">
+    <a href="#" class="brand-text">iMERCH<span>MEDIA</span></a>
+    <div class="d-flex align-items-center gap-3">
+        <div class="date-filter-box">
+            <i class="fas fa-calendar-alt text-danger"></i>
+            <input type="date" id="weekPicker">
         </div>
-        <div class="glass-card metric-card" style="padding: 10px 30px;">
-            <span class="metric-label">Avg Weekly Rate</span>
-            <span class="metric-val" id="avgWeeklyRate" style="color: var(--green);">0%</span>
-        </div>
+        <button class="btn btn-dark rounded-pill px-4 fw-800" onclick="window.print()">
+            <i class="fas fa-print me-2"></i> PRINT REPORT
+        </button>
     </div>
+</nav>
 
-    <div class="weekly-grid">
-        <div class="glass-card">
-            <h3 style="font-size: 0.9rem; margin-top: 0;"><i class="fas fa-chart-area"></i> Coverage Trend</h3>
-            <div class="chart-container">
-                <canvas id="weeklyChart"></canvas>
-            </div>
+<div class="container mb-5">
+    <div class="row g-4 mb-5">
+        <div class="col-lg-8">
+            <h1 class="fw-900" style="font-size: 3.5rem; letter-spacing: -4px;">Weekly Rate Summary</h1>
+            <p id="weekRangeDisplay" class="text-muted fw-600 fs-5">Select a date to calculate the week...</p>
         </div>
-
-        <div class="glass-card">
-            <h3 style="font-size: 0.9rem; margin-top: 0;"><i class="fas fa-users"></i> Staff Consistency (Last 7 Days)</h3>
-            <div style="max-height: 280px; overflow-y: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Staff Name</th>
-                            <th>Target</th>
-                            <th>Actual</th>
-                            <th>Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody id="staffTableBody"></tbody>
-                </table>
+        <div class="col-lg-4">
+            <div class="summary-mini-card">
+                <div class="small fw-800 opacity-50 uppercase mb-2">Grand Total Payout (Weekly)</div>
+                <div class="display-5 fw-900" id="grandTotalLabel">₱0.00</div>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <div class="payroll-card">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Coordinator Name</th>
+                    <th>Actual Total Covered</th>
+                    <th>Weekly Rate Calculation</th>
+                    <th>Total Weekly Rate (#)</th>
+                </tr>
+            </thead>
+            <tbody id="payrollBody"></tbody>
+        </table>
+    </div>
+</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
-            authDomain: "imerch-checkins-out.firebaseapp.com",
-            projectId: "imerch-checkins-out",
-            appId: "1:842279761036:web:1d3889999612d602f337a9"
-        };
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const adminExclusion = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+    const firebaseConfig = {
+        apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
+        authDomain: "imerch-checkins-out.firebaseapp.com",
+        projectId: "imerch-checkins-out"
+    };
 
-        async function initWeekly() {
-            const now = new Date();
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(now.getDate() - 6);
-            sevenDaysAgo.setHours(0,0,0,0);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-            document.getElementById('dateRangeText').innerText = `${sevenDaysAgo.toDateString().toUpperCase()} - TODAY`;
+    const RATE_PER_STORE = 500; 
+    const weekPicker = document.getElementById('weekPicker');
+    const weekRangeDisplay = document.getElementById('weekRangeDisplay');
+    
+    // Default to today
+    weekPicker.valueAsDate = new Date();
 
-            const q = query(
-                collection(db, "attendance"), 
-                where("timestamp", ">=", Timestamp.fromDate(sevenDaysAgo))
-            );
+    async function loadWeeklyRates() {
+        const payrollBody = document.getElementById('payrollBody');
+        const grandTotalLabel = document.getElementById('grandTotalLabel');
+        payrollBody.innerHTML = '<tr><td colspan="4" class="text-center p-5 fw-800">SYNCING WEEKLY DATA...</td></tr>';
 
-            const snap = await getDocs(q);
-            const rawData = snap.docs.map(doc => doc.data());
-            
-            // Get Total Staff for Baseline
-            const staffSnap = await getDocs(collection(db, "staff_members"));
-            let totalStaff = 0;
-            staffSnap.forEach(doc => {
-                if(!adminExclusion.includes(doc.data().name || doc.data().staffName)) totalStaff++;
-            });
+        // --- WEEKLY LOGIC: Monday to Sunday ---
+        const curr = new Date(weekPicker.value);
+        const first = curr.getDate() - curr.getDay() + (curr.getDay() === 0 ? -6 : 1); // Monday
+        const last = first + 6; // Sunday
 
-            processData(rawData, totalStaff, sevenDaysAgo);
-            document.getElementById('loading').style.display = 'none';
-        }
+        const startOfWeek = new Date(new Date(curr.setDate(first)).setHours(0,0,0,0));
+        const endOfWeek = new Date(new Date(curr.setDate(last)).setHours(23,59,59,999));
 
-        function processData(logs, totalStaffCount, startDate) {
-            const dailyData = {};
-            const staffPerformance = {};
+        weekRangeDisplay.innerText = `Range: ${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}`;
 
-            // Initialize dates
-            for(let i=0; i<7; i++) {
-                const d = new Date(startDate);
-                d.setDate(startDate.getDate() + i);
-                dailyData[d.toDateString()] = new Set();
-            }
+        const q = query(
+            collection(db, "attendance"),
+            where("timestamp", ">=", Timestamp.fromDate(startOfWeek)),
+            where("timestamp", "<=", Timestamp.fromDate(endOfWeek)),
+            orderBy("timestamp", "desc")
+        );
 
-            logs.forEach(log => {
-                const dateKey = log.timestamp.toDate().toDateString();
-                const name = log.name || log.staffName || "Unknown";
-                
-                if(adminExclusion.includes(name)) return;
+        try {
+            const snapshot = await getDocs(q);
+            const stats = {};
+            let grandTotal = 0;
 
-                if(dailyData[dateKey]) {
-                    dailyData[dateKey].add(name);
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const name = data.staffName || data.name || "Unknown Staff";
+                const type = (data.type || "").toLowerCase();
+
+                // Only count "Check-in" types
+                if (type.includes('in')) {
+                    stats[name] = (stats[name] || 0) + 1;
                 }
-
-                if(!staffPerformance[name]) staffPerformance[name] = new Set();
-                staffPerformance[name].add(dateKey);
             });
 
-            // 1. Chart Rendering
-            const labels = Object.keys(dailyData).map(d => d.split(' ')[0] + ' ' + d.split(' ')[2]);
-            const values = Object.values(dailyData).map(set => 
-                totalStaffCount > 0 ? Math.round((set.size / totalStaffCount) * 100) : 0
-            );
+            const rows = Object.entries(stats).map(([name, count]) => {
+                const totalRate = count * RATE_PER_STORE;
+                grandTotal += totalRate;
 
-            renderChart(labels, values);
-
-            // 2. Table Rendering
-            const tbody = document.getElementById('staffTableBody');
-            let totalRates = 0;
-            
-            Object.keys(staffPerformance).sort().forEach(name => {
-                const activeDays = staffPerformance[name].size;
-                const rate = Math.round((activeDays / 7) * 100);
-                totalRates += rate;
-
-                const statusClass = rate >= 80 ? 'high' : (rate >= 50 ? 'mid' : 'low');
-
-                tbody.innerHTML += `
+                return `
                     <tr>
-                        <td style="font-weight:bold;">${name}</td>
-                        <td>7 Days</td>
-                        <td>${activeDays} Days</td>
-                        <td><span class="rate-badge ${statusClass}">${rate}%</span></td>
+                        <td>
+                            <div class="fw-800 fs-5">${name.toUpperCase()}</div>
+                            <div class="small text-muted fw-600">iMerch Field Coordinator</div>
+                        </td>
+                        <td>
+                            <span class="badge-count">${count} STORES</span>
+                        </td>
+                        <td>
+                            <div class="fw-700 text-muted small">${count} Visits x ₱${RATE_PER_STORE.toLocaleString()}</div>
+                        </td>
+                        <td>
+                            <div class="rate-text">₱${totalRate.toLocaleString()}</div>
+                        </td>
                     </tr>
                 `;
-            });
+            }).join('');
 
-            // 3. Overall Metric
-            const avg = values.length > 0 ? Math.round(values.reduce((a,b) => a+b) / values.length) : 0;
-            document.getElementById('avgWeeklyRate').innerText = avg + "%";
+            payrollBody.innerHTML = rows || '<tr><td colspan="4" class="text-center p-5 fw-800">NO LOGS FOUND FOR THIS WEEK</td></tr>';
+            grandTotalLabel.innerText = `₱${grandTotal.toLocaleString()}`;
+
+        } catch (e) {
+            console.error("Firebase Error:", e);
+            payrollBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger p-5 font-monospace">Error: ${e.message}</td></tr>`;
         }
+    }
 
-        function renderChart(labels, data) {
-            new Chart(document.getElementById('weeklyChart'), {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Coverage %',
-                        data: data,
-                        borderColor: '#58a6ff',
-                        backgroundColor: 'rgba(88, 166, 255, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 5,
-                        pointBackgroundColor: '#58a6ff'
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, max: 100, grid: { color: '#30363d' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
+    weekPicker.addEventListener('change', loadWeeklyRates);
+    loadWeeklyRates();
+</script>
 
-        initWeekly();
-    </script>
 </body>
 </html>
