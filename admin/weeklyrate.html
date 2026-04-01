@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch - Coverage Analytics v2.826 Stable</title>
+    <title>iMerch Media - Coverage Analytics v2.827 Professional</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -12,10 +12,20 @@
 
     <style>
         :root { 
-            --bg: #0b0e14; --card: #151921; --text: #f0f6fc; --accent: #58a6ff; 
-            --green: #238636; --border: #30363d; --red: #f85149; --orange: #d29922; 
-            --primary-red: #d90429; --secondary-text: #8b949e; --glass: rgba(21, 25, 33, 0.85);
+            --bg: #0b0e14; 
+            --card: #151921; 
+            --text: #f0f6fc; 
+            --accent: #58a6ff; 
+            --green: #238636; 
+            --border: #30363d; 
+            --red: #f85149; 
+            --orange: #d29922; 
+            --primary-red: #d90429; 
+            --secondary-text: #8b949e; 
+            --glass: rgba(21, 25, 33, 0.85);
             --shadow: 0 10px 30px rgba(0,0,0,0.5);
+            --excellent: #ff9f1c; /* Orange for Excellent */
+            --very-sat: #2ec4b6;  /* Green for Very Satisfactory */
         }
 
         [data-theme="light"] {
@@ -26,201 +36,429 @@
         }
 
         body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); 
-            color: var(--text); margin: 0; padding: 25px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            padding: 25px; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
         }
 
-        /* HEADER & NAVIGATION */
-        .header-section {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 35px; flex-wrap: wrap; gap: 20px;
+        /* --- HEADER SECTION --- */
+        .header-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+            animation: fadeInDown 0.8s ease;
         }
 
-        .view-switcher {
-            display: flex; background: var(--card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 6px; box-shadow: var(--shadow);
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .switch-btn {
-            padding: 10px 24px; border-radius: 10px; border: none; background: transparent;
-            color: var(--secondary-text); font-weight: 700; cursor: pointer; transition: 0.3s;
-            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
+        .brand-box h1 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.8rem;
+            letter-spacing: -1.5px;
+            background: linear-gradient(90deg, var(--text), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .switch-btn.active { background: var(--primary-red); color: white; box-shadow: 0 4px 15px rgba(217, 4, 41, 0.3); }
+        .brand-box p {
+            margin: 5px 0 0;
+            font-size: 0.8rem;
+            color: var(--secondary-text);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-        .action-group { display: flex; gap: 12px; align-items: center; }
-
-        .icon-btn {
-            background: var(--card); border: 1px solid var(--border); color: var(--text);
-            padding: 12px 18px; border-radius: 12px; cursor: pointer; transition: 0.3s;
-            display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.8rem;
+        /* --- CONTROLS --- */
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--card);
+            padding: 8px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
             box-shadow: var(--shadow);
         }
 
-        .icon-btn:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .export-btn { background: var(--primary-red); border: none; color: white; }
-        .theme-btn { width: 45px; justify-content: center; }
+        .view-pill {
+            display: flex;
+            gap: 5px;
+            background: var(--bg);
+            padding: 5px;
+            border-radius: 12px;
+        }
 
-        /* KPI SECTION */
-        .kpi-row {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 25px; margin-bottom: 35px;
+        .pill-btn {
+            padding: 8px 20px;
+            border-radius: 10px;
+            border: none;
+            background: transparent;
+            color: var(--secondary-text);
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .pill-btn.active {
+            background: var(--primary-red);
+            color: white;
+            box-shadow: 0 4px 12px rgba(217, 4, 41, 0.3);
+        }
+
+        .date-picker {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 700;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* --- KPI CARDS --- */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
         }
 
         .kpi-card {
-            background: var(--card); border: 1px solid var(--border); border-radius: 20px;
-            padding: 25px; position: relative; overflow: hidden; box-shadow: var(--shadow);
-            transition: 0.3s;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: 0.4s;
         }
 
-        .kpi-card:hover { transform: translateY(-5px); border-color: var(--accent); }
-        .kpi-val { font-size: 2.2rem; font-weight: 800; display: block; margin: 8px 0; }
-        .kpi-label { font-size: 0.65rem; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; }
-        .rate-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .kpi-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent);
+        }
 
-        /* ANALYTICS GRID */
-        .analytics-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 25px; margin-bottom: 35px; }
-        @media (max-width: 1100px) { .analytics-grid { grid-template-columns: 1fr; } }
+        .kpi-label {
+            font-size: 0.7rem;
+            color: var(--secondary-text);
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-        .glass-panel {
-            background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border);
-            border-radius: 24px; padding: 30px; box-shadow: var(--shadow);
+        .kpi-value {
+            font-size: 2.8rem;
+            font-weight: 800;
+            display: block;
+            margin: 15px 0;
+            color: var(--text);
+        }
+
+        .kpi-footer {
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* --- DASHBOARD GRID --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.8fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+        .panel {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 35px;
+            box-shadow: var(--shadow);
         }
 
         .panel-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
         }
 
-        .panel-title { font-size: 1rem; font-weight: 800; letter-spacing: -0.5px; }
-        .chart-wrap { height: 320px; width: 100%; }
-
-        /* CALENDAR HEATMAP */
-        .calendar-container { padding: 10px 0; }
-        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        .cal-header-day { text-align: center; font-size: 0.65rem; font-weight: 800; color: var(--secondary-text); padding-bottom: 15px; }
-        .cal-cell {
-            aspect-ratio: 1; border-radius: 12px; display: flex; align-items: center;
-            justify-content: center; font-size: 0.8rem; font-weight: 700;
-            background: var(--bg); border: 1px solid var(--border); transition: 0.2s;
-            cursor: pointer;
-        }
-        .cal-cell:hover { transform: scale(1.1); z-index: 2; border-color: var(--accent); }
-
-        /* PERFORMANCE TABLE */
-        .table-wrap { overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { text-align: left; padding: 18px; font-size: 0.7rem; color: var(--secondary-text); border-bottom: 2px solid var(--border); font-weight: 800; }
-        td { padding: 18px; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: 500; }
-
-        .staff-profile { display: flex; align-items: center; gap: 12px; }
-        .staff-avatar { 
-            width: 35px; height: 35px; border-radius: 10px; 
-            background: var(--accent); color: white; display: flex; 
-            align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
         }
 
-        .p-bar-bg { width: 100%; height: 8px; background: var(--bg); border-radius: 10px; margin-top: 8px; border: 1px solid var(--border); }
-        .p-bar-fill { height: 100%; border-radius: 10px; transition: 1s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        /* LOADER SYSTEM */
-        #loader {
-            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease;
+        .chart-container {
+            height: 350px;
+            width: 100%;
         }
-        .loading-ring { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--primary-red); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+        /* --- CALENDAR HEATMAP --- */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+        }
+
+        .heat-day-label {
+            text-align: center;
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: var(--secondary-text);
+            padding-bottom: 10px;
+        }
+
+        .heat-cell {
+            aspect-ratio: 1;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: default;
+        }
+
+        .heat-cell:hover {
+            transform: scale(1.15);
+            z-index: 5;
+            box-shadow: 0 0 20px rgba(88, 166, 255, 0.4);
+        }
+
+        /* --- PERFORMANCE TABLE --- */
+        .table-panel {
+            overflow: hidden;
+            margin-bottom: 60px;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+            border-radius: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 900px;
+        }
+
+        th {
+            background: rgba(48, 54, 61, 0.2);
+            text-align: left;
+            padding: 20px;
+            font-size: 0.75rem;
+            color: var(--secondary-text);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 800;
+            border-bottom: 2px solid var(--border);
+        }
+
+        td {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .member-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: linear-gradient(45deg, var(--primary-red), #ff4d6d);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 10px rgba(217, 4, 41, 0.3);
+        }
+
+        .progress-container {
+            width: 180px;
+        }
+
+        .bar-bg {
+            width: 100%;
+            height: 10px;
+            background: var(--bg);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width 1.5s cubic-bezier(0.1, 0.7, 0.1, 1);
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- LOADER --- */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 0.6s;
+        }
+
+        .loader-ring {
+            width: 60px;
+            height: 60px;
+            border: 5px solid var(--border);
+            border-top: 5px solid var(--primary-red);
+            border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+        }
+
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loader-text {
+            margin-top: 25px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            color: var(--secondary-text);
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body data-theme="dark">
 
-    <div id="loader">
-        <div class="loading-ring"></div>
-        <p id="loader-text" style="margin-top:20px; font-weight:700; letter-spacing:2px; font-size:0.7rem; color:var(--secondary-text);">INITIALIZING ANALYTICS</p>
+    <div id="loading-overlay">
+        <div class="loader-ring"></div>
+        <p class="loader-text">Analyzing iMerch Data</p>
     </div>
 
-    <div class="header-section">
-        <div>
-            <h1 style="margin:0; font-weight:800; font-size:1.5rem; letter-spacing:-1px;">Coverage Intelligence</h1>
-            <p style="margin:5px 0 0; font-size:0.75rem; color:var(--secondary-text); font-weight:600;">iMerch Stable CCPI PERFOMANCE</p>
+    <div class="header-wrapper">
+        <div class="brand-box">
+            <h1>Coverage Intel</h1>
+            <p>v2.827 Stable Architecture</p>
         </div>
 
-        <div class="view-switcher">
-            <button class="switch-btn" id="btn-daily" onclick="setView('daily')">Daily</button>
-            <button class="switch-btn active" id="btn-weekly" onclick="setView('weekly')">Weekly</button>
-            <button class="switch-btn" id="btn-monthly" onclick="setView('monthly')">Monthly</button>
-        </div>
-
-        <div class="action-group">
-            <input type="date" id="dateSelector" class="icon-btn" style="color-scheme: dark;">
-            <button class="icon-btn theme-btn" onclick="toggleTheme()">🌓</button>
-            <button class="icon-btn export-btn" onclick="downloadExcel()">
-                <i class="fas fa-file-export"></i> EXPORT
-            </button>
+        <div class="controls-group">
+            <div class="view-pill">
+                <button class="pill-btn" id="view-daily" onclick="updateView('daily')">Daily</button>
+                <button class="pill-btn active" id="view-weekly" onclick="updateView('weekly')">Weekly</button>
+                <button class="pill-btn" id="view-monthly" onclick="updateView('monthly')">Monthly</button>
+            </div>
+            <input type="date" id="dateInput" class="date-picker">
+            <button class="pill-btn" onclick="toggleTheme()" style="background: var(--bg); border: 1px solid var(--border);">🌓</button>
+            <button class="pill-btn" onclick="exportReport()" style="background: var(--primary-red); color: white;">EXPORT</button>
         </div>
     </div>
 
-    <div class="kpi-row">
+    <div class="kpi-container">
         <div class="kpi-card">
-            <span class="kpi-label"><div class="rate-dot" style="background:var(--accent);"></div> Network Efficiency</span>
-            <span class="kpi-val" id="kpi-rate">0%</span>
-            <div class="p-bar-bg"><div id="kpi-bar" class="p-bar-fill" style="width:0%; background:var(--accent);"></div></div>
+            <div class="kpi-label"><i class="fas fa-chart-line"></i> Efficiency Score</div>
+            <span class="kpi-value" id="kpi-efficiency">0%</span>
+            <div class="bar-bg"><div id="kpi-eff-bar" class="bar-fill" style="width:0%; background:var(--accent);"></div></div>
         </div>
         <div class="kpi-card">
-            <span class="kpi-label"><div class="rate-dot" style="background:var(--green);"></div> Total Verified Logs</span>
-            <span class="kpi-val" id="kpi-logs">0</span>
-            <span style="font-size:0.65rem; color:var(--green); font-weight:700;">LIVE UPDATING</span>
+            <div class="kpi-label"><i class="fas fa-fingerprint"></i> Total Coverage</div>
+            <span class="kpi-value" id="kpi-total">0</span>
+            <div class="kpi-footer" style="color:var(--green)"><i class="fas fa-check-circle"></i> VERIFIED LOGS</div>
         </div>
         <div class="kpi-card">
-            <span class="kpi-label"><div class="rate-dot" style="background:var(--primary-red);"></div> Target Fulfillment</span>
-            <span class="kpi-val" id="kpi-hit">0</span>
-            <span style="font-size:0.65rem; color:var(--secondary-text); font-weight:700;">STAFF REACHED QUOTA</span>
+            <div class="kpi-label"><i class="fas fa-award"></i> Performance MVP</div>
+            <span class="kpi-value" id="kpi-mvp" style="font-size: 1.8rem; height: 3.3rem; display: flex; align-items: center;">---</span>
+            <div class="kpi-footer" id="kpi-mvp-stats">TOP PERFORMER TODAY</div>
         </div>
     </div>
 
-    <div class="analytics-grid">
-        <div class="glass-panel">
+    <div class="dashboard-grid">
+        <div class="panel">
             <div class="panel-header">
-                <span class="panel-title" id="chart-head">WEEKLY PERFORMANCE</span>
-                <div style="font-size:0.7rem; color:var(--secondary-text); font-weight:700;" id="chart-sub">TREND ANALYSIS</div>
+                <span class="panel-title" id="chart-main-title">Weekly Performance Trend</span>
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--secondary-text);">LOGS PER DAY</span>
             </div>
-            <div class="chart-wrap">
-                <canvas id="analyticsChart"></canvas>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
             </div>
         </div>
 
-        <div class="glass-panel">
+        <div class="panel">
             <div class="panel-header">
-                <span class="panel-title">Monthly Heatmap</span>
-                <span id="cal-month-year" style="font-size:0.75rem; font-weight:800; color:var(--accent);">APRIL 2026</span>
+                <span class="panel-title">Activity Heatmap</span>
+                <span id="cal-label" style="font-size: 0.8rem; font-weight: 800; color: var(--accent);">APRIL 2026</span>
             </div>
-            <div class="calendar-container">
-                <div class="cal-grid" id="cal-header-row">
-                    <div class="cal-header-day">MON</div><div class="cal-header-day">TUE</div><div class="cal-header-day">WED</div>
-                    <div class="cal-header-day">THU</div><div class="cal-header-day">FRI</div><div class="cal-header-day">SAT</div><div class="cal-header-day">SUN</div>
+            <div class="heatmap-grid" id="cal-header">
+                <div class="heat-day-label">M</div><div class="heat-day-label">T</div><div class="heat-day-label">W</div>
+                <div class="heat-day-label">T</div><div class="heat-day-label">F</div><div class="heat-day-label">S</div><div class="heat-day-label">S</div>
+            </div>
+            <div class="heatmap-grid" id="cal-body" style="margin-top: 10px;">
                 </div>
-                <div class="cal-grid" id="cal-body"></div>
-            </div>
         </div>
     </div>
 
-    <div class="glass-panel" style="margin-bottom: 50px;">
+    <div class="panel table-panel">
         <div class="panel-header">
-            <span class="panel-title">Performance Ranking</span>
+            <span class="panel-title">Detailed Performance Breakdown</span>
         </div>
-        <div class="table-wrap">
+        <div class="table-scroll">
             <table>
                 <thead>
                     <tr>
-                        <th>STAFF MEMBER</th>
-                        <th>TARGET</th>
-                        <th>ACTUAL</th>
-                        <th>PERCENTAGE</th>
-                        <th>KPI STATUS</th>
+                        <th>Staff Member</th>
+                        <th>Quota Target</th>
+                        <th>Actual Visits</th>
+                        <th>Progress %</th>
+                        <th>Ranking Status</th>
                     </tr>
                 </thead>
-                <tbody id="rankingTable"></tbody>
+                <tbody id="rankingBody">
+                    </tbody>
             </table>
         </div>
     </div>
@@ -229,7 +467,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, getDocs, where, Timestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBvfzEtu2s5TME19mufjf7eusuj4YxM4FU",
             authDomain: "imerch-checkins-out.firebaseapp.com",
@@ -241,200 +478,197 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // State Management
-        let activeView = 'weekly';
-        let staffMap = {};
-        let logs = [];
-        let mainChart = null;
-        let currentTimeline = {};
-        const TARGET_PER_DAY = 6;
-        const admins = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+        // CONFIG & STATE
+        let activeMode = 'weekly';
+        let staffDatabase = {};
+        let currentLogs = [];
+        let chartInstance = null;
+        const DAILY_QUOTA = 6;
+        const ADMIN_LIST = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
-        document.getElementById('dateSelector').valueAsDate = new Date();
+        document.getElementById('dateInput').valueAsDate = new Date();
 
-        // Theme Control
-        window.toggleTheme = () => {
-            const body = document.body;
-            const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', newTheme);
-            if(mainChart) renderChart(currentTimeline); 
-        };
-
-        // Application Initialization
-        async function startApp() {
+        // 1. SYSTEM INITIALIZATION
+        async function initSystem() {
             try {
-                console.log("System Start: Mapping Personnel...");
-                const sSnap = await getDocs(collection(db, "staff_members"));
+                console.log("System initialization started...");
+                const staffSnap = await getDocs(collection(db, "staff_members"));
                 
-                staffMap = {}; 
-
-                if (sSnap.empty) {
-                    console.warn("DB Alert: No staff records found in 'staff_members' collection.");
-                }
-
-                sSnap.forEach(doc => {
-                    const d = doc.data();
-                    // Advanced Multi-field detection
-                    const name = d.Personnel || d.name || d.staffName || d.Fullname || "Unnamed Staff";
-                    const email = (d.email || d.staffEmail || "").toLowerCase().trim();
+                staffDatabase = {};
+                staffSnap.forEach(doc => {
+                    const data = doc.data();
+                    const name = data.Personnel || data.name || data.staffName || data.Fullname || "Unnamed";
+                    const email = (data.email || data.staffEmail || "").toLowerCase().trim();
                     
-                    if(email && !admins.includes(name)) {
-                        staffMap[email] = name;
-                        console.log(`Mapped: ${email} -> ${name}`);
+                    if(email && !ADMIN_LIST.includes(name)) {
+                        staffDatabase[email] = name;
                     }
                 });
 
-                console.log("Syncing Initial Analytics Data...");
-                await refreshData();
+                await fetchData();
                 
+                // Remove Loader
                 setTimeout(() => {
-                    const loader = document.getElementById('loader');
-                    loader.style.opacity = '0';
-                    setTimeout(() => loader.style.display = 'none', 500);
-                }, 800);
+                    document.getElementById('loading-overlay').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 600);
+                }, 1000);
 
-            } catch (err) { 
-                console.error("Critical Failure:", err);
+            } catch (err) {
+                console.error("Boot Error:", err);
             }
         }
 
-        // Data Fetching
-        async function refreshData() {
-            const dateInput = document.getElementById('dateSelector').value;
-            const date = new Date(dateInput);
-            let s, e;
+        // 2. DATA ENGINE
+        async function fetchData() {
+            const pickedDate = new Date(document.getElementById('dateInput').value);
+            let start, end;
 
-            if(activeView === 'daily') {
-                s = new Date(date); s.setHours(0,0,0,0);
-                e = new Date(date); e.setHours(23,59,59,999);
-            } else if(activeView === 'weekly') {
-                const day = date.getDay(), diff = date.getDate() - day + (day === 0 ? -6 : 1);
-                s = new Date(date.setDate(diff)); s.setHours(0,0,0,0);
-                e = new Date(s); e.setDate(e.getDate() + 6); e.setHours(23,59,59,999);
+            if(activeMode === 'daily') {
+                start = new Date(pickedDate); start.setHours(0,0,0,0);
+                end = new Date(pickedDate); end.setHours(23,59,59,999);
+            } else if(activeMode === 'weekly') {
+                const day = pickedDate.getDay();
+                const diff = pickedDate.getDate() - day + (day === 0 ? -6 : 1);
+                start = new Date(pickedDate.setDate(diff)); start.setHours(0,0,0,0);
+                end = new Date(start); end.setDate(end.getDate() + 6); end.setHours(23,59,59,999);
             } else {
-                s = new Date(date.getFullYear(), date.getMonth(), 1);
-                e = new Date(date.getFullYear(), date.getMonth() + 1, 0); e.setHours(23,59,59,999);
+                start = new Date(pickedDate.getFullYear(), pickedDate.getMonth(), 1);
+                end = new Date(pickedDate.getFullYear(), pickedDate.getMonth() + 1, 0); end.setHours(23,59,59,999);
             }
 
-            console.log(`Query Range: ${s.toDateString()} to ${e.toDateString()}`);
-
             const q = query(collection(db, "attendance"), 
-                where("timestamp", ">=", Timestamp.fromDate(s)),
-                where("timestamp", "<=", Timestamp.fromDate(e)),
+                where("timestamp", ">=", Timestamp.fromDate(start)),
+                where("timestamp", "<=", Timestamp.fromDate(end)),
                 orderBy("timestamp", "asc")
             );
 
             try {
                 const snap = await getDocs(q);
-                logs = snap.docs.map(doc => doc.data());
-                console.log(`Total Logs Fetched: ${logs.length}`);
-                processAnalytics();
-            } catch (error) {
-                console.error("Query Error:", error);
-            }
+                currentLogs = snap.docs.map(d => d.data());
+                calculateAnalytics();
+            } catch (e) { console.error("Query Error:", e); }
         }
 
-        window.setView = (v) => {
-            activeView = v;
-            document.querySelectorAll('.switch-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${v}`));
-            document.getElementById('chart-head').innerText = `${v.toUpperCase()} PERFORMANCE`;
-            refreshData();
-        };
-
-        // Analytics Engine
-        function processAnalytics() {
+        // 3. ANALYTICS CALCULATION
+        function calculateAnalytics() {
             const stats = {};
             const timeline = {};
             
+            // Define Targets
             let target;
-            if(activeView === 'daily') target = TARGET_PER_DAY;
-            else if(activeView === 'weekly') target = TARGET_PER_DAY * 6;
-            else target = TARGET_PER_DAY * 26;
+            if(activeMode === 'daily') target = DAILY_QUOTA; // 6
+            else if(activeMode === 'weekly') target = 36;    // 6 * 6 working days
+            else target = 144;                              // 36 * 4 weeks
 
-            // Pre-fill stats
-            Object.values(staffMap).forEach(n => {
-                stats[n] = { actual: 0, target: target };
+            // Initialize every staff member from DB
+            Object.values(staffDatabase).forEach(name => {
+                stats[name] = { actual: 0, quota: target };
             });
 
-            logs.forEach(l => {
-                const email = (l.email || l.staffEmail || "").toLowerCase().trim();
-                const name = staffMap[email] || email.split('@')[0]; // Fallback to email prefix
+            currentLogs.forEach(log => {
+                const email = (log.email || log.staffEmail || "").toLowerCase().trim();
+                const name = staffDatabase[email] || email.split('@')[0]; // Fallback to email prefix
                 
-                if(email && (l.type?.toLowerCase().includes("in") || l.type?.toLowerCase().includes("check"))) {
-                    if(!stats[name]) stats[name] = { actual: 0, target: target };
+                // Only count check-ins/ins
+                if(email && (log.type?.toLowerCase().includes("in") || log.type?.toLowerCase().includes("check"))) {
+                    if(!stats[name]) stats[name] = { actual: 0, quota: target };
                     stats[name].actual++;
                     
-                    const dKey = l.timestamp.toDate().toDateString();
-                    timeline[dKey] = (timeline[dKey] || 0) + 1;
+                    const dateKey = log.timestamp.toDate().toDateString();
+                    timeline[dateKey] = (timeline[dateKey] || 0) + 1;
                 }
             });
 
-            currentTimeline = timeline;
-            updateUI(stats, timeline);
+            refreshUI(stats, timeline);
         }
 
-        // Interface Rendering
-        function updateUI(stats, timeline) {
-            const tbody = document.getElementById('rankingTable');
-            let h = "", totalR = 0, countS = 0, hitS = 0, totalL = 0;
+        // 4. UI REFRESH
+        function refreshUI(stats, timeline) {
+            const tableBody = document.getElementById('rankingBody');
+            let rows = "";
+            let teamActual = 0, teamQuota = 0, topScore = -1, mvpName = "---";
+            let excellentCount = 0;
 
-            const sortedEntries = Object.entries(stats).sort((a,b) => b[1].actual - a[1].actual);
+            const sortedStaff = Object.entries(stats).sort((a,b) => b[1].actual - a[1].actual);
 
-            sortedEntries.forEach(([name, d]) => {
-                const rate = d.target > 0 ? Math.min(Math.round((d.actual / d.target) * 100), 100) : 0;
-                const color = rate >= 100 ? 'var(--green)' : (rate > 50 ? 'var(--orange)' : 'var(--red)');
-                
-                if(rate >= 100) hitS++;
-                totalL += d.actual;
-                totalR += rate;
-                countS++;
+            sortedStaff.forEach(([name, data]) => {
+                const percent = data.quota > 0 ? Math.round((data.actual / data.quota) * 100) : 0;
+                let statusLabel = "", statusColor = "";
 
-                h += `<tr>
-                    <td><div class="staff-profile"><div class="staff-avatar">${name.charAt(0).toUpperCase()}</div><b>${name}</b></div></td>
-                    <td>${d.target}</td>
-                    <td style="color:var(--accent); font-weight:800;">${d.actual}</td>
-                    <td style="width:200px;">
-                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:800;">
-                            <span style="color:${color}">${rate}%</span>
-                        </div>
-                        <div class="p-bar-bg"><div class="p-bar-fill" style="width:${rate}%; background:${color}"></div></div>
-                    </td>
-                    <td><span style="color:${color}; font-size:0.7rem; font-weight:800;">${rate >= 100 ? 'OPTIMAL' : 'PENDING'}</span></td>
-                </tr>`;
+                // PERFORMANCE TIERING ENGINE (ACCURATE FORMULA)
+                if (data.actual > data.quota) {
+                    statusLabel = "Excellent!"; statusColor = "var(--orange)"; excellentCount++;
+                } else if (data.actual === data.quota) {
+                    statusLabel = "Very Satisfactory"; statusColor = "var(--green)";
+                } else if (data.actual >= (data.quota * 0.66)) {
+                    statusLabel = "Fairly Satisfactory"; statusColor = "var(--accent)";
+                } else {
+                    statusLabel = "Needs Improvement"; statusColor = "var(--red)";
+                }
+
+                // Track MVP
+                if(data.actual > topScore) { topScore = data.actual; mvpName = name; }
+                teamActual += data.actual;
+                teamQuota += data.quota;
+
+                rows += `
+                    <tr>
+                        <td>
+                            <div class="member-info">
+                                <div class="avatar">${name.charAt(0).toUpperCase()}</div>
+                                <div><b style="display:block;">${name}</b><small style="color:var(--secondary-text)">Member</small></div>
+                            </div>
+                        </td>
+                        <td><b>${data.quota}</b></td>
+                        <td style="color:var(--accent); font-weight:800; font-size:1.1rem;">${data.actual}</td>
+                        <td>
+                            <div class="progress-container">
+                                <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; color:${statusColor}">
+                                    <span>${percent}%</span>
+                                    <span>${data.actual}/${data.quota}</span>
+                                </div>
+                                <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(percent, 100)}%; background:${statusColor}"></div></div>
+                            </div>
+                        </td>
+                        <td><span class="badge" style="background: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}40;">${statusLabel}</span></td>
+                    </tr>
+                `;
             });
 
-            tbody.innerHTML = h;
-            const avg = countS > 0 ? Math.round(totalR / countS) : 0;
-            
-            document.getElementById('kpi-rate').innerText = avg + "%";
-            document.getElementById('kpi-bar').style.width = avg + "%";
-            document.getElementById('kpi-logs').innerText = totalL;
-            document.getElementById('kpi-hit').innerText = hitS;
+            tableBody.innerHTML = rows;
 
-            renderChart(timeline);
+            // Update KPIs
+            const teamEfficiency = teamQuota > 0 ? Math.round((teamActual / teamQuota) * 100) : 0;
+            document.getElementById('kpi-efficiency').innerText = teamEfficiency + "%";
+            document.getElementById('kpi-eff-bar').style.width = Math.min(teamEfficiency, 100) + "%";
+            document.getElementById('kpi-total').innerText = teamActual;
+            document.getElementById('kpi-mvp').innerText = mvpName;
+            document.getElementById('kpi-hit').innerText = excellentCount;
+
+            renderCharts(timeline);
             renderCalendar(timeline);
         }
 
-        function renderChart(data) {
-            const ctx = document.getElementById('analyticsChart')?.getContext('2d');
-            if(!ctx) return;
-            if(mainChart) mainChart.destroy();
+        // 5. CHART ENGINE
+        function renderCharts(timeline) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
 
             const isLight = document.body.getAttribute('data-theme') === 'light';
-            const keys = Object.keys(data || {});
-            const labels = keys.map(k => k.split(' ').slice(1,3).join(' '));
-            const values = Object.values(data || {});
+            const labels = Object.keys(timeline).map(d => d.split(' ').slice(1,3).join(' '));
+            const dataValues = Object.values(timeline);
 
-            mainChart = new Chart(ctx, {
-                type: activeView === 'monthly' ? 'line' : 'bar',
+            chartInstance = new Chart(ctx, {
+                type: activeMode === 'monthly' ? 'line' : 'bar',
                 data: {
                     labels: labels,
                     datasets: [{
-                        data: values,
-                        backgroundColor: isLight ? 'rgba(9, 105, 218, 0.1)' : 'rgba(88, 166, 255, 0.1)',
+                        label: 'Total Visits',
+                        data: dataValues,
+                        backgroundColor: isLight ? 'rgba(9, 105, 218, 0.2)' : 'rgba(88, 166, 255, 0.2)',
                         borderColor: isLight ? '#0969da' : '#58a6ff',
                         borderWidth: 3,
-                        borderRadius: 8,
+                        borderRadius: 6,
                         tension: 0.4,
                         fill: true
                     }]
@@ -443,48 +677,82 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: isLight ? '#eee' : '#30363d' }, ticks: { color: isLight ? '#555' : '#8b949e' } },
-                        x: { grid: { display: false }, ticks: { color: isLight ? '#555' : '#8b949e' } }
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: isLight ? '#eee' : '#30363d' },
+                            ticks: { color: isLight ? '#555' : '#8b949e', font: { weight: 'bold' } }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: isLight ? '#555' : '#8b949e', font: { weight: 'bold' } }
+                        }
                     }
                 }
             });
         }
 
+        // 6. HEATMAP GENERATOR
         function renderCalendar(timeline) {
-            const grid = document.getElementById('cal-body');
-            const date = new Date(document.getElementById('dateSelector').value);
-            const m = date.getMonth(), y = date.getFullYear();
+            const gridBody = document.getElementById('cal-body');
+            const date = new Date(document.getElementById('dateInput').value);
+            const month = date.getMonth();
+            const year = date.getFullYear();
             
-            document.getElementById('cal-month-year').innerText = `${date.toLocaleString('default', { month: 'long' }).toUpperCase()} ${y}`;
+            document.getElementById('cal-label').innerText = date.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
 
-            const first = new Date(y, m, 1).getDay();
-            const last = new Date(y, m + 1, 0).getDate();
-            const offset = first === 0 ? 6 : first - 1;
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const adjustedOffset = firstDay === 0 ? 6 : firstDay - 1;
 
-            grid.innerHTML = "";
-            for(let i=0; i<offset; i++) grid.innerHTML += `<div class="cal-cell" style="opacity:0; pointer-events:none;"></div>`;
+            gridBody.innerHTML = "";
+            
+            // Empty cells for offset
+            for(let i=0; i<adjustedOffset; i++) {
+                gridBody.innerHTML += `<div class="heat-cell" style="opacity:0; pointer-events:none;"></div>`;
+            }
 
-            for(let d=1; d<=last; d++) {
-                const dayStr = new Date(y, m, d).toDateString();
-                const val = timeline[dayStr] || 0;
-                let bg = 'var(--bg)';
+            for(let d=1; d<=daysInMonth; d++) {
+                const dStr = new Date(year, month, d).toDateString();
+                const count = timeline[dStr] || 0;
                 
-                if(val > 40) bg = 'rgba(35, 134, 54, 0.9)';
-                else if(val > 20) bg = 'rgba(35, 134, 54, 0.6)';
-                else if(val > 5) bg = 'rgba(35, 134, 54, 0.3)';
-                else if(val > 0) bg = 'rgba(248, 81, 73, 0.3)';
+                let heatColor = "var(--bg)";
+                if(count > 40) heatColor = "rgba(35, 134, 54, 1)";
+                else if(count > 20) heatColor = "rgba(35, 134, 54, 0.6)";
+                else if(count > 5) heatColor = "rgba(35, 134, 54, 0.3)";
+                else if(count > 0) heatColor = "rgba(248, 81, 73, 0.3)";
 
-                grid.innerHTML += `<div class="cal-cell" style="background:${bg}; border-color:${val > 0 ? 'transparent' : 'var(--border)'}">${d}</div>`;
+                gridBody.innerHTML += `<div class="heat-cell" style="background:${heatColor}; border-color:${count > 0 ? 'transparent' : 'var(--border)'}">${d}</div>`;
             }
         }
 
-        window.downloadExcel = () => {
-            const wb = XLSX.utils.table_to_book(document.querySelector("table"));
-            XLSX.writeFile(wb, `iMerch_Coverage_${activeView}_${new Date().toLocaleDateString()}.xlsx`);
+        // 7. UTILITIES
+        window.updateView = (mode) => {
+            activeMode = mode;
+            document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`view-${mode}`).classList.add('active');
+            document.getElementById('chart-main-title').innerText = `${mode.toUpperCase()} PERFORMANCE TREND`;
+            fetchData();
         };
 
-        document.getElementById('dateSelector').addEventListener('change', refreshData);
-        startApp();
+        window.toggleTheme = () => {
+            const body = document.body;
+            const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            document.getElementById('dateInput').style.colorScheme = newTheme;
+            calculateAnalytics();
+        };
+
+        window.exportReport = () => {
+            const table = document.querySelector("table");
+            const wb = XLSX.utils.table_to_book(table);
+            XLSX.writeFile(wb, `iMerch_Analytics_${activeMode}_${new Date().toLocaleDateString()}.xlsx`);
+        };
+
+        document.getElementById('dateInput').addEventListener('change', fetchData);
+
+        // START SYSTEM
+        initSystem();
+
     </script>
 </body>
 </html>
