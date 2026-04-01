@@ -164,7 +164,11 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch, addDoc, serverTimestamp, updateDoc, doc, setDoc, Timestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { 
+        getFirestore, collection, query, orderBy, onSnapshot, getDocs, 
+        writeBatch, addDoc, serverTimestamp, updateDoc, doc, setDoc, 
+        Timestamp, deleteDoc, where, limit // Idinagdag ang where at limit dito
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -306,7 +310,8 @@
     }
 
     function loadAdminLogs() {
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+        // Naka-limit na sa 200 records para tipid sa Quota Reads
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(200));
         onSnapshot(q, (snap) => {
             masterLogs = [];
             snap.forEach(doc => {
@@ -436,42 +441,28 @@
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
     document.getElementById('wipeLogsBtn').onclick = async () => {
-        // Confirmation para sa March Cleanup
         const confirmation = confirm("WARNING: Buburahin nito ang LAHAT ng logs mula sa NAKARAANG BUWAN (March 2026 pababa). Ang records ngayong April 1 ay MANANATILI. Sigurado ka ba?");
-        
         if (!confirmation) return;
-
         const btn = document.getElementById('wipeLogsBtn');
-        
         try {
             btn.disabled = true;
             btn.innerText = "Cleaning March Logs...";
-
-            // Cutoff: April 1, 2026, 12:00 AM
             const ngayon = new Date();
             const startOfApril = new Date(ngayon.getFullYear(), ngayon.getMonth(), 1);
             const cutoffTimestamp = Timestamp.fromDate(startOfApril);
-
-            // Query: Luma lang ang kukunin (March back to 2009 if ever)
             const q = query(collection(db, "attendance"), where("timestamp", "<", cutoffTimestamp));
             const snapshot = await getDocs(q);
-
             if (snapshot.empty) {
                 alert("Malinis na ang system! Wala nang March logs na nakita.");
                 btn.disabled = false;
                 btn.innerText = "🗑️ Wipe Logs";
                 return;
             }
-
-            // Batch Delete
             const batch = writeBatch(db);
             snapshot.docs.forEach(doc => batch.delete(doc.ref));
-            
             await batch.commit();
-
             alert(`Success! ${snapshot.size} records mula sa March ang nabura. Happy 17th Anniversary iMerch!`);
             location.reload(); 
-
         } catch (e) {
             console.error("Wipe failed:", e);
             alert("Error: " + e.message);
@@ -546,7 +537,4 @@
     };
 </script>
 </body>
-
 </html>
-
-
