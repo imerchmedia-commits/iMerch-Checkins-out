@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iMerch Media - Coverage Analytics v2.827 Professional</title>
+    <title>iMerch - Coverage Analytics v2.830</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
@@ -12,20 +12,10 @@
 
     <style>
         :root { 
-            --bg: #0b0e14; 
-            --card: #151921; 
-            --text: #f0f6fc; 
-            --accent: #58a6ff; 
-            --green: #238636; 
-            --border: #30363d; 
-            --red: #f85149; 
-            --orange: #d29922; 
-            --primary-red: #d90429; 
-            --secondary-text: #8b949e; 
-            --glass: rgba(21, 25, 33, 0.85);
+            --bg: #0b0e14; --card: #151921; --text: #f0f6fc; --accent: #58a6ff; 
+            --green: #238636; --border: #30363d; --red: #f85149; --orange: #d29922; 
+            --primary-red: #d90429; --secondary-text: #8b949e; --glass: rgba(21, 25, 33, 0.85);
             --shadow: 0 10px 30px rgba(0,0,0,0.5);
-            --excellent: #ff9f1c; /* Orange for Excellent */
-            --very-sat: #2ec4b6;  /* Green for Very Satisfactory */
         }
 
         [data-theme="light"] {
@@ -36,429 +26,181 @@
         }
 
         body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
-            padding: 25px; 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow-x: hidden;
+            font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); 
+            color: var(--text); margin: 0; padding: 25px; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* --- HEADER SECTION --- */
-        .header-wrapper {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-            gap: 20px;
-            animation: fadeInDown 0.8s ease;
+        /* HEADER SECTION */
+        .header-section {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 35px; flex-wrap: wrap; gap: 20px;
         }
 
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .view-switcher {
+            display: flex; background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 6px; box-shadow: var(--shadow);
         }
 
-        .brand-box h1 {
-            margin: 0;
-            font-weight: 800;
-            font-size: 1.8rem;
-            letter-spacing: -1.5px;
-            background: linear-gradient(90deg, var(--text), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .switch-btn {
+            padding: 10px 24px; border-radius: 10px; border: none; background: transparent;
+            color: var(--secondary-text); font-weight: 800; cursor: pointer; transition: 0.3s;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
         }
 
-        .brand-box p {
-            margin: 5px 0 0;
-            font-size: 0.8rem;
-            color: var(--secondary-text);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+        .switch-btn.active { background: var(--primary-red); color: white; }
+
+        .action-group { display: flex; gap: 12px; align-items: center; }
+
+        .icon-btn {
+            background: var(--card); border: 1px solid var(--border); color: var(--text);
+            padding: 12px 18px; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 0.8rem;
         }
 
-        /* --- CONTROLS --- */
-        .controls-group {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: var(--card);
-            padding: 8px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-        }
+        .export-btn { background: var(--primary-red); border: none; color: white; }
 
-        .view-pill {
-            display: flex;
-            gap: 5px;
-            background: var(--bg);
-            padding: 5px;
-            border-radius: 12px;
-        }
-
-        .pill-btn {
-            padding: 8px 20px;
-            border-radius: 10px;
-            border: none;
-            background: transparent;
-            color: var(--secondary-text);
-            font-weight: 800;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-        }
-
-        .pill-btn.active {
-            background: var(--primary-red);
-            color: white;
-            box-shadow: 0 4px 12px rgba(217, 4, 41, 0.3);
-        }
-
-        .date-picker {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 10px;
-            border-radius: 10px;
-            font-weight: 700;
-            outline: none;
-            cursor: pointer;
-        }
-
-        /* --- KPI CARDS --- */
-        .kpi-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
+        /* KPI CARDS */
+        .kpi-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px; margin-bottom: 35px;
         }
 
         .kpi-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 30px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: 0.4s;
+            background: var(--card); border: 1px solid var(--border); border-radius: 24px;
+            padding: 25px; box-shadow: var(--shadow); transition: 0.3s;
         }
 
-        .kpi-card:hover {
-            transform: translateY(-8px);
-            border-color: var(--accent);
+        .kpi-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .kpi-val { font-size: 2.5rem; font-weight: 800; display: block; margin: 10px 0; letter-spacing: -1.5px; }
+        .kpi-label { font-size: 0.65rem; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 2px; font-weight: 800; }
+
+        /* ANALYTICS */
+        .analytics-grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 25px; margin-bottom: 35px; }
+        @media (max-width: 1100px) { .analytics-grid { grid-template-columns: 1fr; } }
+
+        .glass-panel {
+            background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border-radius: 28px; padding: 30px; box-shadow: var(--shadow);
         }
 
-        .kpi-label {
-            font-size: 0.7rem;
-            color: var(--secondary-text);
-            text-transform: uppercase;
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        /* CALENDAR UNIQUE HEATMAP */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+        .cal-cell {
+            aspect-ratio: 1; border-radius: 12px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;
+        }
+        .cal-cell:hover { transform: scale(1.1); z-index: 5; border-color: var(--accent); background: rgba(255,255,255,0.1); }
+        .glow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); margin-top: 4px; box-shadow: 0 0 8px var(--accent); }
+
+        /* TABLE PERFORMANCE */
+        .staff-profile { display: flex; align-items: center; gap: 15px; }
+        .staff-avatar { width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+        
+        .status-pill {
+            padding: 6px 12px; border-radius: 10px; font-size: 0.65rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1px; border: 1px solid transparent;
         }
 
-        .kpi-value {
-            font-size: 2.8rem;
-            font-weight: 800;
-            display: block;
-            margin: 15px 0;
-            color: var(--text);
+        .p-bar-bg { width: 100%; height: 8px; background: var(--bg); border-radius: 10px; margin-top: 8px; }
+        .p-bar-fill { height: 100%; border-radius: 10px; transition: 1.5s ease-out; }
+
+        #loader {
+            position: fixed; inset: 0; background: var(--bg); z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-
-        .kpi-footer {
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        /* --- DASHBOARD GRID --- */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1.8fr 1fr;
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-
-        @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: 1fr; } }
-
-        .panel {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: 28px;
-            padding: 35px;
-            box-shadow: var(--shadow);
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .panel-title {
-            font-size: 1.1rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
-        .chart-container {
-            height: 350px;
-            width: 100%;
-        }
-
-        /* --- CALENDAR HEATMAP --- */
-        .heatmap-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 12px;
-        }
-
-        .heat-day-label {
-            text-align: center;
-            font-size: 0.65rem;
-            font-weight: 800;
-            color: var(--secondary-text);
-            padding-bottom: 10px;
-        }
-
-        .heat-cell {
-            aspect-ratio: 1;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.85rem;
-            font-weight: 700;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: default;
-        }
-
-        .heat-cell:hover {
-            transform: scale(1.15);
-            z-index: 5;
-            box-shadow: 0 0 20px rgba(88, 166, 255, 0.4);
-        }
-
-        /* --- PERFORMANCE TABLE --- */
-        .table-panel {
-            overflow: hidden;
-            margin-bottom: 60px;
-        }
-
-        .table-scroll {
-            overflow-x: auto;
-            border-radius: 15px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            min-width: 900px;
-        }
-
-        th {
-            background: rgba(48, 54, 61, 0.2);
-            text-align: left;
-            padding: 20px;
-            font-size: 0.75rem;
-            color: var(--secondary-text);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 800;
-            border-bottom: 2px solid var(--border);
-        }
-
-        td {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
-            vertical-align: middle;
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        .member-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 14px;
-            background: linear-gradient(45deg, var(--primary-red), #ff4d6d);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 10px rgba(217, 4, 41, 0.3);
-        }
-
-        .progress-container {
-            width: 180px;
-        }
-
-        .bar-bg {
-            width: 100%;
-            height: 10px;
-            background: var(--bg);
-            border-radius: 20px;
-            border: 1px solid var(--border);
-            margin-top: 8px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            border-radius: 20px;
-            transition: width 1.5s cubic-bezier(0.1, 0.7, 0.1, 1);
-        }
-
-        .badge {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* --- LOADER --- */
-        #loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: 0.6s;
-        }
-
-        .loader-ring {
-            width: 60px;
-            height: 60px;
-            border: 5px solid var(--border);
-            border-top: 5px solid var(--primary-red);
-            border-radius: 50%;
-            animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
-        }
-
+        .ring { width: 50px; height: 50px; border: 4px solid var(--border); border-top-color: var(--primary-red); border-radius: 50%; animation: spin 1s infinite linear; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .loader-text {
-            margin-top: 25px;
-            font-weight: 800;
-            font-size: 0.8rem;
-            letter-spacing: 3px;
-            color: var(--secondary-text);
-            text-transform: uppercase;
-        }
     </style>
 </head>
 <body data-theme="dark">
 
-    <div id="loading-overlay">
-        <div class="loader-ring"></div>
-        <p class="loader-text">Analyzing iMerch Data</p>
+    <div id="loader">
+        <div class="ring"></div>
+        <p style="margin-top:20px; font-weight:800; letter-spacing:3px; font-size:0.7rem; color:var(--secondary-text);">SYNCING LIVE DATA</p>
     </div>
 
-    <div class="header-wrapper">
-        <div class="brand-box">
-            <h1>Coverage Intel</h1>
-            <p>v2.827 Stable Architecture</p>
+    <div class="header-section">
+        <div>
+            <h1 style="margin:0; font-weight:800; font-size:1.6rem; letter-spacing:-1.5px;">iMerch Intel <span style="color:var(--primary-red)">v2.830</span></h1>
+            <p style="margin:5px 0 0; font-size:0.75rem; color:var(--secondary-text); font-weight:700; letter-spacing:1px;">CCPI MONITORING PORTAL</p>
         </div>
 
-        <div class="controls-group">
-            <div class="view-pill">
-                <button class="pill-btn" id="view-daily" onclick="updateView('daily')">Daily</button>
-                <button class="pill-btn active" id="view-weekly" onclick="updateView('weekly')">Weekly</button>
-                <button class="pill-btn" id="view-monthly" onclick="updateView('monthly')">Monthly</button>
-            </div>
-            <input type="date" id="dateInput" class="date-picker">
-            <button class="pill-btn" onclick="toggleTheme()" style="background: var(--bg); border: 1px solid var(--border);">🌓</button>
-            <button class="pill-btn" onclick="exportReport()" style="background: var(--primary-red); color: white;">EXPORT</button>
+        <div class="view-switcher">
+            <button class="switch-btn" id="btn-daily" onclick="updateView('daily')">Daily</button>
+            <button class="switch-btn active" id="btn-weekly" onclick="updateView('weekly')">Weekly</button>
+            <button class="switch-btn" id="btn-monthly" onclick="updateView('monthly')">Monthly</button>
+        </div>
+
+        <div class="action-group">
+            <input type="date" id="mainDatePicker" class="icon-btn">
+            <button class="icon-btn" onclick="toggleTheme()">🌓</button>
+            <button class="icon-btn export-btn" onclick="exportToExcel()">
+                <i class="fas fa-file-download"></i> EXPORT
+            </button>
         </div>
     </div>
 
-    <div class="kpi-container">
+    <div class="kpi-row">
         <div class="kpi-card">
-            <div class="kpi-label"><i class="fas fa-chart-line"></i> Efficiency Score</div>
-            <span class="kpi-value" id="kpi-efficiency">0%</span>
-            <div class="bar-bg"><div id="kpi-eff-bar" class="bar-fill" style="width:0%; background:var(--accent);"></div></div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label"><i class="fas fa-fingerprint"></i> Total Coverage</div>
-            <span class="kpi-value" id="kpi-total">0</span>
-            <div class="kpi-footer" style="color:var(--green)"><i class="fas fa-check-circle"></i> VERIFIED LOGS</div>
+            <span class="kpi-label">Team Efficiency</span>
+            <span class="kpi-val" id="total-eff">0%</span>
+            <div class="p-bar-bg"><div id="total-bar" class="p-bar-fill" style="width:0%; background:var(--accent);"></div></div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-label"><i class="fas fa-award"></i> Performance MVP</div>
-            <span class="kpi-value" id="kpi-mvp" style="font-size: 1.8rem; height: 3.3rem; display: flex; align-items: center;">---</span>
-            <div class="kpi-footer" id="kpi-mvp-stats">TOP PERFORMER TODAY</div>
+            <span class="kpi-label">Verified Logs</span>
+            <span class="kpi-val" id="total-logs">0</span>
+            <span style="font-size:0.7rem; color:var(--green); font-weight:800;"><i class="fas fa-check-circle"></i> DATA SECURE</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">Excellent Performers</span>
+            <span class="kpi-val" id="mvp-count">0</span>
+            <span style="font-size:0.7rem; color:var(--orange); font-weight:800;"><i class="fas fa-trophy"></i> TOP ACHIEVERS</span>
         </div>
     </div>
 
-    <div class="dashboard-grid">
-        <div class="panel">
-            <div class="panel-header">
-                <span class="panel-title" id="chart-main-title">Weekly Performance Trend</span>
-                <span style="font-size: 0.7rem; font-weight: 800; color: var(--secondary-text);">LOGS PER DAY</span>
+    <div class="analytics-grid">
+        <div class="glass-panel">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <span style="font-weight:800; font-size:1.1rem;" id="chart-title">Coverage Trend</span>
+                <span style="font-size:0.7rem; color:var(--secondary-text); font-weight:800;">VISITS LOGGED</span>
             </div>
-            <div class="chart-container">
-                <canvas id="mainChart"></canvas>
-            </div>
+            <div style="height:350px;"><canvas id="mainChart"></canvas></div>
         </div>
 
-        <div class="panel">
-            <div class="panel-header">
-                <span class="panel-title">Activity Heatmap</span>
-                <span id="cal-label" style="font-size: 0.8rem; font-weight: 800; color: var(--accent);">APRIL 2026</span>
+        <div class="glass-panel">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <span style="font-weight:800; font-size:1.1rem;">Activity Heatmap</span>
+                <span id="cal-month-name" style="font-size:0.8rem; font-weight:800; color:var(--accent);">APRIL 2026</span>
             </div>
-            <div class="heatmap-grid" id="cal-header">
-                <div class="heat-day-label">M</div><div class="heat-day-label">T</div><div class="heat-day-label">W</div>
-                <div class="heat-day-label">T</div><div class="heat-day-label">F</div><div class="heat-day-label">S</div><div class="heat-day-label">S</div>
+            <div class="cal-grid">
+                <div style="text-align:center; font-size:0.6rem; font-weight:800; color:var(--secondary-text);">M</div>
+                <div style="text-align:center; font-size:0.6rem; font-weight:800; color:var(--secondary-text);">T</div>
+                <div style="text-align:center; font-size:0.6rem; font-weight:800; color:var(--secondary-text);">W</div>
+                <div style="text-align:center; font-size:0.6rem; font-weight:800; color:var(--secondary-text);">T</div>
+                <div style="text-align:center; font-size:0.6rem; font-weight:800; color:var(--secondary-text);">F</div>
+                <div style="text-align:center; font-size:0.6rem; font-weight:800; color:var(--secondary-text);">S</div>
+                <div style="text-align:center; font-size:0.6rem; font-weight:800; color:var(--secondary-text);">S</div>
             </div>
-            <div class="heatmap-grid" id="cal-body" style="margin-top: 10px;">
-                </div>
+            <div class="cal-grid" id="calendarBody" style="margin-top:10px;"></div>
         </div>
     </div>
 
-    <div class="panel table-panel">
-        <div class="panel-header">
-            <span class="panel-title">Detailed Performance Breakdown</span>
-        </div>
-        <div class="table-scroll">
-            <table>
+    <div class="glass-panel">
+        <div style="margin-bottom:25px; font-weight:800; font-size:1.2rem;">Staff Performance Ranking</div>
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse; min-width:850px;">
                 <thead>
-                    <tr>
-                        <th>Staff Member</th>
-                        <th>Quota Target</th>
-                        <th>Actual Visits</th>
-                        <th>Progress %</th>
-                        <th>Ranking Status</th>
+                    <tr style="text-align:left; border-bottom:2px solid var(--border);">
+                        <th style="padding:15px; font-size:0.7rem; color:var(--secondary-text);">STAFF MEMBER</th>
+                        <th style="padding:15px; font-size:0.7rem; color:var(--secondary-text);">TARGET</th>
+                        <th style="padding:15px; font-size:0.7rem; color:var(--secondary-text);">ACTUAL</th>
+                        <th style="padding:15px; font-size:0.7rem; color:var(--secondary-text);">PERFORMANCE</th>
+                        <th style="padding:15px; font-size:0.7rem; color:var(--secondary-text);">RATING</th>
                     </tr>
                 </thead>
-                <tbody id="rankingBody">
-                    </tbody>
+                <tbody id="performanceTable"></tbody>
             </table>
         </div>
     </div>
@@ -478,281 +220,189 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // CONFIG & STATE
         let activeMode = 'weekly';
-        let staffDatabase = {};
-        let currentLogs = [];
-        let chartInstance = null;
+        let staffCache = {};
+        let rawLogs = [];
+        let chartInstance;
         const DAILY_QUOTA = 6;
-        const ADMIN_LIST = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
+        const ADMINS = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
-        document.getElementById('dateInput').valueAsDate = new Date();
+        document.getElementById('mainDatePicker').valueAsDate = new Date();
 
-        // 1. SYSTEM INITIALIZATION
-        async function initSystem() {
+        // 1. START ENGINE
+        async function boot() {
             try {
-                console.log("System initialization started...");
-                const staffSnap = await getDocs(collection(db, "staff_members"));
-                
-                staffDatabase = {};
-                staffSnap.forEach(doc => {
-                    const data = doc.data();
-                    const name = data.Personnel || data.name || data.staffName || data.Fullname || "Unnamed";
-                    const email = (data.email || data.staffEmail || "").toLowerCase().trim();
-                    
-                    if(email && !ADMIN_LIST.includes(name)) {
-                        staffDatabase[email] = name;
-                    }
+                const sSnap = await getDocs(collection(db, "staff_members"));
+                staffCache = {};
+                sSnap.forEach(doc => {
+                    const d = doc.data();
+                    const name = d.Personnel || d.name || d.Fullname;
+                    const email = (d.email || d.staffEmail || "").toLowerCase().trim();
+                    if(email && !ADMINS.includes(name)) staffCache[email] = name;
                 });
-
-                await fetchData();
-                
-                // Remove Loader
-                setTimeout(() => {
-                    document.getElementById('loading-overlay').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 600);
-                }, 1000);
-
-            } catch (err) {
-                console.error("Boot Error:", err);
-            }
+                await sync();
+                document.getElementById('loader').style.display = 'none';
+            } catch (e) { console.error(e); }
         }
 
-        // 2. DATA ENGINE
-        async function fetchData() {
-            const pickedDate = new Date(document.getElementById('dateInput').value);
-            let start, end;
+        // 2. DATA SYNC
+        async function sync() {
+            const pick = new Date(document.getElementById('mainDatePicker').value);
+            let s, e;
 
             if(activeMode === 'daily') {
-                start = new Date(pickedDate); start.setHours(0,0,0,0);
-                end = new Date(pickedDate); end.setHours(23,59,59,999);
+                s = new Date(pick); s.setHours(0,0,0,0);
+                e = new Date(pick); e.setHours(23,59,59,999);
             } else if(activeMode === 'weekly') {
-                const day = pickedDate.getDay();
-                const diff = pickedDate.getDate() - day + (day === 0 ? -6 : 1);
-                start = new Date(pickedDate.setDate(diff)); start.setHours(0,0,0,0);
-                end = new Date(start); end.setDate(end.getDate() + 6); end.setHours(23,59,59,999);
+                const day = pick.getDay(), diff = pick.getDate() - day + (day === 0 ? -6 : 1);
+                s = new Date(pick.setDate(diff)); s.setHours(0,0,0,0);
+                e = new Date(s); e.setDate(e.getDate() + 6); e.setHours(23,59,59,999);
             } else {
-                start = new Date(pickedDate.getFullYear(), pickedDate.getMonth(), 1);
-                end = new Date(pickedDate.getFullYear(), pickedDate.getMonth() + 1, 0); end.setHours(23,59,59,999);
+                s = new Date(pick.getFullYear(), pick.getMonth(), 1);
+                e = new Date(pick.getFullYear(), pick.getMonth() + 1, 0); e.setHours(23,59,59,999);
             }
 
             const q = query(collection(db, "attendance"), 
-                where("timestamp", ">=", Timestamp.fromDate(start)),
-                where("timestamp", "<=", Timestamp.fromDate(end)),
+                where("timestamp", ">=", Timestamp.fromDate(s)),
+                where("timestamp", "<=", Timestamp.fromDate(e)),
                 orderBy("timestamp", "asc")
             );
 
-            try {
-                const snap = await getDocs(q);
-                currentLogs = snap.docs.map(d => d.data());
-                calculateAnalytics();
-            } catch (e) { console.error("Query Error:", e); }
+            const snap = await getDocs(q);
+            rawLogs = snap.docs.map(doc => doc.data());
+            calculate();
         }
 
-        // 3. ANALYTICS CALCULATION
-        function calculateAnalytics() {
+        // 3. CALCULATION - ACCURATE TIERS
+        function calculate() {
             const stats = {};
             const timeline = {};
-            
-            // Define Targets
-            let target;
-            if(activeMode === 'daily') target = DAILY_QUOTA; // 6
-            else if(activeMode === 'weekly') target = 36;    // 6 * 6 working days
-            else target = 144;                              // 36 * 4 weeks
+            // Formula: Daily 6, Weekly 36, Monthly 144
+            let targetQuota = activeMode === 'daily' ? 6 : (activeMode === 'weekly' ? 36 : 144);
 
-            // Initialize every staff member from DB
-            Object.values(staffDatabase).forEach(name => {
-                stats[name] = { actual: 0, quota: target };
-            });
+            Object.values(staffCache).forEach(n => stats[n] = { actual: 0, target: targetQuota });
 
-            currentLogs.forEach(log => {
-                const email = (log.email || log.staffEmail || "").toLowerCase().trim();
-                const name = staffDatabase[email] || email.split('@')[0]; // Fallback to email prefix
-                
-                // Only count check-ins/ins
-                if(email && (log.type?.toLowerCase().includes("in") || log.type?.toLowerCase().includes("check"))) {
-                    if(!stats[name]) stats[name] = { actual: 0, quota: target };
+            rawLogs.forEach(l => {
+                const email = (l.email || l.staffEmail || "").toLowerCase().trim();
+                const name = staffCache[email] || email.split('@')[0];
+                if(email && (l.type?.toLowerCase().includes("in"))) {
+                    if(!stats[name]) stats[name] = { actual: 0, target: targetQuota };
                     stats[name].actual++;
-                    
-                    const dateKey = log.timestamp.toDate().toDateString();
-                    timeline[dateKey] = (timeline[dateKey] || 0) + 1;
+                    const dKey = l.timestamp.toDate().toDateString();
+                    timeline[dKey] = (timeline[dKey] || 0) + 1;
                 }
             });
 
-            refreshUI(stats, timeline);
+            render(stats, timeline);
         }
 
-        // 4. UI REFRESH
-        function refreshUI(stats, timeline) {
-            const tableBody = document.getElementById('rankingBody');
-            let rows = "";
-            let teamActual = 0, teamQuota = 0, topScore = -1, mvpName = "---";
-            let excellentCount = 0;
+        // 4. UI RENDER
+        function render(stats, timeline) {
+            const table = document.getElementById('performanceTable');
+            let rows = "", totalA = 0, totalT = 0, mvp = 0;
 
-            const sortedStaff = Object.entries(stats).sort((a,b) => b[1].actual - a[1].actual);
+            const sorted = Object.entries(stats).sort((a,b) => b[1].actual - a[1].actual);
 
-            sortedStaff.forEach(([name, data]) => {
-                const percent = data.quota > 0 ? Math.round((data.actual / data.quota) * 100) : 0;
-                let statusLabel = "", statusColor = "";
+            sorted.forEach(([name, d]) => {
+                const percent = Math.round((d.actual / d.target) * 100);
+                let rating = "Needs Improvement", color = "var(--red)";
 
-                // PERFORMANCE TIERING ENGINE (ACCURATE FORMULA)
-                if (data.actual > data.quota) {
-                    statusLabel = "Excellent!"; statusColor = "var(--orange)"; excellentCount++;
-                } else if (data.actual === data.quota) {
-                    statusLabel = "Very Satisfactory"; statusColor = "var(--green)";
-                } else if (data.actual >= (data.quota * 0.66)) {
-                    statusLabel = "Fairly Satisfactory"; statusColor = "var(--accent)";
-                } else {
-                    statusLabel = "Needs Improvement"; statusColor = "var(--red)";
+                // THE ACCURATE FORMULA
+                if (d.actual > d.target) { 
+                    rating = "Excellent!"; color = "var(--orange)"; mvp++; 
+                } else if (d.actual === d.target) { 
+                    rating = "Very Satisfactory"; color = "var(--green)"; 
+                } else if (d.actual >= (d.target * 0.66)) { 
+                    rating = "Fairly Satisfactory"; color = "var(--accent)"; 
                 }
 
-                // Track MVP
-                if(data.actual > topScore) { topScore = data.actual; mvpName = name; }
-                teamActual += data.actual;
-                teamQuota += data.quota;
+                totalA += d.actual; totalT += d.target;
 
                 rows += `
-                    <tr>
-                        <td>
-                            <div class="member-info">
-                                <div class="avatar">${name.charAt(0).toUpperCase()}</div>
-                                <div><b style="display:block;">${name}</b><small style="color:var(--secondary-text)">Member</small></div>
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="padding:15px;"><div class="staff-profile"><div class="staff-avatar">${name.charAt(0)}</div><b>${name}</b></div></td>
+                        <td style="padding:15px;">${d.target}</td>
+                        <td style="padding:15px; color:var(--accent); font-weight:800;">${d.actual}</td>
+                        <td style="padding:15px; width:220px;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; color:${color}">
+                                <span>${percent}%</span><span>${d.actual}/${d.target}</span>
                             </div>
+                            <div class="p-bar-bg"><div style="width:${Math.min(percent,100)}%; background:${color};" class="p-bar-fill"></div></div>
                         </td>
-                        <td><b>${data.quota}</b></td>
-                        <td style="color:var(--accent); font-weight:800; font-size:1.1rem;">${data.actual}</td>
-                        <td>
-                            <div class="progress-container">
-                                <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800; color:${statusColor}">
-                                    <span>${percent}%</span>
-                                    <span>${data.actual}/${data.quota}</span>
-                                </div>
-                                <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(percent, 100)}%; background:${statusColor}"></div></div>
-                            </div>
-                        </td>
-                        <td><span class="badge" style="background: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}40;">${statusLabel}</span></td>
+                        <td style="padding:15px;"><span class="status-pill" style="border-color:${color}40; color:${color}; background:${color}10">${rating}</span></td>
                     </tr>
                 `;
             });
 
-            tableBody.innerHTML = rows;
+            table.innerHTML = rows;
+            const avg = totalT > 0 ? Math.round((totalA / totalT) * 100) : 0;
+            document.getElementById('total-eff').innerText = avg + "%";
+            document.getElementById('total-bar').style.width = Math.min(avg, 100) + "%";
+            document.getElementById('total-logs').innerText = totalA;
+            document.getElementById('mvp-count').innerText = mvp;
 
-            // Update KPIs
-            const teamEfficiency = teamQuota > 0 ? Math.round((teamActual / teamQuota) * 100) : 0;
-            document.getElementById('kpi-efficiency').innerText = teamEfficiency + "%";
-            document.getElementById('kpi-eff-bar').style.width = Math.min(teamEfficiency, 100) + "%";
-            document.getElementById('kpi-total').innerText = teamActual;
-            document.getElementById('kpi-mvp').innerText = mvpName;
-            document.getElementById('kpi-hit').innerText = excellentCount;
-
-            renderCharts(timeline);
+            renderChart(timeline);
             renderCalendar(timeline);
         }
 
-        // 5. CHART ENGINE
-        function renderCharts(timeline) {
+        function renderChart(data) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             if(chartInstance) chartInstance.destroy();
-
-            const isLight = document.body.getAttribute('data-theme') === 'light';
-            const labels = Object.keys(timeline).map(d => d.split(' ').slice(1,3).join(' '));
-            const dataValues = Object.values(timeline);
-
             chartInstance = new Chart(ctx, {
                 type: activeMode === 'monthly' ? 'line' : 'bar',
                 data: {
-                    labels: labels,
+                    labels: Object.keys(data).map(k => k.split(' ').slice(1,3).join(' ')),
                     datasets: [{
-                        label: 'Total Visits',
-                        data: dataValues,
-                        backgroundColor: isLight ? 'rgba(9, 105, 218, 0.2)' : 'rgba(88, 166, 255, 0.2)',
-                        borderColor: isLight ? '#0969da' : '#58a6ff',
-                        borderWidth: 3,
-                        borderRadius: 6,
-                        tension: 0.4,
-                        fill: true
+                        data: Object.values(data), borderColor: '#58a6ff', backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                        fill: true, tension: 0.4, borderRadius: 10
                     }]
                 },
-                options: {
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { color: isLight ? '#eee' : '#30363d' },
-                            ticks: { color: isLight ? '#555' : '#8b949e', font: { weight: 'bold' } }
-                        },
-                        x: { 
-                            grid: { display: false },
-                            ticks: { color: isLight ? '#555' : '#8b949e', font: { weight: 'bold' } }
-                        }
-                    }
-                }
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, 
+                scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } }, x: { grid: { display: false } } } }
             });
         }
 
-        // 6. HEATMAP GENERATOR
         function renderCalendar(timeline) {
-            const gridBody = document.getElementById('cal-body');
-            const date = new Date(document.getElementById('dateInput').value);
-            const month = date.getMonth();
-            const year = date.getFullYear();
-            
-            document.getElementById('cal-label').innerText = date.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
+            const body = document.getElementById('calendarBody');
+            const date = new Date(document.getElementById('mainDatePicker').value);
+            const m = date.getMonth(), y = date.getFullYear();
+            document.getElementById('cal-month-name').innerText = date.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase();
 
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const adjustedOffset = firstDay === 0 ? 6 : firstDay - 1;
+            const first = new Date(y, m, 1).getDay();
+            const last = new Date(y, m + 1, 0).getDate();
+            const offset = first === 0 ? 6 : first - 1;
 
-            gridBody.innerHTML = "";
-            
-            // Empty cells for offset
-            for(let i=0; i<adjustedOffset; i++) {
-                gridBody.innerHTML += `<div class="heat-cell" style="opacity:0; pointer-events:none;"></div>`;
-            }
-
-            for(let d=1; d<=daysInMonth; d++) {
-                const dStr = new Date(year, month, d).toDateString();
-                const count = timeline[dStr] || 0;
-                
-                let heatColor = "var(--bg)";
-                if(count > 40) heatColor = "rgba(35, 134, 54, 1)";
-                else if(count > 20) heatColor = "rgba(35, 134, 54, 0.6)";
-                else if(count > 5) heatColor = "rgba(35, 134, 54, 0.3)";
-                else if(count > 0) heatColor = "rgba(248, 81, 73, 0.3)";
-
-                gridBody.innerHTML += `<div class="heat-cell" style="background:${heatColor}; border-color:${count > 0 ? 'transparent' : 'var(--border)'}">${d}</div>`;
+            body.innerHTML = "";
+            for(let i=0; i<offset; i++) body.innerHTML += `<div class="cal-cell" style="opacity:0;"></div>`;
+            for(let d=1; d<=last; d++) {
+                const dayStr = new Date(y, m, d).toDateString();
+                const count = timeline[dayStr] || 0;
+                body.innerHTML += `
+                    <div class="cal-cell" style="border-color:${count > 0 ? 'var(--accent)' : 'var(--border)'}">
+                        ${d}${count > 0 ? '<div class="glow-dot"></div>' : ''}
+                    </div>`;
             }
         }
 
-        // 7. UTILITIES
-        window.updateView = (mode) => {
-            activeMode = mode;
-            document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`view-${mode}`).classList.add('active');
-            document.getElementById('chart-main-title').innerText = `${mode.toUpperCase()} PERFORMANCE TREND`;
-            fetchData();
+        window.updateView = (m) => {
+            activeMode = m;
+            document.querySelectorAll('.switch-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${m}`));
+            sync();
         };
 
         window.toggleTheme = () => {
-            const body = document.body;
-            const newTheme = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', newTheme);
-            document.getElementById('dateInput').style.colorScheme = newTheme;
-            calculateAnalytics();
+            const b = document.body;
+            b.setAttribute('data-theme', b.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+            renderChart({});
         };
 
-        window.exportReport = () => {
-            const table = document.querySelector("table");
-            const wb = XLSX.utils.table_to_book(table);
-            XLSX.writeFile(wb, `iMerch_Analytics_${activeMode}_${new Date().toLocaleDateString()}.xlsx`);
+        window.exportToExcel = () => {
+            const wb = XLSX.utils.table_to_book(document.querySelector("table"));
+            XLSX.writeFile(wb, `iMerch_Report_${activeMode}.xlsx`);
         };
 
-        document.getElementById('dateInput').addEventListener('change', fetchData);
-
-        // START SYSTEM
-        initSystem();
-
+        document.getElementById('mainDatePicker').addEventListener('change', sync);
+        boot();
     </script>
 </body>
 </html>
