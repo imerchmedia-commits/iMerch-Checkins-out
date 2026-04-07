@@ -30,8 +30,7 @@
             color: var(--text); margin: 0; padding: 25px; transition: 0.4s ease;
         }
 
-        /* HEADER */
-        .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; gap: 20px; }
+        .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; gap: 20px; flex-wrap: wrap; }
         
         .view-switcher { 
             display: flex; background: var(--glass); backdrop-filter: blur(10px); 
@@ -47,20 +46,18 @@
         .daily-active { background: #ffd60a !important; color: #000 !important; box-shadow: 0 5px 20px rgba(255, 214, 10, 0.4); }
         .weekly-active { background: #0077ff !important; color: #fff !important; box-shadow: 0 5px 20px rgba(0, 119, 255, 0.4); }
         .monthly-active { background: #d90429 !important; color: #fff !important; box-shadow: 0 5px 20px rgba(217, 4, 41, 0.4); }
+        .range-active { background: #58a6ff !important; color: #fff !important; box-shadow: 0 5px 20px rgba(88, 166, 255, 0.4); }
 
-        /* KPI CENTERED */
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin-bottom: 40px; }
         .kpi-card { background: var(--card); border: 1px solid var(--border); border-radius: 35px; padding: 35px; box-shadow: var(--shadow); text-align: center; }
         .kpi-val { font-size: 3.2rem; font-weight: 800; display: block; margin: 10px 0; letter-spacing: -2px; }
         .kpi-label { font-size: 0.75rem; font-weight: 800; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 2px; }
 
-        /* ANALYTICS GRID */
         .analytics-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 30px; margin-bottom: 40px; }
         @media (max-width: 1100px) { .analytics-grid { grid-template-columns: 1fr; } }
 
         .glass-panel { background: var(--glass); backdrop-filter: blur(25px); border: 1px solid var(--border); border-radius: 40px; padding: 40px; box-shadow: var(--shadow); }
 
-        /* CALENDAR CENTERED HEADER */
         .cal-header-centered { text-align: center; margin-bottom: 30px; }
         .cal-title-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; }
         
@@ -84,7 +81,6 @@
         .heat-high { background: rgba(217, 4, 41, 0.6); color: #fff; box-shadow: 0 0 15px rgba(217, 4, 41, 0.4); }
         .selected-date { border: 3px solid #ffd60a !important; transform: scale(1.08); }
 
-        /* TABLE */
         table { width: 100%; border-collapse: separate; border-spacing: 0 10px; text-align: center; }
         th { padding: 20px; font-size: 0.7rem; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 1px; }
         td { padding: 20px; background: var(--card); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -96,6 +92,9 @@
         .instruction-tag { text-align: center; color: var(--secondary-text); font-size: 0.7rem; font-weight: 700; margin-top: 25px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8; }
         
         .status-pill { padding: 6px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+
+        .date-controls { display: flex; gap: 10px; align-items: center; background: var(--card); padding: 10px 20px; border-radius: 20px; border: 1px solid var(--border); }
+        .date-input { background: transparent; border: none; color: var(--text); font-weight: 800; font-family: inherit; font-size: 0.8rem; outline: none; cursor: pointer; }
     </style>
 </head>
 <body data-theme="dark">
@@ -104,14 +103,23 @@
 
     <div class="header-section">
         <div><h1 style="margin:0; font-weight:800; font-size:1.8rem; letter-spacing:-1.5px;">IMERCH <span style="color:var(--primary-red)">CCPI STATS PERFORMANCE</span></h1></div>
+        
         <div class="view-switcher">
             <button class="switch-btn" id="btn-daily" onclick="updateView('daily')">Daily</button>
             <button class="switch-btn active" id="btn-weekly" onclick="updateView('weekly')">Weekly</button>
             <button class="switch-btn" id="btn-monthly" onclick="updateView('monthly')">Monthly</button>
+            <button class="switch-btn" id="btn-range" onclick="updateView('range')">Custom Range</button>
         </div>
+
         <div style="display:flex; gap:15px; align-items:center;">
             <button class="theme-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
-            <input type="date" id="mainDatePicker" class="switch-btn" style="background:var(--card); border:1px solid var(--border); color:var(--text);">
+            
+            <div class="date-controls">
+                <input type="date" id="mainDatePicker" class="date-input">
+                <span id="dateSeparator" style="color:var(--secondary-text); font-weight:800; display:none;">TO</span>
+                <input type="date" id="endDatePicker" class="date-input" style="display:none;">
+            </div>
+
             <button class="switch-btn" onclick="exportToExcel()" style="background:var(--text); color:var(--bg);">EXPORT</button>
         </div>
     </div>
@@ -136,7 +144,7 @@
 
     <div class="analytics-grid">
         <div class="glass-panel">
-            <div style="text-align:center; margin-bottom:30px; font-weight:800; letter-spacing:2px; font-size:0.9rem;">PERFORMANCE METRICS</div>
+            <div id="chart-title" style="text-align:center; margin-bottom:30px; font-weight:800; letter-spacing:2px; font-size:0.9rem;">PERFORMANCE METRICS</div>
             <div style="height:350px;"><canvas id="mainChart"></canvas></div>
         </div>
 
@@ -188,16 +196,20 @@
         const ADMINS = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
         document.getElementById('mainDatePicker').valueAsDate = new Date();
+        document.getElementById('endDatePicker').valueAsDate = new Date();
 
-        // LOGIC PARA SA EXCEL EXPORT (UPDATED)
         window.exportToExcel = () => {
             const table = document.getElementById("performanceTableMain");
             const ws = XLSX.utils.table_to_sheet(table);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "CCPI Performance");
             
-            const dateStr = document.getElementById('mainDatePicker').value;
-            const fileName = `IMERCH_Performance_${activeMode.toUpperCase()}_${dateStr}.xlsx`;
+            const startStr = document.getElementById('mainDatePicker').value;
+            const endStr = document.getElementById('endDatePicker').value;
+            
+            let fileName = `IMERCH_Stats_${activeMode.toUpperCase()}_${startStr}.xlsx`;
+            if(activeMode === 'range') fileName = `IMERCH_Stats_RANGE_${startStr}_to_${endStr}.xlsx`;
+
+            XLSX.utils.book_append_sheet(wb, ws, "Performance");
             XLSX.writeFile(wb, fileName);
         };
 
@@ -217,6 +229,8 @@
 
         async function sync() {
             const pick = new Date(document.getElementById('mainDatePicker').value);
+            const pickEnd = new Date(document.getElementById('endDatePicker').value);
+            
             const startMonth = new Date(pick.getFullYear(), pick.getMonth(), 1);
             const endMonth = new Date(pick.getFullYear(), pick.getMonth() + 1, 0, 23, 59, 59);
 
@@ -237,19 +251,28 @@
                 const day = pick.getDay(), diff = pick.getDate() - day + (day === 0 ? -6 : 1);
                 s = new Date(pick.getFullYear(), pick.getMonth(), diff); s.setHours(0,0,0,0);
                 e = new Date(s); e.setDate(e.getDate() + 6); e.setHours(23,59,59,999);
+            } else if(activeMode === 'range') {
+                s = new Date(pick); s.setHours(0,0,0,0);
+                e = new Date(pickEnd); e.setHours(23,59,59,999);
             } else {
                 s = startMonth; e = endMonth;
             }
 
             const filtered = allLogs.filter(l => l.timestamp.toDate() >= s && l.timestamp.toDate() <= e);
-            calculate(filtered, allLogs, pick);
+            calculate(filtered, allLogs, pick, s, e);
         }
 
-        function calculate(filtered, fullMonth, currentPick) {
+        function calculate(filtered, fullMonth, currentPick, rangeStart, rangeEnd) {
             const stats = {};
             const heat = {};
             const chartData = {};
-            let quota = activeMode === 'daily' ? 6 : (activeMode === 'weekly' ? 36 : 144);
+            
+            // Calculate Quota based on number of days in range
+            const diffTime = Math.abs(rangeEnd - rangeStart);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            let quota = activeMode === 'daily' ? 6 : (activeMode === 'weekly' ? 36 : (activeMode === 'monthly' ? 144 : diffDays * 6));
+            if(quota < 6) quota = 6;
+
             Object.values(staffCache).forEach(n => stats[n] = { actual: 0, target: quota });
 
             fullMonth.forEach(l => {
@@ -277,30 +300,19 @@
             let rows = "", totalA = 0, totalT = 0, mvp = 0;
 
             Object.entries(stats).sort((a,b) => b[1].actual - a[1].actual).forEach(([name, d]) => {
-                const percent = Math.round((d.actual / d.target) * 100);
+                const percent = d.target > 0 ? Math.round((d.actual / d.target) * 100) : 0;
                 let rating = "Below Target", color = "var(--red)";
                 if (d.actual > d.target) { rating = "Excellent!"; color = "var(--orange)"; mvp++; }
                 else if (d.actual === d.target) { rating = "Very Satisfactory"; color = "var(--green)"; }
                 else if (d.actual >= (d.target * 0.66)) { rating = "Satisfactory"; color = "var(--accent)"; }
 
                 totalA += d.actual; totalT += d.target;
-                rows += `<tr>
-                    <td style="font-weight:800;">${name}</td>
-                    <td>${d.target}</td>
-                    <td style="font-weight:800; color:var(--accent);">${d.actual}</td>
-                    <td>
-                        <div style="font-weight:800; color:${color}; margin-bottom:5px;">${percent}%</div>
-                        <div style="height:6px; background:rgba(0,0,0,0.1); border-radius:10px; width:150px; margin:0 auto;">
-                            <div style="width:${Math.min(percent,100)}%; height:100%; background:${color}; border-radius:10px;"></div>
-                        </div>
-                    </td>
-                    <td><span class="status-pill" style="background:${color}15; color:${color}; border:1px solid ${color}30;">${rating}</span></td>
-                </tr>`;
+                rows += `<tr><td style="font-weight:800;">${name}</td><td>${d.target}</td><td style="font-weight:800; color:var(--accent);">${d.actual}</td><td><div style="font-weight:800; color:${color}; margin-bottom:5px;">${percent}%</div><div style="height:6px; background:rgba(0,0,0,0.1); border-radius:10px; width:150px; margin:0 auto;"><div style="width:${Math.min(percent,100)}%; height:100%; background:${color}; border-radius:10px;"></div></div></td><td><span class="status-pill" style="background:${color}15; color:${color}; border:1px solid ${color}30;">${rating}</span></td></tr>`;
             });
 
             table.innerHTML = rows;
-            document.getElementById('total-eff').innerText = Math.round((totalA/totalT)*100) + "%";
-            document.getElementById('total-bar').style.width = Math.min((totalA/totalT)*100, 100) + "%";
+            document.getElementById('total-eff').innerText = totalT > 0 ? Math.round((totalA/totalT)*100) + "%" : "0%";
+            document.getElementById('total-bar').style.width = totalT > 0 ? Math.min((totalA/totalT)*100, 100) + "%" : "0%";
             document.getElementById('total-logs').innerText = totalA;
             document.getElementById('mvp-count').innerText = mvp;
             renderChart(chartData);
@@ -310,7 +322,7 @@
         function renderChart(data) {
             const ctx = document.getElementById('mainChart').getContext('2d');
             if(chartInstance) chartInstance.destroy();
-            const accent = activeMode === 'daily' ? '#ffd60a' : (activeMode === 'weekly' ? '#0077ff' : '#d90429');
+            const accent = activeMode === 'daily' ? '#ffd60a' : (activeMode === 'weekly' ? '#0077ff' : (activeMode === 'monthly' ? '#d90429' : '#58a6ff'));
             chartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: accent + '40', borderColor: accent, borderWidth: 2, borderRadius: 8 }] }, options: { maintainAspectRatio: false, plugins: { legend: false } } });
         }
 
@@ -334,7 +346,18 @@
 
         window.updateView = (m) => {
             activeMode = m;
-            ['daily', 'weekly', 'monthly'].forEach(key => {
+            const endPicker = document.getElementById('endDatePicker');
+            const separator = document.getElementById('dateSeparator');
+            
+            if(m === 'range') {
+                endPicker.style.display = 'block';
+                separator.style.display = 'block';
+            } else {
+                endPicker.style.display = 'none';
+                separator.style.display = 'none';
+            }
+
+            ['daily', 'weekly', 'monthly', 'range'].forEach(key => {
                 const b = document.getElementById(`btn-${key}`);
                 if(b) {
                     b.className = 'switch-btn';
@@ -346,7 +369,10 @@
 
         window.selectDate = (iso) => { document.getElementById('mainDatePicker').value = iso.split('T')[0]; sync(); };
         window.toggleTheme = () => { const b = document.body; const isDark = b.getAttribute('data-theme') === 'dark'; b.setAttribute('data-theme', isDark ? 'light' : 'dark'); document.querySelector('.theme-btn i').className = isDark ? 'fas fa-sun' : 'fas fa-moon'; };
+        
         document.getElementById('mainDatePicker').addEventListener('change', sync);
+        document.getElementById('endDatePicker').addEventListener('change', sync);
+        
         boot();
     </script>
 </body>
