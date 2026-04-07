@@ -94,6 +94,8 @@
         .theme-btn { width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; }
         #loader { position: fixed; inset: 0; background: var(--bg); z-index: 10000; display: flex; align-items: center; justify-content: center; }
         .instruction-tag { text-align: center; color: var(--secondary-text); font-size: 0.7rem; font-weight: 700; margin-top: 25px; letter-spacing: 1px; text-transform: uppercase; opacity: 0.8; }
+        
+        .status-pill { padding: 6px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
     </style>
 </head>
 <body data-theme="dark">
@@ -152,7 +154,7 @@
     </div>
 
     <div class="glass-panel" style="overflow-x:auto;">
-        <table>
+        <table id="performanceTableMain">
             <thead>
                 <tr>
                     <th>CCPI Coordinator Fullname</th>
@@ -186,6 +188,18 @@
         const ADMINS = ["Joy Biazon", "Brylle Oca", "Pauline Oca", "Samantha Claire", "Ron Sarmenta", "Arem Gonzales"];
 
         document.getElementById('mainDatePicker').valueAsDate = new Date();
+
+        // LOGIC PARA SA EXCEL EXPORT (UPDATED)
+        window.exportToExcel = () => {
+            const table = document.getElementById("performanceTableMain");
+            const ws = XLSX.utils.table_to_sheet(table);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "CCPI Performance");
+            
+            const dateStr = document.getElementById('mainDatePicker').value;
+            const fileName = `IMERCH_Performance_${activeMode.toUpperCase()}_${dateStr}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        };
 
         async function boot() {
             try {
@@ -270,7 +284,18 @@
                 else if (d.actual >= (d.target * 0.66)) { rating = "Satisfactory"; color = "var(--accent)"; }
 
                 totalA += d.actual; totalT += d.target;
-                rows += `<tr><td style="font-weight:800;">${name}</td><td>${d.target}</td><td style="font-weight:800; color:var(--accent);">${d.actual}</td><td><div style="font-weight:800; color:${color}; margin-bottom:5px;">${percent}%</div><div style="height:6px; background:rgba(0,0,0,0.1); border-radius:10px; width:150px; margin:0 auto;"><div style="width:${Math.min(percent,100)}%; height:100%; background:${color}; border-radius:10px;"></div></div></td><td><span class="status-pill" style="background:${color}15; color:${color}; border:1px solid ${color}30;">${rating}</span></td></tr>`;
+                rows += `<tr>
+                    <td style="font-weight:800;">${name}</td>
+                    <td>${d.target}</td>
+                    <td style="font-weight:800; color:var(--accent);">${d.actual}</td>
+                    <td>
+                        <div style="font-weight:800; color:${color}; margin-bottom:5px;">${percent}%</div>
+                        <div style="height:6px; background:rgba(0,0,0,0.1); border-radius:10px; width:150px; margin:0 auto;">
+                            <div style="width:${Math.min(percent,100)}%; height:100%; background:${color}; border-radius:10px;"></div>
+                        </div>
+                    </td>
+                    <td><span class="status-pill" style="background:${color}15; color:${color}; border:1px solid ${color}30;">${rating}</span></td>
+                </tr>`;
             });
 
             table.innerHTML = rows;
@@ -311,8 +336,10 @@
             activeMode = m;
             ['daily', 'weekly', 'monthly'].forEach(key => {
                 const b = document.getElementById(`btn-${key}`);
-                b.className = 'switch-btn';
-                if(key === m) b.classList.add(`${m}-active`);
+                if(b) {
+                    b.className = 'switch-btn';
+                    if(key === m) b.classList.add(`${m}-active`);
+                }
             });
             sync();
         };
