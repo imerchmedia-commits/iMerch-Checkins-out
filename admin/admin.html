@@ -166,7 +166,7 @@
     import { 
         getFirestore, collection, query, orderBy, onSnapshot, getDocs, 
         writeBatch, addDoc, serverTimestamp, updateDoc, doc, setDoc, 
-        Timestamp, deleteDoc, where, limit 
+        Timestamp, deleteDoc, where 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -214,12 +214,10 @@
         markerGroup = L.layerGroup().addTo(map);
     }
 
-    // UPDATED: Plotting now uses logsToShow instead of global masterLogs
     function plotFilteredMarkers(logsToShow) {
         if (!markerGroup) return;
         markerGroup.clearLayers();
         
-        // Pin lang ang pinaka-latest record ng bawat staff sa loob ng filter
         const latestPositions = {};
         [...logsToShow].reverse().forEach(log => {
             if (log.latitude && log.longitude) {
@@ -305,7 +303,8 @@
     }
 
     function loadAdminLogs() {
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(500));
+        // LIMIT REMOVED: Kukunin na lahat ng records para lilitaw ang April 1 pataas
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
         onSnapshot(q, (snap) => {
             masterLogs = snap.docs.map(doc => {
                 const data = doc.data();
@@ -317,7 +316,6 @@
         });
     }
 
-    // --- UPDATED CORE FILTER LOGIC ---
     function applyFilters() {
         const nameVal = document.getElementById('filter-name').value.toLowerCase().trim();
         const dateFromInput = document.getElementById('filter-date-from').value;
@@ -326,34 +324,30 @@
         filteredLogs = masterLogs.filter(log => {
             const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
             const currentEmail = (log.email || "").toLowerCase();
-            
-            // Name Match: If blank, it matches everything (true)
             const matchesName = nameVal === "" || currentName.includes(nameVal) || currentEmail.includes(nameVal);
             
-            // Date Match Logic
             let matchesDate = true;
             if (log.timestamp && log.timestamp.toDate) {
-                const logDate = log.timestamp.toDate();
-                // Strip time for clean comparison
-                const logTime = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
+                const logFullTime = log.timestamp.toDate().getTime();
                 
                 if (dateFromInput) {
-                    const from = new Date(dateFromInput).getTime();
-                    if (logTime < from) matchesDate = false;
+                    const from = new Date(dateFromInput);
+                    from.setHours(0, 0, 0, 0); 
+                    if (logFullTime < from.getTime()) matchesDate = false;
                 }
                 if (dateToInput) {
-                    const to = new Date(dateToInput).getTime();
-                    if (logTime > to) matchesDate = false;
+                    const to = new Date(dateToInput);
+                    to.setHours(23, 59, 59, 999); // FIXED: Sinisigurado na kasama ang logs hanggang dulo ng araw
+                    if (logFullTime > to.getTime()) matchesDate = false;
                 }
             } else if (dateFromInput || dateToInput) {
                 matchesDate = false;
             }
-
             return matchesName && matchesDate;
         });
 
         renderAdminLogs(filteredLogs);
-        plotFilteredMarkers(filteredLogs); // Sinisigurado na pati markers ay updated
+        plotFilteredMarkers(filteredLogs);
     }
 
     document.getElementById('applyFiltersBtn').onclick = (e) => { e.preventDefault(); applyFilters(); };
