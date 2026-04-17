@@ -21,7 +21,6 @@
         .container { max-width: 1200px; margin: auto; }
         .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        /* Dashboard Stats */
         .stats-container { display: flex; gap: 15px; margin-bottom: 20px; }
         .stat-box { flex: 1; background: var(--card); border: 1px solid var(--border); padding: 20px; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--blue); }
         .stat-val { display: block; font-size: 2.2em; font-weight: bold; color: var(--blue); }
@@ -34,9 +33,7 @@
 
         input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 12px; }
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 14px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn:hover { opacity: 0.8; }
-
-        /* Logs List Styling */
+        
         .history-item { padding: 15px; border-bottom: 1px solid var(--border); transition: 0.2s; }
         .history-item:hover { background: rgba(88, 166, 255, 0.05); }
         .history-row { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -74,11 +71,11 @@
     <div id="login-view" style="max-width: 420px; margin: 80px auto;">
         <div class="logo-container"><img src="logo1.png"></div>
         <div class="card">
-            <h2 style="text-align: center; margin-top: 0;">Admin Portal</h2>
+            <h2 style="text-align: center; margin-top: 0;">Admin Portal Access</h2>
             <form id="login-form">
                 <input type="email" id="login-email" placeholder="Admin Email" required>
                 <input type="password" id="login-pass" placeholder="Password" required>
-                <button type="submit" class="btn" style="background: var(--blue); margin-top: 10px;">Login Dashboard</button>
+                <button type="submit" class="btn" style="background: var(--blue); margin-top: 10px;">Sign In to Dashboard</button>
             </form>
         </div>
     </div>
@@ -102,18 +99,18 @@
 
         <div class="admin-grid">
             <div class="admin-sidebar">
-                <h3>Control Panel</h3>
+                <h3>Management</h3>
                 <div class="card">
                     <h4 style="margin-top: 0; color: var(--blue);">Add New Staff</h4>
                     <input type="text" id="new-fullname" placeholder="Full Name">
                     <input type="email" id="new-email" placeholder="Email Address">
-                    <input type="password" id="new-pass" placeholder="Set Password">
+                    <input type="password" id="new-pass" placeholder="Initial Password">
                     <button class="btn" style="background: var(--blue);" id="createAccBtn">✨ Create Account</button>
                 </div>
 
-                <h3>Staff Directory</h3>
+                <h3>Staff List</h3>
                 <div class="card" id="staff-directory-list" style="max-height: 400px; overflow-y: auto;">
-                    <p style="text-align: center; color: #8b949e;">Loading...</p>
+                    <p style="text-align: center; color: #8b949e;">Loading staff...</p>
                 </div>
                 <span class="logout-link" id="logoutLink">🔒 Secure Logout</span>
             </div>
@@ -126,15 +123,15 @@
                     <div class="filter-section">
                         <div class="filter-grid">
                             <div>
-                                <label style="font-size: 0.75em; color: #8b949e;">Search Personnel</label>
-                                <input type="text" id="filter-name" placeholder="Name or Email">
+                                <label style="font-size: 0.75em; color: #8b949e;">Filter Name</label>
+                                <input type="text" id="filter-name" placeholder="Search...">
                             </div>
                             <div>
-                                <label style="font-size: 0.75em; color: #8b949e;">Start Date</label>
+                                <label style="font-size: 0.75em; color: #8b949e;">From</label>
                                 <input type="date" id="filter-date-from">
                             </div>
                             <div>
-                                <label style="font-size: 0.75em; color: #8b949e;">End Date</label>
+                                <label style="font-size: 0.75em; color: #8b949e;">To</label>
                                 <input type="date" id="filter-date-to">
                             </div>
                             <button id="applyFiltersBtn" class="btn" style="background: var(--blue); height: 48px; min-width: 140px;">
@@ -152,11 +149,11 @@
                     </div>
 
                     <div id="log-status" style="margin-bottom: 10px; font-size: 0.85em; color: var(--blue); font-weight: bold;">
-                        Status: Ready. (Includes March & April Data)
+                        Ready. Total records will include March & April data.
                     </div>
 
                     <div id="admin-master-list" style="max-height: 700px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; background: rgba(0,0,0,0.1);">
-                        <p style="text-align: center; padding: 40px; color: #8b949e;">Tap <b>"Sync & Filter"</b> to pull all historical data.</p>
+                        <p style="text-align: center; padding: 40px; color: #8b949e;">Tap <b>"Sync & Filter"</b> to pull all history.</p>
                     </div>
                 </div>
             </div>
@@ -205,7 +202,6 @@
         markerGroup = L.layerGroup().addTo(map);
     }
 
-    // --- STAFF DIRECTORY ---
     async function loadStaffData() {
         const snap = await getDocs(collection(db, "users"));
         const directory = document.getElementById('staff-directory-list');
@@ -215,7 +211,7 @@
             staffMap[data.uid] = { name: data.fullName, email: data.email };
             directory.innerHTML += `
                 <div class="staff-item">
-                    <div style="font-size: 0.9em;"><b>${data.fullName}</b></div>
+                    <div style="font-size: 0.85em;"><b>${data.fullName}</b></div>
                     <button class="geo-btn" style="background:#444; padding:5px 8px;" onclick="deleteStaff('${dDoc.id}', '${data.fullName}')">🗑️</button>
                 </div>`;
         });
@@ -226,12 +222,12 @@
         const name = document.getElementById('new-fullname').value;
         const email = document.getElementById('new-email').value;
         const pass = document.getElementById('new-pass').value;
-        if (!name || !email || !pass) return alert("Fill all fields");
+        if (!name || !email || !pass) return alert("Complete all fields");
         try {
             const res = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
             await addDoc(collection(db, "users"), { uid: res.user.uid, fullName: name, email: email, createdAt: serverTimestamp() });
-            alert("Success! Account created.");
-            location.reload();
+            alert("Staff Account Created!");
+            loadStaffData();
         } catch (e) { alert(e.message); }
     };
 
@@ -239,22 +235,20 @@
         if (confirm(`Delete ${name}?`)) { await deleteDoc(doc(db, "users", id)); loadStaffData(); }
     };
 
-    // --- ATTENDANCE ENGINE (ALL DATA FETCH) ---
     async function syncLogs() {
         const btn = document.getElementById('applyFiltersBtn');
-        const list = document.getElementById('admin-master-list');
         btn.disabled = true;
         btn.innerHTML = '<div class="loading-spinner"></div> Syncing...';
         
         try {
-            // WALANG LIMIT para mahugot lahat ng data from March/April
+            // ALL RECORDS (March, April, etc)
             const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
             const snap = await getDocs(q);
             masterLogs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
             updatePresentToday();
             applyFilters();
-        } catch (e) { alert("Sync Error: " + e.message); }
+        } catch (e) { alert("Error: " + e.message); }
         finally {
             btn.disabled = false;
             btn.innerHTML = '🔍 Sync & Filter';
@@ -286,7 +280,6 @@
             return currentName.includes(nameVal) && dateMatch;
         });
 
-        document.getElementById('log-status').innerText = `Displaying ${filtered.length} total records.`;
         renderLogs(filtered);
         plotMarkers(filtered);
     }
@@ -297,28 +290,26 @@
         
         data.forEach(d => {
             const dt = d.timestamp?.toDate() || new Date();
-            // FORMAT: Month Name (e.g., April 17, 2026)
             const dateStr = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             const timeStr = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const name = staffMap[d.uid]?.name || d.fullName || "Unknown";
             
             const item = document.createElement('div');
             item.className = 'history-item';
             item.innerHTML = `
                 <div class="history-row">
                     <div>
-                        <b style="color:var(--blue); font-size:1.1em;">${name}</b><br>
+                        <b style="color:var(--blue); font-size:1.1em;">${staffMap[d.uid]?.name || d.fullName}</b><br>
                         <small style="color:#8b949e;">${dateStr} • ${timeStr}</small>
                     </div>
                     <button class="geo-btn" onclick="zoomTo(${d.latitude}, ${d.longitude})">📍 Map</button>
                 </div>
-                <div class="history-row" style="margin-top:8px; align-items:center;">
+                <div class="history-row" style="margin-top:8px;">
                     <span>
                         <b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> 
                         <span style="margin-left:5px;">${d.locationName || 'No Location'}</span>
                     </span>
                 </div>
-                <div class="coords-text">Coord: ${d.latitude || '0.0'}, ${d.longitude || '0.0'}</div>
+                <div class="coords-text">Coord: ${d.latitude || '0'}, ${d.longitude || '0'}</div>
                 <div class="remarks-text">Remarks: ${d.remarks || 'None'}</div>
             `;
             list.appendChild(item);
@@ -336,22 +327,21 @@
 
     window.zoomTo = (lat, lng) => { if(lat && lng) { map.setView([lat, lng], 17); window.scrollTo({top:0, behavior:'smooth'}); } };
 
-    // --- SYSTEM OPERATIONS (BACKUP, RESTORE, EXPORT, WIPE) ---
     document.getElementById('applyFiltersBtn').onclick = syncLogs;
 
     document.getElementById('exportBtn').onclick = () => {
-        let csv = "Name,Date,Time,Action,Location,Latitude,Longitude,Remarks\n";
+        let csv = "Name,Date,Time,Action,Location,Lat,Lng,Remarks\n";
         masterLogs.forEach(d => {
             const dt = d.timestamp?.toDate() || new Date();
             const dStr = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-            csv += `"${staffMap[d.uid]?.name || d.fullName}","${dStr}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude || ''}","${d.longitude || ''}","${d.remarks || ''}"\n`;
+            csv += `"${staffMap[d.uid]?.name || d.fullName}","${dStr}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${d.remarks || ''}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `iMerch_Full_Report.csv`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `iMerch_Export.csv`; a.click();
     };
 
     document.getElementById('archiveBtn').onclick = () => {
-        const backup = { data: masterLogs, date: new Date().toISOString() };
+        const backup = { data: masterLogs, timestamp: new Date().toISOString() };
         const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "iMerch_Backup.json"; a.click();
     };
@@ -364,10 +354,7 @@
             try {
                 const json = JSON.parse(ev.target.result);
                 const batch = writeBatch(db);
-                json.data.forEach(log => {
-                    const ref = doc(collection(db, "attendance"));
-                    batch.set(ref, log);
-                });
+                json.data.forEach(log => { batch.set(doc(collection(db, "attendance")), log); });
                 await batch.commit(); alert("Data Restored!"); syncLogs();
             } catch (err) { alert("Format Error"); }
         };
@@ -375,16 +362,15 @@
     };
 
     document.getElementById('wipeLogsBtn').onclick = async () => {
-        if (!confirm("BURAHIN LAHAT NG LOGS? Sigurado ka ba?")) return;
+        if (!confirm("BURAHIN LAHAT?")) return;
         const pass = prompt("Type 'DELETE ALL' to confirm:");
         if (pass !== "DELETE ALL") return;
         const snap = await getDocs(collection(db, "attendance"));
         const batch = writeBatch(db);
         snap.forEach(d => batch.delete(d.ref));
-        await batch.commit(); alert("Database Wiped."); syncLogs();
+        await batch.commit(); alert("Cleared."); syncLogs();
     };
 
-    // --- AUTH ---
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('login-view').classList.add('hidden');
