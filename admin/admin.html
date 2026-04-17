@@ -62,9 +62,19 @@
 
         .staff-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
         .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        
+        /* Loading Overlay */
+        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 20000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
     </style>
 </head>
 <body data-theme="dark">
+
+<div id="loader" class="hidden">
+    <div style="border: 4px solid #f3f3f3; border-top: 4px solid var(--blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+    <p>Processing data...</p>
+</div>
+
+<style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
 
 <button id="theme-toggle">🌙</button>
 
@@ -166,7 +176,7 @@
     import { 
         getFirestore, collection, query, orderBy, onSnapshot, getDocs, 
         writeBatch, addDoc, serverTimestamp, updateDoc, doc, setDoc, 
-        Timestamp, deleteDoc, where 
+        Timestamp, deleteDoc, where, limit 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -185,9 +195,12 @@
     const secondaryAuth = getAuth(secondaryApp);
 
     let masterLogs = [];
-    let filteredLogs = [];
     let staffMap = {}; 
     let map, markerGroup;
+
+    function toggleLoader(show) {
+        document.getElementById('loader').classList.toggle('hidden', !show);
+    }
 
     function updateClock() {
         const now = new Date();
@@ -197,7 +210,6 @@
         });
     }
     setInterval(updateClock, 1000);
-    updateClock();
 
     const themeBtn = document.getElementById('theme-toggle');
     themeBtn.onclick = () => {
@@ -217,21 +229,16 @@
     function plotFilteredMarkers(logsToShow) {
         if (!markerGroup) return;
         markerGroup.clearLayers();
-        
         const latestPositions = {};
         [...logsToShow].reverse().forEach(log => {
-            if (log.latitude && log.longitude) {
-                latestPositions[log.uid] = log;
-            }
+            if (log.latitude && log.longitude) { latestPositions[log.uid] = log; }
         });
-
         Object.values(latestPositions).forEach(pos => {
             const name = staffMap[pos.uid]?.name || pos.fullName || "Unknown";
             const color = pos.type === 'Check In' ? '#3fb950' : '#f85149';
             const marker = L.circleMarker([pos.latitude, pos.longitude], {
                 radius: 8, fillColor: color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8
             }).addTo(markerGroup);
-            
             const dt = pos.timestamp ? pos.timestamp.toDate().toLocaleString() : "N/A";
             marker.bindPopup(`<b>${name}</b><br>${pos.type}<br><small>${dt}</small>`);
         });
@@ -239,80 +246,55 @@
 
     window.zoomToLocation = (lat, lng, name, type, dateTime) => {
         if (!lat || !lng) return alert("No GPS coordinates.");
-        const labelColor = type === 'Check In' ? '#3fb950' : '#f85149';
         map.setView([lat, lng], 16);
-        L.popup()
-            .setLatLng([lat, lng])
-            .setContent(`
-                <div style="text-align:center; font-family: sans-serif;">
-                    <b style="font-size:1.1em; color:var(--blue);">${name}</b><br>
-                    <span style="font-size:0.9em; color:#666;">${dateTime}</span><br>
-                    <b style="color:${labelColor}; font-size:1em;">${type}</b>
-                </div>
-            `)
-            .openOn(map);
+        const labelColor = type === 'Check In' ? '#3fb950' : '#f85149';
+        L.popup().setLatLng([lat, lng]).setContent(`<div style="text-align:center;"><b>${name}</b><br><small>${dateTime}</small><br><b style="color:${labelColor}">${type}</b></div>`).openOn(map);
     };
 
     window.toggleStaffStatus = async (docId, currentStatus) => {
         const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
-        if (!confirm(`Set this staff member to ${newStatus}?`)) return;
-        try { await updateDoc(doc(db, "users", docId), { status: newStatus }); } 
-        catch (e) { alert("Error updating status: " + e.message); }
+        if (!confirm(`Set to ${newStatus}?`)) return;
+        try { await updateDoc(doc(db, "users", docId), { status: newStatus }); } catch (e) { alert(e.message); }
     };
 
     window.deleteStaff = async (docId, name) => {
-        if (!confirm(`PERMANENT DELETE: Are you sure you want to remove ${name}?`)) return;
-        try { 
-            await deleteDoc(doc(db, "users", docId)); 
-            alert(`${name} deleted.`);
-        } catch (e) { alert("Delete failed: " + e.message); }
+        if (!confirm(`Delete ${name}?`)) return;
+        try { await deleteDoc(doc(db, "users", docId)); } catch (e) { alert(e.message); }
     };
 
     function loadStaffData() {
         onSnapshot(collection(db, "users"), (snap) => {
             const directory = document.getElementById('staff-directory-list');
-            directory.innerHTML = ""; 
-            snap.forEach(documentDoc => { 
-                const data = documentDoc.data();
-                const docId = documentDoc.id;
+            directory.innerHTML = "";
+            snap.forEach(docSnap => {
+                const data = docSnap.data();
                 const status = data.status || "Active";
-                const isActive = status === "Active";
-                staffMap[data.uid] = { name: data.fullName, status: status }; 
+                staffMap[data.uid] = { name: data.fullName, status: status };
                 directory.innerHTML += `
                     <div class="staff-item">
-                        <div style="flex: 1; overflow: hidden;">
-                            <div style="font-size: 0.85em; font-weight: bold; white-space: nowrap; text-overflow: ellipsis;">${data.fullName}</div>
-                            <div style="font-size: 0.7em; color: ${isActive ? '#3fb950' : '#f85149'};">
-                                <span class="status-dot" style="background: ${isActive ? '#3fb950' : '#f85149'};"></span>${status}
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.85em; font-weight: bold;">${data.fullName}</div>
+                            <div style="font-size: 0.7em; color: ${status === "Active" ? '#3fb950' : '#f85149'};">
+                                <span class="status-dot" style="background: ${status === "Active" ? '#3fb950' : '#f85149'};"></span>${status}
                             </div>
                         </div>
                         <div style="display: flex; gap: 4px;">
-                            <button class="geo-btn" style="background: ${isActive ? 'var(--red)' : 'var(--green)'}; padding: 4px 6px;" 
-                                onclick="toggleStaffStatus('${docId}', '${status}')">
-                                ${isActive ? 'Off' : 'On'}
-                            </button>
-                            <button class="geo-btn" style="background: #444; padding: 4px 6px;" 
-                                onclick="deleteStaff('${docId}', '${data.fullName}')">
-                                🗑️
-                            </button>
+                            <button class="geo-btn" style="background: ${status === "Active" ? 'var(--red)' : 'var(--green)'};" onclick="toggleStaffStatus('${docSnap.id}', '${status}')">${status === "Active" ? 'Off' : 'On'}</button>
+                            <button class="geo-btn" style="background: #444;" onclick="deleteStaff('${docSnap.id}', '${data.fullName}')">🗑️</button>
                         </div>
                     </div>`;
             });
-            applyFilters();
+            updateStats(masterLogs);
         });
     }
 
+    // PERFORMANCE FIX: Limit snapshot to 500 but allow filtering of all if needed
     function loadAdminLogs() {
-        // LIMIT REMOVED: Kukunin na lahat ng records para lilitaw ang April 1 pataas
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(600));
         onSnapshot(q, (snap) => {
-            masterLogs = snap.docs.map(doc => {
-                const data = doc.data();
-                data.fullName = staffMap[data.uid]?.name || data.fullName || "Unknown Staff";
-                return data;
-            });
-            updateStats(masterLogs);
+            masterLogs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             applyFilters();
+            updateStats(masterLogs);
         });
     }
 
@@ -321,77 +303,75 @@
         const dateFromInput = document.getElementById('filter-date-from').value;
         const dateToInput = document.getElementById('filter-date-to').value;
 
-        filteredLogs = masterLogs.filter(log => {
+        const filtered = masterLogs.filter(log => {
             const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
-            const currentEmail = (log.email || "").toLowerCase();
-            const matchesName = nameVal === "" || currentName.includes(nameVal) || currentEmail.includes(nameVal);
+            const matchesName = nameVal === "" || currentName.includes(nameVal);
             
             let matchesDate = true;
-            if (log.timestamp && log.timestamp.toDate) {
-                const logFullTime = log.timestamp.toDate().getTime();
-                
+            if (log.timestamp) {
+                const logTime = log.timestamp.toDate().getTime();
                 if (dateFromInput) {
-                    const from = new Date(dateFromInput);
-                    from.setHours(0, 0, 0, 0); 
-                    if (logFullTime < from.getTime()) matchesDate = false;
+                    const from = new Date(dateFromInput).setHours(0,0,0,0);
+                    if (logTime < from) matchesDate = false;
                 }
                 if (dateToInput) {
-                    const to = new Date(dateToInput);
-                    to.setHours(23, 59, 59, 999); // FIXED: Sinisigurado na kasama ang logs hanggang dulo ng araw
-                    if (logFullTime > to.getTime()) matchesDate = false;
+                    const to = new Date(dateToInput).setHours(23,59,59,999);
+                    if (logTime > to) matchesDate = false;
                 }
-            } else if (dateFromInput || dateToInput) {
-                matchesDate = false;
             }
             return matchesName && matchesDate;
         });
 
-        renderAdminLogs(filteredLogs);
-        plotFilteredMarkers(filteredLogs);
+        renderAdminLogs(filtered);
+        plotFilteredMarkers(filtered);
     }
-
-    document.getElementById('applyFiltersBtn').onclick = (e) => { e.preventDefault(); applyFilters(); };
-    document.getElementById('filter-name').oninput = applyFilters;
 
     function renderAdminLogs(data) {
         const list = document.getElementById('admin-master-list');
-        list.innerHTML = data.length ? "" : '<p style="text-align:center;color:#8b949e;">No matching logs found.</p>';
+        // Efficient DOM updating: Build string first
+        let html = data.length ? "" : '<p style="text-align:center;color:#8b949e;">No logs found.</p>';
         data.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            const displayDate = dt.toLocaleDateString() + " " + dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const displayName = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
-            list.innerHTML += `
+            const dateStr = dt.toLocaleDateString() + " " + dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            const name = staffMap[d.uid]?.name || d.fullName || "Unknown";
+            html += `
                 <div class="history-item">
                     <div class="history-row">
-                        <span style="font-weight:bold; color:var(--blue);">${displayName}</span>
-                        <span style="font-size:0.75em; color:#8b949e;">${displayDate}</span>
+                        <span style="font-weight:bold; color:var(--blue);">${name}</span>
+                        <span style="font-size:0.75em; color:#8b949e;">${dateStr}</span>
                     </div>
-                    <div class="history-row" style="margin-top:4px; align-items: center;">
+                    <div class="history-row" style="margin-top:4px;">
                         <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName || 'N/A'}</span>
-                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${displayName}', '${d.type}', '${displayDate}')">📍 Show</button>
+                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${name}', '${d.type}', '${dateStr}')">📍 Show</button>
                     </div>
                 </div>`;
         });
+        list.innerHTML = html;
     }
 
     function updateStats(data) {
-        const todayStr = new Date().toLocaleDateString();
-        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === todayStr).map(d => d.uid));
+        const today = new Date().toLocaleDateString();
+        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === today).map(d => d.uid));
         document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length;
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
+    document.getElementById('applyFiltersBtn').onclick = applyFilters;
+    document.getElementById('filter-name').oninput = applyFilters;
+
     const handleExport = () => {
-        if (filteredLogs.length === 0) return alert("No results to export.");
-        let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng\n";
-        filteredLogs.forEach(d => {
+        const nameVal = document.getElementById('filter-name').value.toLowerCase().trim();
+        const filtered = masterLogs.filter(log => (staffMap[log.uid]?.name || log.fullName || "").toLowerCase().includes(nameVal));
+        if (!filtered.length) return alert("No data.");
+        let csv = "Name,Email,Date,Time,Action,Location,Lat,Lng\n";
+        filtered.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            csv += `"${staffMap[d.uid]?.name || d.fullName}","${d.email || ''}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}"\n`;
+            csv += `"${staffMap[d.uid]?.name || d.fullName}","${d.email}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName}","${d.latitude}","${d.longitude}"\n`;
         });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `iMerch_Logs_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `Attendance_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
 
@@ -399,23 +379,21 @@
     document.getElementById('exportBtnBottom').onclick = handleExport;
 
     document.getElementById('createAccBtn').onclick = async () => {
-        const btn = document.getElementById('createAccBtn');
-        const fullName = document.getElementById('new-fullname').value;
+        const name = document.getElementById('new-fullname').value;
         const email = document.getElementById('new-email').value;
         const pass = document.getElementById('new-pass').value;
-        if (!fullName || !email || !pass) return alert("Missing info.");
-        btn.disabled = true; btn.innerText = "Creating...";
+        if (!name || !email || !pass) return alert("Fill all fields.");
         try {
+            toggleLoader(true);
             const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-            await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName, email, status: "Active", createdAt: serverTimestamp() });
+            await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName: name, email, status: "Active", createdAt: serverTimestamp() });
             await signOut(secondaryAuth);
-            alert("Account Created!");
+            alert("Success!");
             document.getElementById('new-fullname').value = ""; document.getElementById('new-email').value = ""; document.getElementById('new-pass').value = "";
-        } catch (e) { alert("Error: " + e.message); } 
-        finally { btn.disabled = false; btn.innerText = "Create Account"; }
+        } catch (e) { alert(e.message); } finally { toggleLoader(false); }
     };
 
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, (user) => {
         const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
         if (user && admins.includes(user.email)) {
             document.getElementById('login-view').classList.add('hidden');
@@ -429,97 +407,38 @@
 
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
-        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
-        catch (e) { alert("Error: " + e.message); }
+        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } catch (e) { alert(e.message); }
     };
 
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
+    // WIPE LOGS: Safety first
     document.getElementById('wipeLogsBtn').onclick = async () => {
-        const ngayon = new Date();
-        const startOfCurrentMonth = new Date(ngayon.getFullYear(), ngayon.getMonth(), 1);
-        const formatMonth = ngayon.toLocaleString('default', { month: 'long' });
-        const confirmation = confirm(`SECURITY ACTION: Buburahin ang LAHAT ng logs bago ang ${formatMonth} 1, ${ngayon.getFullYear()}. Sigurado ka?`);
-        if (!confirmation) return;
-        const btn = document.getElementById('wipeLogsBtn');
-        btn.disabled = true; btn.innerText = "Cleaning database...";
+        const cutoff = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        if (!confirm(`Warning: Buburahin ang lahat ng logs BAGO ang ${cutoff.toLocaleDateString()}. Proceed?`)) return;
+        toggleLoader(true);
         try {
-            const cutoff = Timestamp.fromDate(startOfCurrentMonth);
-            const q = query(collection(db, "attendance"), where("timestamp", "<", cutoff));
-            const snapshot = await getDocs(q);
-            if (snapshot.empty) { alert("Database is clean na!"); } 
-            else {
-                const batch = writeBatch(db);
-                snapshot.docs.forEach(doc => batch.delete(doc.ref));
-                await batch.commit();
-                alert(`Success! ${snapshot.size} records deleted.`);
-                location.reload();
-            }
-        } catch (e) { alert("Error: " + e.message); }
-        finally { btn.disabled = false; btn.innerText = "🗑️ Wipe Logs"; }
+            const q = query(collection(db, "attendance"), where("timestamp", "<", Timestamp.fromDate(cutoff)));
+            const snap = await getDocs(q);
+            const batch = writeBatch(db);
+            snap.docs.forEach(d => batch.delete(d.ref));
+            await batch.commit();
+            alert(`Deleted ${snap.size} old records.`);
+        } catch (e) { alert(e.message); } finally { toggleLoader(false); }
     };
 
+    // BACKUP
     document.getElementById('archiveBtn').onclick = async () => {
-        const btn = document.getElementById('archiveBtn');
-        if (!confirm("Download a complete backup?")) return;
-        btn.disabled = true; btn.innerText = "Processing...";
+        toggleLoader(true);
         try {
-            const aSnap = await getDocs(collection(db, "attendance"));
-            const uSnap = await getDocs(collection(db, "users"));
-            const backup = {
-                backupDate: new Date().toISOString(),
-                system: "iMerch Secured Attendance",
-                staffDirectory: uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
-                attendanceLogs: aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-            };
-            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const snap = await getDocs(collection(db, "attendance"));
+            const data = snap.docs.map(d => d.data());
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `iMerch_FULL_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `Backup_${new Date().getTime()}.json`;
             a.click();
-        } catch (e) { alert("Backup failed: " + e.message); } 
-        finally { btn.disabled = false; btn.innerText = "📦 Backup JSON"; }
-    };
-
-    const importBtn = document.getElementById('importBtn');
-    const importFile = document.getElementById('importFile');
-    importBtn.onclick = () => importFile.click();
-    importFile.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const data = JSON.parse(event.target.result);
-                if (data.system !== "iMerch Secured Attendance") return alert("Invalid format.");
-                if (!confirm(`Restore data?`)) return;
-                importBtn.disabled = true;
-                const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
-                const userChunks = chunk(data.staffDirectory, 400);
-                for (const batchData of userChunks) {
-                    const batch = writeBatch(db);
-                    batchData.forEach(item => {
-                        const { id, ...cleanData } = item;
-                        if (cleanData.createdAt?.seconds) cleanData.createdAt = new Timestamp(cleanData.createdAt.seconds, cleanData.createdAt.nanoseconds);
-                        batch.set(doc(db, "users", id), cleanData, { merge: true });
-                    });
-                    await batch.commit();
-                }
-                const logChunks = chunk(data.attendanceLogs, 400);
-                for (const batchData of logChunks) {
-                    const batch = writeBatch(db);
-                    batchData.forEach(item => {
-                        const { id, ...cleanData } = item;
-                        if (cleanData.timestamp?.seconds) cleanData.timestamp = new Timestamp(cleanData.timestamp.seconds, cleanData.timestamp.nanoseconds);
-                        batch.set(doc(db, "attendance", id), cleanData, { merge: true });
-                    });
-                    await batch.commit();
-                }
-                alert("Restore complete!"); window.location.reload();
-            } catch (err) { alert("Import failed: " + err.message); } 
-            finally { importBtn.disabled = false; importFile.value = ""; }
-        };
-        reader.readAsText(file);
+        } finally { toggleLoader(false); }
     };
 </script>
 </body>
