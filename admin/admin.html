@@ -214,12 +214,15 @@
         markerGroup = L.layerGroup().addTo(map);
     }
 
-    function plotAllStaff() {
+    // UPDATED: Plotting now uses logsToShow instead of global masterLogs
+    function plotFilteredMarkers(logsToShow) {
         if (!markerGroup) return;
         markerGroup.clearLayers();
+        
+        // Pin lang ang pinaka-latest record ng bawat staff sa loob ng filter
         const latestPositions = {};
-        masterLogs.forEach(log => {
-            if (!latestPositions[log.uid] && log.latitude && log.longitude) {
+        [...logsToShow].reverse().forEach(log => {
+            if (log.latitude && log.longitude) {
                 latestPositions[log.uid] = log;
             }
         });
@@ -230,7 +233,9 @@
             const marker = L.circleMarker([pos.latitude, pos.longitude], {
                 radius: 8, fillColor: color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8
             }).addTo(markerGroup);
-            marker.bindPopup(`<b>${name}</b><br>${pos.type}<br><small>${pos.timestamp?.toDate().toLocaleString()}</small>`);
+            
+            const dt = pos.timestamp ? pos.timestamp.toDate().toLocaleString() : "N/A";
+            marker.bindPopup(`<b>${name}</b><br>${pos.type}<br><small>${dt}</small>`);
         });
     }
 
@@ -300,7 +305,7 @@
     }
 
     function loadAdminLogs() {
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(200));
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(500));
         onSnapshot(q, (snap) => {
             masterLogs = snap.docs.map(doc => {
                 const data = doc.data();
@@ -309,10 +314,10 @@
             });
             updateStats(masterLogs);
             applyFilters();
-            plotAllStaff();
         });
     }
 
+    // --- UPDATED CORE FILTER LOGIC ---
     function applyFilters() {
         const nameVal = document.getElementById('filter-name').value.toLowerCase().trim();
         const dateFromInput = document.getElementById('filter-date-from').value;
@@ -321,11 +326,17 @@
         filteredLogs = masterLogs.filter(log => {
             const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
             const currentEmail = (log.email || "").toLowerCase();
-            const matchesName = currentName.includes(nameVal) || currentEmail.includes(nameVal);
+            
+            // Name Match: If blank, it matches everything (true)
+            const matchesName = nameVal === "" || currentName.includes(nameVal) || currentEmail.includes(nameVal);
+            
+            // Date Match Logic
             let matchesDate = true;
             if (log.timestamp && log.timestamp.toDate) {
                 const logDate = log.timestamp.toDate();
+                // Strip time for clean comparison
                 const logTime = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
+                
                 if (dateFromInput) {
                     const from = new Date(dateFromInput).getTime();
                     if (logTime < from) matchesDate = false;
@@ -334,10 +345,15 @@
                     const to = new Date(dateToInput).getTime();
                     if (logTime > to) matchesDate = false;
                 }
+            } else if (dateFromInput || dateToInput) {
+                matchesDate = false;
             }
+
             return matchesName && matchesDate;
         });
+
         renderAdminLogs(filteredLogs);
+        plotFilteredMarkers(filteredLogs); // Sinisigurado na pati markers ay updated
     }
 
     document.getElementById('applyFiltersBtn').onclick = (e) => { e.preventDefault(); applyFilters(); };
@@ -425,31 +441,24 @@
 
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
-    // --- AUTOMATIC MONTHLY WIPE LOGIC (Updated to be Dynamic) ---
     document.getElementById('wipeLogsBtn').onclick = async () => {
         const ngayon = new Date();
-        // Set cutoff to the 1st of the CURRENT month at 12:00 AM
         const startOfCurrentMonth = new Date(ngayon.getFullYear(), ngayon.getMonth(), 1);
         const formatMonth = ngayon.toLocaleString('default', { month: 'long' });
-
-        const confirmation = confirm(`SECURITY ACTION: Buburahin ang LAHAT ng logs bago ang ${formatMonth} 1, ${ngayon.getFullYear()}. Ang matitira lang ay records ngayong buwan. Sigurado ka?`);
+        const confirmation = confirm(`SECURITY ACTION: Buburahin ang LAHAT ng logs bago ang ${formatMonth} 1, ${ngayon.getFullYear()}. Sigurado ka?`);
         if (!confirmation) return;
-
         const btn = document.getElementById('wipeLogsBtn');
         btn.disabled = true; btn.innerText = "Cleaning database...";
-
         try {
             const cutoff = Timestamp.fromDate(startOfCurrentMonth);
             const q = query(collection(db, "attendance"), where("timestamp", "<", cutoff));
             const snapshot = await getDocs(q);
-
-            if (snapshot.empty) {
-                alert(`Database is na-clean na! Walang records bago ang ${formatMonth} 1.`);
-            } else {
+            if (snapshot.empty) { alert("Database is clean na!"); } 
+            else {
                 const batch = writeBatch(db);
                 snapshot.docs.forEach(doc => batch.delete(doc.ref));
                 await batch.commit();
-                alert(`Success! ${snapshot.size} lumang records (bago ang ${formatMonth} 1) ang nabura.`);
+                alert(`Success! ${snapshot.size} records deleted.`);
                 location.reload();
             }
         } catch (e) { alert("Error: " + e.message); }
@@ -481,7 +490,6 @@
     const importBtn = document.getElementById('importBtn');
     const importFile = document.getElementById('importFile');
     importBtn.onclick = () => importFile.click();
-
     importFile.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -490,12 +498,9 @@
             try {
                 const data = JSON.parse(event.target.result);
                 if (data.system !== "iMerch Secured Attendance") return alert("Invalid format.");
-                if (!confirm(`Restore ${data.staffDirectory.length} staff and ${data.attendanceLogs.length} logs?`)) return;
-                
+                if (!confirm(`Restore data?`)) return;
                 importBtn.disabled = true;
                 const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
-                
-                // Restore Staff
                 const userChunks = chunk(data.staffDirectory, 400);
                 for (const batchData of userChunks) {
                     const batch = writeBatch(db);
@@ -506,8 +511,6 @@
                     });
                     await batch.commit();
                 }
-                
-                // Restore Logs
                 const logChunks = chunk(data.attendanceLogs, 400);
                 for (const batchData of logChunks) {
                     const batch = writeBatch(db);
@@ -518,9 +521,7 @@
                     });
                     await batch.commit();
                 }
-                
-                alert("Restore complete!");
-                window.location.reload();
+                alert("Restore complete!"); window.location.reload();
             } catch (err) { alert("Import failed: " + err.message); } 
             finally { importBtn.disabled = false; importFile.value = ""; }
         };
