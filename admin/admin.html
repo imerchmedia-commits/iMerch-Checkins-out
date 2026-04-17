@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iMerch Admin - Master Control Panel</title>
+    <title>iMerch Admin - Master Control Panel (With Remarks)</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -46,6 +46,8 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
+
+        h2, h3 { margin-top: 0; color: var(--blue); }
 
         .stats-row { display: flex; gap: 15px; margin-bottom: 20px; }
         .stat-box {
@@ -99,8 +101,11 @@
         .btn:hover { opacity: 0.8; }
 
         .history-item {
-            padding: 12px;
+            padding: 15px;
             border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            margin-bottom: 5px;
+            border-radius: 6px;
         }
 
         .badge {
@@ -118,6 +123,16 @@
             align-items: center;
             padding: 8px 0;
             border-bottom: 1px solid var(--border);
+        }
+
+        .remarks-box {
+            background: rgba(88, 166, 255, 0.1);
+            border-left: 3px solid var(--blue);
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 13px;
+            font-style: italic;
+            color: #d1d5db;
         }
 
         .hidden { display: none !important; }
@@ -152,7 +167,7 @@
             <form id="login-form">
                 <input type="email" id="login-email" placeholder="Email" required>
                 <input type="password" id="login-pass" placeholder="Password" required>
-                <button type="submit" class="btn" style="background: var(--blue);">Access Panel</button>
+                <button type="submit" class="btn" style="background: var(--blue);">Login to Panel</button>
             </form>
         </div>
     </div>
@@ -160,45 +175,45 @@
     <div id="admin-view" class="hidden">
         <header style="text-align: center; margin-bottom: 20px;">
             <img src="logo1.png" style="max-width: 120px;">
-            <div id="live-clock" style="font-weight: bold; color: var(--blue); margin-top: 5px;"></div>
+            <div id="live-clock" style="font-weight: bold; color: var(--blue);"></div>
         </header>
 
         <div class="stats-row">
-            <div class="stat-box"><span id="stat-total-staff">0</span><small>Registered Employees</small></div>
-            <div class="stat-box"><span id="stat-filtered-count" style="color: var(--green);">0</span><small>Filtered Logs</small></div>
+            <div class="stat-box"><span id="stat-total-staff">0</span><small>Registered Staff</small></div>
+            <div class="stat-box"><span id="stat-filtered-count" style="color: var(--green);">0</span><small>Filtered Records</small></div>
         </div>
 
         <div class="admin-layout">
             <aside>
                 <div class="card">
-                    <h3>➕ Add Staff</h3>
+                    <h3>➕ Create Staff</h3>
                     <input type="text" id="add-fullname" placeholder="Full Name">
                     <input type="email" id="add-email" placeholder="Email Address">
                     <input type="password" id="add-pass" placeholder="Password">
-                    <button id="btn-create-staff" class="btn" style="background: var(--blue);">Create Account</button>
+                    <button id="btn-create-staff" class="btn" style="background: var(--blue);">Add Employee</button>
                 </div>
                 <div class="card">
-                    <h3>👥 Staff Directory</h3>
+                    <h3>👥 Directory</h3>
                     <div id="staff-list" style="max-height: 250px; overflow-y: auto;"></div>
                 </div>
-                <button id="btn-logout" class="btn" style="background: #444;">🚪 Logout</button>
+                <button id="btn-logout" class="btn" style="background: #444;">🚪 Sign Out</button>
             </aside>
 
             <main>
                 <div id="map"></div>
                 <div class="card">
-                    <h3>🔍 Manual Cutoff Filtering</h3>
+                    <h3>🔍 Strict Cutoff Filtering</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 15px;">
                         <div>
-                            <label style="font-size: 11px;">Filter by Name</label>
+                            <label style="font-size: 11px; color: var(--blue);">Search Employee</label>
                             <input type="text" id="f-name-input" placeholder="Name...">
                         </div>
                         <div>
-                            <label style="font-size: 11px;">Start Date</label>
+                            <label style="font-size: 11px; color: var(--blue);">From Date</label>
                             <input type="date" id="f-date-from">
                         </div>
                         <div>
-                            <label style="font-size: 11px;">End Date</label>
+                            <label style="font-size: 11px; color: var(--blue);">To Date</label>
                             <input type="date" id="f-date-to">
                         </div>
                         <button id="btn-apply-filter" class="btn" style="background: var(--blue); margin: 0; height: 42px; align-self: end;">Apply Filter</button>
@@ -207,16 +222,16 @@
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
                         <button id="btn-export-1" class="btn" style="background: var(--green); flex: 1;">📊 Export Selection</button>
                         <button id="btn-backup" class="btn" style="background: var(--yellow); flex: 1;">📦 Backup JSON</button>
-                        <button id="btn-restore" class="btn" style="background: var(--purple); flex: 1;">📥 Restore Backup</button>
+                        <button id="btn-restore" class="btn" style="background: var(--purple); flex: 1;">📥 Restore</button>
                         <button id="btn-wipe" class="btn" style="background: var(--red); flex: 1;">🗑️ Wipe All Logs</button>
                     </div>
-                    <input type="file" id="restore-file-input" class="hidden" accept=".json">
+                    <input type="file" id="restore-file-input" class="hidden">
 
-                    <div id="log-results" style="max-height: 500px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
-                        <p style="text-align: center; color: #8b949e; padding: 20px;">Set date range to display records...</p>
+                    <div id="log-results" style="max-height: 500px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 10px;">
+                        <p style="text-align: center; color: #8b949e; padding: 20px;">Ready for filtering...</p>
                     </div>
 
-                    <button id="btn-export-2" class="btn" style="background: var(--green); margin-top: 15px;">📊 Download Full CSV Result</button>
+                    <button id="btn-export-2" class="btn" style="background: var(--green); margin-top: 15px;">📊 Download Full CSV Results</button>
                 </div>
             </main>
         </div>
@@ -226,7 +241,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch, addDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, getDocs, writeBatch, addDoc, doc, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -240,19 +255,20 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-    const sAuth = getAuth(initializeApp(firebaseConfig, "Secondary"));
+    const secondaryAuth = getAuth(initializeApp(firebaseConfig, "Secondary"));
 
     let allLogs = [], filteredData = [], staffNames = {}, map, markerLayer;
 
-    // Clock
+    // Live Clock
     setInterval(() => {
-        document.getElementById('live-clock').innerText = new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('live-clock').innerText = new Date().toLocaleString('en-PH');
     }, 1000);
 
-    // Theme
+    // Theme Toggle
     document.getElementById('theme-btn').onclick = () => {
         const body = document.body;
-        const next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        const current = body.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
         body.setAttribute('data-theme', next);
         document.getElementById('theme-btn').innerText = next === 'dark' ? '🌙' : '☀️';
     };
@@ -265,6 +281,7 @@
         }
     }
 
+    // Load Staff Directory
     function loadStaff() {
         onSnapshot(collection(db, "users"), (snap) => {
             const listEl = document.getElementById('staff-list');
@@ -275,16 +292,16 @@
                 listEl.innerHTML += `
                     <div class="staff-item">
                         <span>${data.fullName}</span>
-                        <button onclick="delStaff('${d.id}')" style="background:none; border:none; color:var(--red); cursor:pointer;">🗑️</button>
+                        <button onclick="delUser('${d.id}')" style="background:none; border:none; color:var(--red); cursor:pointer;">🗑️</button>
                     </div>
                 `;
             });
             document.getElementById('stat-total-staff').innerText = snap.size;
         });
     }
+    window.delUser = async (id) => { if(confirm("Delete staff?")) await deleteDoc(doc(db, "users", id)); };
 
-    window.delStaff = async (id) => { if (confirm("Delete this staff member?")) await deleteDoc(doc(db, "users", id)); };
-
+    // Load All Logs
     function loadLogs() {
         onSnapshot(query(collection(db, "attendance"), orderBy("timestamp", "desc")), (snap) => {
             allLogs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -292,88 +309,96 @@
         });
     }
 
-    // STRICT PHILIPPINE TIME FILTER
+    // STRICT FILTER LOGIC (PH TIME)
     function executeFiltering() {
-        const searchName = document.getElementById('f-name-input').value.toLowerCase();
-        const dateFrom = document.getElementById('f-date-from').value;
-        const dateTo = document.getElementById('f-date-to').value;
+        const nameQuery = document.getElementById('f-name-input').value.toLowerCase();
+        const start = document.getElementById('f-date-from').value;
+        const end = document.getElementById('f-date-to').value;
 
         filteredData = allLogs.filter(log => {
             const empName = (staffNames[log.uid] || log.fullName || "Unknown").toLowerCase();
-            let isDateMatch = true;
+            let dateMatch = true;
 
             if (log.timestamp) {
                 const ts = log.timestamp.toDate();
-                // Extract local date components manually to avoid UTC offset issues
-                const y = ts.getFullYear();
-                const m = String(ts.getMonth() + 1).padStart(2, '0');
-                const d = String(ts.getDate()).padStart(2, '0');
-                const localStr = `${y}-${m}-${d}`;
+                const year = ts.getFullYear();
+                const month = String(ts.getMonth() + 1).padStart(2, '0');
+                const day = String(ts.getDate()).padStart(2, '0');
+                const localDateStr = `${year}-${month}-${day}`;
                 
-                if (dateFrom && localStr < dateFrom) isDateMatch = false;
-                if (dateTo && localStr > dateTo) isDateMatch = false;
-            } else if (dateFrom || dateTo) {
-                isDateMatch = false; 
-            }
-            return empName.includes(searchName) && isDateMatch;
+                if (start && localDateStr < start) dateMatch = false;
+                if (end && localDateStr > end) dateMatch = false;
+            } else if (start || end) { dateMatch = false; }
+
+            return empName.includes(nameQuery) && dateMatch;
         });
-        renderLogs();
+        renderDisplay();
     }
 
-    function renderLogs() {
+    // Render Data with Remarks
+    function renderDisplay() {
         const container = document.getElementById('log-results');
-        container.innerHTML = filteredData.length === 0 ? '<p style="text-align:center; padding:20px; color:#8b949e;">No logs found.</p>' : "";
+        container.innerHTML = filteredData.length === 0 ? '<p style="text-align:center; color:#8b949e; padding:20px;">No records found.</p>' : "";
         markerLayer.clearLayers();
 
         filteredData.forEach(log => {
             const ts = log.timestamp?.toDate() || new Date();
-            const dateStr = ts.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-            const timeStr = ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            
+            // Build Remarks HTML if available
+            const remarksHtml = log.remarks ? `<div class="remarks-box"><b>Remarks:</b> ${log.remarks}</div>` : '';
 
-            const item = document.createElement('div');
-            item.className = 'history-item';
-            item.innerHTML = `
-                <div style="display:flex; justify-content:space-between;">
-                    <b style="color:var(--blue);">${staffNames[log.uid] || log.fullName}</b>
-                    <small style="color:#8b949e;">${dateStr} | ${timeStr}</small>
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <b style="color:var(--blue); font-size:15px;">${staffNames[log.uid] || log.fullName}</b>
+                    <small style="color:#8b949e;">${ts.toLocaleDateString()} | ${ts.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</small>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-                    <span><b class="badge ${log.type === 'Check In' ? 'badge-in' : 'badge-out'}">${log.type}</b> ${log.locationName || 'Unknown'}</span>
-                    <button class="btn" style="width:auto; margin:0; padding:4px 8px; font-size:11px; background:var(--purple);" onclick="zoomTo(${log.latitude}, ${log.longitude})">📍 Show</button>
+                    <span>
+                        <b class="badge ${log.type === 'Check In' ? 'badge-in' : 'badge-out'}">${log.type}</b>
+                        <span style="font-size:13px; margin-left:5px;">${log.locationName || 'Unknown Loc'}</span>
+                    </span>
+                    <button class="btn" style="width:auto; margin:0; padding:4px 8px; font-size:11px; background:var(--purple);" onclick="zoomMap(${log.latitude}, ${log.longitude})">📍 Show</button>
                 </div>
+                ${remarksHtml}
             `;
-            container.appendChild(item);
-            if (log.latitude) L.circleMarker([log.latitude, log.longitude], { radius: 6, fillColor: log.type === 'Check In' ? '#238636' : '#da3633', color: "#fff", weight: 1, fillOpacity: 0.9 }).addTo(markerLayer);
+            container.appendChild(div);
+
+            if (log.latitude) {
+                L.circleMarker([log.latitude, log.longitude], { radius: 6, fillColor: log.type === 'Check In' ? '#238636' : '#da3633', color: "#fff", weight: 1, fillOpacity: 0.9 }).addTo(markerLayer);
+            }
         });
         document.getElementById('stat-filtered-count').innerText = filteredData.length;
     }
 
-    window.zoomTo = (lat, lng) => { if (lat) { map.setView([lat, lng], 17); window.scrollTo({ top: 0, behavior: 'smooth' }); } };
+    window.zoomMap = (lat, lng) => { if(lat) { map.setView([lat, lng], 17); window.scrollTo({top:0, behavior:'smooth'}); } };
 
     document.getElementById('btn-apply-filter').onclick = executeFiltering;
 
+    // Export CSV with Remarks
     const exportCSV = () => {
         if (filteredData.length === 0) return alert("Nothing to export.");
-        let csv = "Employee Name,Date,Time,Type,Location,Latitude,Longitude\n";
+        let csv = "Employee Name,Date,Time,Type,Location,Remarks,Latitude,Longitude\n";
         filteredData.forEach(l => {
             const d = l.timestamp?.toDate() || new Date();
-            csv += `"${staffNames[l.uid] || l.fullName}","${d.toLocaleDateString()}","${d.toLocaleTimeString()}","${l.type}","${l.locationName}","${l.latitude}","${l.longitude}"\n`;
+            const remarkText = l.remarks ? l.remarks.replace(/,/g, " ") : ""; // Clean commas for CSV
+            csv += `"${staffNames[l.uid] || l.fullName}","${d.toLocaleDateString()}","${d.toLocaleTimeString()}","${l.type}","${l.locationName}","${remarkText}","${l.latitude}","${l.longitude}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `iMerch_Export_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `iMerch_Log_Export.csv`; a.click();
     };
 
     document.getElementById('btn-export-1').onclick = exportCSV;
     document.getElementById('btn-export-2').onclick = exportCSV;
 
+    // Backup JSON
     document.getElementById('btn-backup').onclick = () => {
         const blob = new Blob([JSON.stringify(allLogs)], { type: "application/json" });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `iMerch_FullBackup.json`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `iMerch_Backup.json`; a.click();
     };
 
+    // Restore Backup
     document.getElementById('btn-restore').onclick = () => document.getElementById('restore-file-input').click();
     document.getElementById('restore-file-input').onchange = (e) => {
         const r = new FileReader();
@@ -381,31 +406,35 @@
             const data = JSON.parse(ev.target.result);
             const batch = writeBatch(db);
             data.forEach(item => { const ref = doc(collection(db, "attendance")); batch.set(ref, item); });
-            await batch.commit(); alert("Restored Successfully!");
+            await batch.commit(); alert("Data Restored!");
         };
         r.readAsText(e.target.files[0]);
     };
 
+    // Wipe Logs
     document.getElementById('btn-wipe').onclick = async () => {
-        if (confirm("DANGER: This will delete ALL logs permanently.") && prompt("Type DELETE to confirm") === "DELETE") {
+        if (confirm("Wipe ALL database logs?") && prompt("Type DELETE to confirm:") === "DELETE") {
             const snap = await getDocs(collection(db, "attendance"));
             const batch = writeBatch(db);
             snap.forEach(d => batch.delete(d.ref));
-            await batch.commit(); alert("All logs deleted.");
+            await batch.commit(); alert("System Cleared.");
         }
     };
 
+    // Create Staff
     document.getElementById('btn-create-staff').onclick = async () => {
         const n = document.getElementById('add-fullname').value, e = document.getElementById('add-email').value, p = document.getElementById('add-pass').value;
-        if (!n || !e || !p) return alert("Please fill all fields.");
+        if (!n || !e || !p) return alert("Fill all fields.");
         try {
-            const res = await createUserWithEmailAndPassword(sAuth, e, p);
-            await addDoc(collection(db, "users"), { uid: res.user.uid, fullName: n, email: e });
-            await signOut(sAuth); alert("Staff member registered!");
+            const res = await createUserWithEmailAndPassword(secondaryAuth, e, p);
+            await addDoc(collection(db, "users"), { uid: res.user.uid, fullName: n, email: e, createdAt: Timestamp.now() });
+            await signOut(secondaryAuth);
+            alert("Staff Added: " + n);
             document.getElementById('add-fullname').value = ""; document.getElementById('add-email').value = ""; document.getElementById('add-pass').value = "";
         } catch (err) { alert(err.message); }
     };
 
+    // Auth Watcher
     onAuthStateChanged(auth, u => {
         const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
         if (u && admins.includes(u.email)) {
@@ -421,7 +450,7 @@
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
         try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
-        catch (err) { alert("Access Denied"); }
+        catch (err) { alert("Invalid Admin"); }
     };
 
     document.getElementById('btn-logout').onclick = () => signOut(auth);
