@@ -299,8 +299,9 @@
         });
     }
 
+    // UPDATE: Inalis ang limit(200) para makuha ang lahat ng logs (March, April, etc.)
     function loadAdminLogs() {
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(200));
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
         onSnapshot(q, (snap) => {
             masterLogs = snap.docs.map(doc => {
                 const data = doc.data();
@@ -322,17 +323,22 @@
             const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
             const currentEmail = (log.email || "").toLowerCase();
             const matchesName = currentName.includes(nameVal) || currentEmail.includes(nameVal);
+            
             let matchesDate = true;
             if (log.timestamp && log.timestamp.toDate) {
                 const logDate = log.timestamp.toDate();
+                // Normalize dates to midnight for accurate comparison
                 const logTime = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
+                
                 if (dateFromInput) {
-                    const from = new Date(dateFromInput).getTime();
-                    if (logTime < from) matchesDate = false;
+                    const fromDate = new Date(dateFromInput);
+                    const fromTime = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate()).getTime();
+                    if (logTime < fromTime) matchesDate = false;
                 }
                 if (dateToInput) {
-                    const to = new Date(dateToInput).getTime();
-                    if (logTime > to) matchesDate = false;
+                    const toDate = new Date(dateToInput);
+                    const toTime = new Date(toDate.getFullYear(), toDate.getMonth(), toDate.getDate()).getTime();
+                    if (logTime > toTime) matchesDate = false;
                 }
             }
             return matchesName && matchesDate;
@@ -348,7 +354,6 @@
         list.innerHTML = data.length ? "" : '<p style="text-align:center;color:#8b949e;">No matching logs found.</p>';
         data.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            // CALENDAR DATE FORMAT: March 11, 2026
             const datePart = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             const timePart = dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const displayDate = `${datePart} ${timePart}`;
@@ -383,7 +388,6 @@
         let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
         filteredLogs.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            // CALENDAR FORMAT IN EXCEL
             const dateStr = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             csv += `"${staffMap[d.uid]?.name || d.fullName}","${d.email || ''}","${dateStr}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${d.remarks || ''}"\n`;
         });
