@@ -63,23 +63,21 @@
         .staff-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
         .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
         
-        /* Loading Overlay */
         #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 20000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body data-theme="dark">
 
 <div id="loader" class="hidden">
     <div style="border: 4px solid #f3f3f3; border-top: 4px solid var(--blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-    <p>Processing data...</p>
+    <p id="loader-text">Processing data...</p>
 </div>
-
-<style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
 
 <button id="theme-toggle">🌙</button>
 
 <div class="container">
-    <div id="login-view" style="max-width: 400px; margin: auto;">
+    <div id="login-view" class="hidden" style="max-width: 400px; margin: auto;">
         <div class="logo-container"><img src="logo1.png"></div>
         <h2 style="text-align: center;">Admin Portal</h2>
         <div class="card">
@@ -132,7 +130,7 @@
                     <div id="map"></div>
                     
                     <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
-                        <h4 style="margin: 0 0 10px 0; font-size: 0.9em; color: var(--blue);">Search & Filter Logs</h4>
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.9em; color: var(--blue);">Deep Search & Filter (April 1 onwards)</h4>
                         <div class="filter-row">
                             <div>
                                 <label style="font-size: 0.7em; color: #8b949e;">Name/Email</label>
@@ -146,23 +144,19 @@
                                 <label style="font-size: 0.7em; color: #8b949e;">Date To</label>
                                 <input type="date" id="filter-date-to">
                             </div>
-                            <button id="applyFiltersBtn" class="btn" style="background: var(--blue); margin-bottom: 10px; height: 45px;">🔍 Filter</button>
+                            <button id="applyFiltersBtn" class="btn" style="background: var(--green); margin-bottom: 10px; height: 45px;">🔍 Fetch Records</button>
                         </div>
                     </div>
 
                     <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
-                        <button id="exportBtn" class="btn export-trigger" style="background: #238636; flex: 1; min-width: 120px;">📊 Export Excel</button>
+                        <button id="exportBtn" class="btn export-trigger" style="background: #238636; flex: 1; min-width: 120px;">📊 Export CSV</button>
                         <button id="archiveBtn" class="btn" style="background: #fb8c00; flex: 1; min-width: 120px;">📦 Backup JSON</button>
-                        <button id="importBtn" class="btn" style="background: #8250df; flex: 1; min-width: 120px;">📥 Restore Backup</button>
-                        <input type="file" id="importFile" accept=".json" style="display: none;">
-                        <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1; min-width: 120px;">🗑️ Wipe Logs</button>
+                        <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1; min-width: 120px;">🗑️ Wipe Old Logs</button>
                     </div>
 
-                    <div id="admin-master-list" style="max-height: 400px; overflow-y: auto;">
-                        <p style="text-align: center; color: #8b949e;">Loading activity...</p>
+                    <div id="admin-master-list" style="max-height: 500px; overflow-y: auto;">
+                        <p style="text-align: center; color: #8b949e;">Click "Fetch Records" to load history.</p>
                     </div>
-                    
-                    <button id="exportBtnBottom" class="btn export-trigger" style="background: #238636; margin-top: 15px;">📊 Download Results Below</button>
                 </div>
             </div>
         </div>
@@ -198,7 +192,8 @@
     let staffMap = {}; 
     let map, markerGroup;
 
-    function toggleLoader(show) {
+    function toggleLoader(show, text = "Processing data...") {
+        document.getElementById('loader-text').innerText = text;
         document.getElementById('loader').classList.toggle('hidden', !show);
     }
 
@@ -211,6 +206,7 @@
     }
     setInterval(updateClock, 1000);
 
+    // --- Theme Logic ---
     const themeBtn = document.getElementById('theme-toggle');
     themeBtn.onclick = () => {
         const body = document.body;
@@ -219,121 +215,103 @@
         themeBtn.innerText = isDark ? "☀️" : "🌙";
     };
 
+    // --- Map Logic ---
     function initMap() {
         if (map) return;
-        map = L.map('map').setView([14.5995, 120.9842], 12);
+        map = L.map('map').setView([12.8797, 121.7740], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         markerGroup = L.layerGroup().addTo(map);
-    }
-
-    function plotFilteredMarkers(logsToShow) {
-        if (!markerGroup) return;
-        markerGroup.clearLayers();
-        const latestPositions = {};
-        [...logsToShow].reverse().forEach(log => {
-            if (log.latitude && log.longitude) { latestPositions[log.uid] = log; }
-        });
-        Object.values(latestPositions).forEach(pos => {
-            const name = staffMap[pos.uid]?.name || pos.fullName || "Unknown";
-            const color = pos.type === 'Check In' ? '#3fb950' : '#f85149';
-            const marker = L.circleMarker([pos.latitude, pos.longitude], {
-                radius: 8, fillColor: color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8
-            }).addTo(markerGroup);
-            const dt = pos.timestamp ? pos.timestamp.toDate().toLocaleString() : "N/A";
-            marker.bindPopup(`<b>${name}</b><br>${pos.type}<br><small>${dt}</small>`);
-        });
     }
 
     window.zoomToLocation = (lat, lng, name, type, dateTime) => {
         if (!lat || !lng) return alert("No GPS coordinates.");
         map.setView([lat, lng], 16);
-        const labelColor = type === 'Check In' ? '#3fb950' : '#f85149';
-        L.popup().setLatLng([lat, lng]).setContent(`<div style="text-align:center;"><b>${name}</b><br><small>${dateTime}</small><br><b style="color:${labelColor}">${type}</b></div>`).openOn(map);
+        L.popup().setLatLng([lat, lng]).setContent(`<b>${name}</b><br>${type}<br><small>${dateTime}</small>`).openOn(map);
     };
 
-    window.toggleStaffStatus = async (docId, currentStatus) => {
-        const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
-        if (!confirm(`Set to ${newStatus}?`)) return;
-        try { await updateDoc(doc(db, "users", docId), { status: newStatus }); } catch (e) { alert(e.message); }
-    };
-
-    window.deleteStaff = async (docId, name) => {
-        if (!confirm(`Delete ${name}?`)) return;
-        try { await deleteDoc(doc(db, "users", docId)); } catch (e) { alert(e.message); }
-    };
-
+    // --- Data Loading ---
     function loadStaffData() {
         onSnapshot(collection(db, "users"), (snap) => {
             const directory = document.getElementById('staff-directory-list');
             directory.innerHTML = "";
             snap.forEach(docSnap => {
                 const data = docSnap.data();
-                const status = data.status || "Active";
-                staffMap[data.uid] = { name: data.fullName, status: status };
+                staffMap[data.uid] = { name: data.fullName, status: data.status || "Active" };
                 directory.innerHTML += `
                     <div class="staff-item">
-                        <div style="flex: 1;">
-                            <div style="font-size: 0.85em; font-weight: bold;">${data.fullName}</div>
-                            <div style="font-size: 0.7em; color: ${status === "Active" ? '#3fb950' : '#f85149'};">
-                                <span class="status-dot" style="background: ${status === "Active" ? '#3fb950' : '#f85149'};"></span>${status}
-                            </div>
+                        <div style="flex:1;">
+                            <b>${data.fullName}</b><br>
+                            <small style="color:${data.status === 'Active' ? '#3fb950' : '#f85149'}">${data.status || 'Active'}</small>
                         </div>
-                        <div style="display: flex; gap: 4px;">
-                            <button class="geo-btn" style="background: ${status === "Active" ? 'var(--red)' : 'var(--green)'};" onclick="toggleStaffStatus('${docSnap.id}', '${status}')">${status === "Active" ? 'Off' : 'On'}</button>
-                            <button class="geo-btn" style="background: #444;" onclick="deleteStaff('${docSnap.id}', '${data.fullName}')">🗑️</button>
-                        </div>
+                        <button class="geo-btn" style="background:#444;" onclick="deleteStaff('${docSnap.id}', '${data.fullName}')">🗑️</button>
                     </div>`;
             });
-            updateStats(masterLogs);
+            updateStats();
         });
     }
 
-    // PERFORMANCE FIX: Limit snapshot to 500 but allow filtering of all if needed
-    function loadAdminLogs() {
+    // Default: Load latest 600 for live dashboard
+    function loadLiveLogs() {
         const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(600));
         onSnapshot(q, (snap) => {
             masterLogs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            applyFilters();
-            updateStats(masterLogs);
+            renderAdminLogs(masterLogs);
+            plotMarkers(masterLogs);
+            updateStats();
         });
     }
 
-    function applyFilters() {
-        const nameVal = document.getElementById('filter-name').value.toLowerCase().trim();
-        const dateFromInput = document.getElementById('filter-date-from').value;
-        const dateToInput = document.getElementById('filter-date-to').value;
+    // Deep Search: Makuha lahat ng April 1 onwards
+    async function fetchDeepLogs() {
+        const dateFrom = document.getElementById('filter-date-from').value;
+        const dateTo = document.getElementById('filter-date-to').value;
+        const nameFilter = document.getElementById('filter-name').value.toLowerCase();
 
-        const filtered = masterLogs.filter(log => {
-            const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
-            const matchesName = nameVal === "" || currentName.includes(nameVal);
-            
-            let matchesDate = true;
-            if (log.timestamp) {
-                const logTime = log.timestamp.toDate().getTime();
-                if (dateFromInput) {
-                    const from = new Date(dateFromInput).setHours(0,0,0,0);
-                    if (logTime < from) matchesDate = false;
-                }
-                if (dateToInput) {
-                    const to = new Date(dateToInput).setHours(23,59,59,999);
-                    if (logTime > to) matchesDate = false;
-                }
+        toggleLoader(true, "Fetching all records from database...");
+
+        try {
+            let q = collection(db, "attendance");
+            let constraints = [orderBy("timestamp", "desc")];
+
+            if (dateFrom) {
+                constraints.push(where("timestamp", ">=", Timestamp.fromDate(new Date(dateFrom))));
             }
-            return matchesName && matchesDate;
-        });
+            if (dateTo) {
+                constraints.push(where("timestamp", "<=", Timestamp.fromDate(new Date(new Date(dateTo).setHours(23,59,59)))));
+            }
 
-        renderAdminLogs(filtered);
-        plotFilteredMarkers(filtered);
+            const finalQuery = query(q, ...constraints);
+            const snap = await getDocs(finalQuery);
+            
+            masterLogs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Filter by name locally to avoid complex composite indices in Firebase
+            const filtered = masterLogs.filter(log => 
+                (staffMap[log.uid]?.name || log.fullName || "").toLowerCase().includes(nameFilter)
+            );
+
+            renderAdminLogs(filtered);
+            plotMarkers(filtered);
+            alert(`Found ${filtered.length} records.`);
+        } catch (e) {
+            alert("Error fetching records: " + e.message);
+        } finally {
+            toggleLoader(false);
+        }
     }
 
     function renderAdminLogs(data) {
         const list = document.getElementById('admin-master-list');
-        // Efficient DOM updating: Build string first
-        let html = data.length ? "" : '<p style="text-align:center;color:#8b949e;">No logs found.</p>';
+        if (data.length === 0) {
+            list.innerHTML = '<p style="text-align:center;padding:20px;">No records found.</p>';
+            return;
+        }
+
+        let html = "";
         data.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
-            const dateStr = dt.toLocaleDateString() + " " + dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            const name = staffMap[d.uid]?.name || d.fullName || "Unknown";
+            const dateStr = dt.toLocaleString();
+            const name = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
             html += `
                 <div class="history-item">
                     <div class="history-row">
@@ -349,34 +327,47 @@
         list.innerHTML = html;
     }
 
-    function updateStats(data) {
-        const today = new Date().toLocaleDateString();
-        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === today).map(d => d.uid));
+    function plotMarkers(data) {
+        if (!markerGroup) return;
+        markerGroup.clearLayers();
+        const seen = new Set();
+        data.forEach(log => {
+            if (log.latitude && log.longitude && !seen.has(log.uid)) {
+                seen.add(log.uid);
+                const color = log.type === 'Check In' ? '#3fb950' : '#f85149';
+                L.circleMarker([log.latitude, log.longitude], {
+                    radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8
+                }).addTo(markerGroup).bindPopup(`<b>${log.fullName}</b><br>${log.type}`);
+            }
+        });
+    }
+
+    function updateStats() {
+        const todayStr = new Date().toLocaleDateString();
+        const presentToday = new Set(masterLogs.filter(d => 
+            d.timestamp?.toDate().toLocaleDateString() === todayStr
+        ).map(d => d.uid));
+
         document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length;
         document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
-    document.getElementById('applyFiltersBtn').onclick = applyFilters;
-    document.getElementById('filter-name').oninput = applyFilters;
+    // --- Actions ---
+    document.getElementById('applyFiltersBtn').onclick = fetchDeepLogs;
 
-    const handleExport = () => {
-        const nameVal = document.getElementById('filter-name').value.toLowerCase().trim();
-        const filtered = masterLogs.filter(log => (staffMap[log.uid]?.name || log.fullName || "").toLowerCase().includes(nameVal));
-        if (!filtered.length) return alert("No data.");
+    document.getElementById('exportBtn').onclick = () => {
+        if (!masterLogs.length) return alert("No data to export.");
         let csv = "Name,Email,Date,Time,Action,Location,Lat,Lng\n";
-        filtered.forEach(d => {
+        masterLogs.forEach(d => {
             const dt = d.timestamp ? d.timestamp.toDate() : new Date();
             csv += `"${staffMap[d.uid]?.name || d.fullName}","${d.email}","${dt.toLocaleDateString()}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName}","${d.latitude}","${d.longitude}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `Attendance_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `iMerch_Export_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
-
-    document.getElementById('exportBtn').onclick = handleExport;
-    document.getElementById('exportBtnBottom').onclick = handleExport;
 
     document.getElementById('createAccBtn').onclick = async () => {
         const name = document.getElementById('new-fullname').value;
@@ -384,21 +375,47 @@
         const pass = document.getElementById('new-pass').value;
         if (!name || !email || !pass) return alert("Fill all fields.");
         try {
-            toggleLoader(true);
+            toggleLoader(true, "Creating account...");
             const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
             await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName: name, email, status: "Active", createdAt: serverTimestamp() });
             await signOut(secondaryAuth);
-            alert("Success!");
+            alert("Staff Created Successfully!");
             document.getElementById('new-fullname').value = ""; document.getElementById('new-email').value = ""; document.getElementById('new-pass').value = "";
         } catch (e) { alert(e.message); } finally { toggleLoader(false); }
     };
 
+    window.deleteStaff = async (id, name) => {
+        if (confirm(`Delete ${name}? This will NOT delete their check-in logs.`)) {
+            await deleteDoc(doc(db, "users", id));
+        }
+    };
+
+    document.getElementById('wipeLogsBtn').onclick = async () => {
+        const dateInput = prompt("Enter 'WIPE' to delete logs older than 30 days:");
+        if (dateInput !== "WIPE") return;
+        
+        toggleLoader(true, "Deleting old records...");
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const q = query(collection(db, "attendance"), where("timestamp", "<", Timestamp.fromDate(thirtyDaysAgo)));
+        const snap = await getDocs(q);
+        const batch = writeBatch(db);
+        snap.docs.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+        alert(`Deleted ${snap.size} records.`);
+        toggleLoader(false);
+    };
+
+    // --- Auth ---
     onAuthStateChanged(auth, (user) => {
         const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
         if (user && admins.includes(user.email)) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
-            loadStaffData(); loadAdminLogs(); setTimeout(initMap, 500);
+            loadStaffData(); 
+            loadLiveLogs(); 
+            setTimeout(initMap, 500);
         } else {
             document.getElementById('login-view').classList.remove('hidden');
             document.getElementById('admin-view').classList.add('hidden');
@@ -407,39 +424,13 @@
 
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
-        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } catch (e) { alert(e.message); }
+        try { 
+            await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); 
+        } catch (e) { alert("Login failed: " + e.message); }
     };
 
     document.getElementById('logoutLink').onclick = () => signOut(auth);
 
-    // WIPE LOGS: Safety first
-    document.getElementById('wipeLogsBtn').onclick = async () => {
-        const cutoff = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-        if (!confirm(`Warning: Buburahin ang lahat ng logs BAGO ang ${cutoff.toLocaleDateString()}. Proceed?`)) return;
-        toggleLoader(true);
-        try {
-            const q = query(collection(db, "attendance"), where("timestamp", "<", Timestamp.fromDate(cutoff)));
-            const snap = await getDocs(q);
-            const batch = writeBatch(db);
-            snap.docs.forEach(d => batch.delete(d.ref));
-            await batch.commit();
-            alert(`Deleted ${snap.size} old records.`);
-        } catch (e) { alert(e.message); } finally { toggleLoader(false); }
-    };
-
-    // BACKUP
-    document.getElementById('archiveBtn').onclick = async () => {
-        toggleLoader(true);
-        try {
-            const snap = await getDocs(collection(db, "attendance"));
-            const data = snap.docs.map(d => d.data());
-            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `Backup_${new Date().getTime()}.json`;
-            a.click();
-        } finally { toggleLoader(false); }
-    };
 </script>
 </body>
 </html>
