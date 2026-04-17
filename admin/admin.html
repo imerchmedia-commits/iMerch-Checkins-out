@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iMerch Admin - Master Control Panel (With Remarks)</title>
+    <title>iMerch Admin - Master Control Panel (Correct Excel Order)</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -167,7 +167,7 @@
             <form id="login-form">
                 <input type="email" id="login-email" placeholder="Email" required>
                 <input type="password" id="login-pass" placeholder="Password" required>
-                <button type="submit" class="btn" style="background: var(--blue);">Login to Panel</button>
+                <button type="submit" class="btn" style="background: var(--blue);">Access Control Panel</button>
             </form>
         </div>
     </div>
@@ -179,34 +179,34 @@
         </header>
 
         <div class="stats-row">
-            <div class="stat-box"><span id="stat-total-staff">0</span><small>Registered Staff</small></div>
-            <div class="stat-box"><span id="stat-filtered-count" style="color: var(--green);">0</span><small>Filtered Records</small></div>
+            <div class="stat-box"><span id="stat-total-staff">0</span><small>Total Employees</small></div>
+            <div class="stat-box"><span id="stat-filtered-count" style="color: var(--green);">0</span><small>Cutoff Records</small></div>
         </div>
 
         <div class="admin-layout">
             <aside>
                 <div class="card">
-                    <h3>➕ Create Staff</h3>
+                    <h3>➕ Add Employee</h3>
                     <input type="text" id="add-fullname" placeholder="Full Name">
                     <input type="email" id="add-email" placeholder="Email Address">
                     <input type="password" id="add-pass" placeholder="Password">
-                    <button id="btn-create-staff" class="btn" style="background: var(--blue);">Add Employee</button>
+                    <button id="btn-create-staff" class="btn" style="background: var(--blue);">Register Staff</button>
                 </div>
                 <div class="card">
-                    <h3>👥 Directory</h3>
+                    <h3>👥 Employee List</h3>
                     <div id="staff-list" style="max-height: 250px; overflow-y: auto;"></div>
                 </div>
-                <button id="btn-logout" class="btn" style="background: #444;">🚪 Sign Out</button>
+                <button id="btn-logout" class="btn" style="background: #444;">🚪 Secure Logout</button>
             </aside>
 
             <main>
                 <div id="map"></div>
                 <div class="card">
-                    <h3>🔍 Strict Cutoff Filtering</h3>
+                    <h3>🔍 Manual Cutoff Filter</h3>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 15px;">
                         <div>
-                            <label style="font-size: 11px; color: var(--blue);">Search Employee</label>
-                            <input type="text" id="f-name-input" placeholder="Name...">
+                            <label style="font-size: 11px; color: var(--blue);">Search Staff</label>
+                            <input type="text" id="f-name-input" placeholder="Enter name...">
                         </div>
                         <div>
                             <label style="font-size: 11px; color: var(--blue);">From Date</label>
@@ -222,13 +222,13 @@
                     <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px;">
                         <button id="btn-export-1" class="btn" style="background: var(--green); flex: 1;">📊 Export Selection</button>
                         <button id="btn-backup" class="btn" style="background: var(--yellow); flex: 1;">📦 Backup JSON</button>
-                        <button id="btn-restore" class="btn" style="background: var(--purple); flex: 1;">📥 Restore</button>
-                        <button id="btn-wipe" class="btn" style="background: var(--red); flex: 1;">🗑️ Wipe All Logs</button>
+                        <button id="btn-restore" class="btn" style="background: var(--purple); flex: 1;">📥 Restore Backup</button>
+                        <button id="btn-wipe" class="btn" style="background: var(--red); flex: 1;">🗑️ Wipe Records</button>
                     </div>
                     <input type="file" id="restore-file-input" class="hidden">
 
                     <div id="log-results" style="max-height: 500px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 10px;">
-                        <p style="text-align: center; color: #8b949e; padding: 20px;">Ready for filtering...</p>
+                        <p style="text-align: center; color: #8b949e; padding: 20px;">Use the filters above to load attendance logs.</p>
                     </div>
 
                     <button id="btn-export-2" class="btn" style="background: var(--green); margin-top: 15px;">📊 Download Full CSV Results</button>
@@ -259,12 +259,12 @@
 
     let allLogs = [], filteredData = [], staffNames = {}, map, markerLayer;
 
-    // Live Clock
+    // PH Live Clock
     setInterval(() => {
-        document.getElementById('live-clock').innerText = new Date().toLocaleString('en-PH');
+        document.getElementById('live-clock').innerText = new Date().toLocaleString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }, 1000);
 
-    // Theme Toggle
+    // Dark/Light Theme
     document.getElementById('theme-btn').onclick = () => {
         const body = document.body;
         const current = body.getAttribute('data-theme');
@@ -281,7 +281,7 @@
         }
     }
 
-    // Load Staff Directory
+    // Load Staff Data
     function loadStaff() {
         onSnapshot(collection(db, "users"), (snap) => {
             const listEl = document.getElementById('staff-list');
@@ -299,9 +299,9 @@
             document.getElementById('stat-total-staff').innerText = snap.size;
         });
     }
-    window.delUser = async (id) => { if(confirm("Delete staff?")) await deleteDoc(doc(db, "users", id)); };
+    window.delUser = async (id) => { if(confirm("Confirm deletion?")) await deleteDoc(doc(db, "users", id)); };
 
-    // Load All Logs
+    // Load All Attendance
     function loadLogs() {
         onSnapshot(query(collection(db, "attendance"), orderBy("timestamp", "desc")), (snap) => {
             allLogs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -309,7 +309,7 @@
         });
     }
 
-    // STRICT FILTER LOGIC (PH TIME)
+    // STRICT PH CUTOFF LOGIC
     function executeFiltering() {
         const nameQuery = document.getElementById('f-name-input').value.toLowerCase();
         const start = document.getElementById('f-date-from').value;
@@ -332,13 +332,12 @@
 
             return empName.includes(nameQuery) && dateMatch;
         });
-        renderDisplay();
+        renderUI();
     }
 
-    // Render Data with Remarks
-    function renderDisplay() {
+    function renderUI() {
         const container = document.getElementById('log-results');
-        container.innerHTML = filteredData.length === 0 ? '<p style="text-align:center; color:#8b949e; padding:20px;">No records found.</p>' : "";
+        container.innerHTML = filteredData.length === 0 ? '<p style="text-align:center; padding:20px;">No records match your filter.</p>' : "";
         markerLayer.clearLayers();
 
         filteredData.forEach(log => {
@@ -346,8 +345,7 @@
             const div = document.createElement('div');
             div.className = 'history-item';
             
-            // Build Remarks HTML if available
-            const remarksHtml = log.remarks ? `<div class="remarks-box"><b>Remarks:</b> ${log.remarks}</div>` : '';
+            const remarksHtml = log.remarks ? `<div class="remarks-box"><b>Notes:</b> ${log.remarks}</div>` : '';
 
             div.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -359,7 +357,7 @@
                         <b class="badge ${log.type === 'Check In' ? 'badge-in' : 'badge-out'}">${log.type}</b>
                         <span style="font-size:13px; margin-left:5px;">${log.locationName || 'Unknown Loc'}</span>
                     </span>
-                    <button class="btn" style="width:auto; margin:0; padding:4px 8px; font-size:11px; background:var(--purple);" onclick="zoomMap(${log.latitude}, ${log.longitude})">📍 Show</button>
+                    <button class="btn" style="width:auto; margin:0; padding:4px 8px; font-size:11px; background:var(--purple);" onclick="zoomTo(${log.latitude}, ${log.longitude})">📍 View Map</button>
                 </div>
                 ${remarksHtml}
             `;
@@ -372,33 +370,33 @@
         document.getElementById('stat-filtered-count').innerText = filteredData.length;
     }
 
-    window.zoomMap = (lat, lng) => { if(lat) { map.setView([lat, lng], 17); window.scrollTo({top:0, behavior:'smooth'}); } };
+    window.zoomTo = (lat, lng) => { if(lat) { map.setView([lat, lng], 17); window.scrollTo({top:0, behavior:'smooth'}); } };
 
     document.getElementById('btn-apply-filter').onclick = executeFiltering;
 
-    // Export CSV with Remarks
+    // ACCURATE EXCEL ORDER: Name, Date, Time, Type, Location, Latitude, Longitude, Remarks (THE END)
     const exportCSV = () => {
-        if (filteredData.length === 0) return alert("Nothing to export.");
-        let csv = "Employee Name,Date,Time,Type,Location,Remarks,Latitude,Longitude\n";
+        if (filteredData.length === 0) return alert("No data to export.");
+        let csv = "Employee Name,Date,Time,Type,Location,Latitude,Longitude,Remarks\n";
         filteredData.forEach(l => {
             const d = l.timestamp?.toDate() || new Date();
-            const remarkText = l.remarks ? l.remarks.replace(/,/g, " ") : ""; // Clean commas for CSV
-            csv += `"${staffNames[l.uid] || l.fullName}","${d.toLocaleDateString()}","${d.toLocaleTimeString()}","${l.type}","${l.locationName}","${remarkText}","${l.latitude}","${l.longitude}"\n`;
+            const remarkText = l.remarks ? l.remarks.replace(/,/g, " ").replace(/\n/g, " ") : "";
+            csv += `"${staffNames[l.uid] || l.fullName}","${d.toLocaleDateString()}","${d.toLocaleTimeString()}","${l.type}","${l.locationName}","${l.latitude}","${l.longitude}","${remarkText}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `iMerch_Log_Export.csv`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `iMerch_Log_Cutoff.csv`; a.click();
     };
 
     document.getElementById('btn-export-1').onclick = exportCSV;
     document.getElementById('btn-export-2').onclick = exportCSV;
 
-    // Backup JSON
+    // Backup
     document.getElementById('btn-backup').onclick = () => {
         const blob = new Blob([JSON.stringify(allLogs)], { type: "application/json" });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `iMerch_Backup.json`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `iMerch_SystemBackup.json`; a.click();
     };
 
-    // Restore Backup
+    // Restore
     document.getElementById('btn-restore').onclick = () => document.getElementById('restore-file-input').click();
     document.getElementById('restore-file-input').onchange = (e) => {
         const r = new FileReader();
@@ -406,35 +404,35 @@
             const data = JSON.parse(ev.target.result);
             const batch = writeBatch(db);
             data.forEach(item => { const ref = doc(collection(db, "attendance")); batch.set(ref, item); });
-            await batch.commit(); alert("Data Restored!");
+            await batch.commit(); alert("Records successfully restored!");
         };
         r.readAsText(e.target.files[0]);
     };
 
-    // Wipe Logs
+    // Wipe
     document.getElementById('btn-wipe').onclick = async () => {
-        if (confirm("Wipe ALL database logs?") && prompt("Type DELETE to confirm:") === "DELETE") {
+        if (confirm("DANGER: This will delete ALL logs from the system.") && prompt("Type DELETE to confirm:") === "DELETE") {
             const snap = await getDocs(collection(db, "attendance"));
             const batch = writeBatch(db);
             snap.forEach(d => batch.delete(d.ref));
-            await batch.commit(); alert("System Cleared.");
+            await batch.commit(); alert("Database wiped clean.");
         }
     };
 
-    // Create Staff
+    // Create New Account
     document.getElementById('btn-create-staff').onclick = async () => {
         const n = document.getElementById('add-fullname').value, e = document.getElementById('add-email').value, p = document.getElementById('add-pass').value;
-        if (!n || !e || !p) return alert("Fill all fields.");
+        if (!n || !e || !p) return alert("Fill in all fields.");
         try {
             const res = await createUserWithEmailAndPassword(secondaryAuth, e, p);
-            await addDoc(collection(db, "users"), { uid: res.user.uid, fullName: n, email: e, createdAt: Timestamp.now() });
+            await addDoc(collection(db, "users"), { uid: res.user.uid, fullName: n, email: e });
             await signOut(secondaryAuth);
-            alert("Staff Added: " + n);
+            alert("Registered successfully!");
             document.getElementById('add-fullname').value = ""; document.getElementById('add-email').value = ""; document.getElementById('add-pass').value = "";
         } catch (err) { alert(err.message); }
     };
 
-    // Auth Watcher
+    // Login Auth
     onAuthStateChanged(auth, u => {
         const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
         if (u && admins.includes(u.email)) {
@@ -450,7 +448,7 @@
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
         try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
-        catch (err) { alert("Invalid Admin"); }
+        catch (err) { alert("Access Denied: Unrecognized Admin Account"); }
     };
 
     document.getElementById('btn-logout').onclick = () => signOut(auth);
