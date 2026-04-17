@@ -24,7 +24,7 @@
             --bg: #f6f8fa; --card: #ffffff; --border: #d0d7de; --text: #1f2328;
         }
         body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; margin: 0; transition: background 0.3s; }
-        .container { max-width: 1100px; margin: auto; }
+        .container { max-width: 1000px; margin: auto; }
         .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
         .stats-container { display: flex; gap: 15px; margin-bottom: 20px; }
@@ -34,59 +34,56 @@
 
         #map { height: 350px; width: 100%; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; z-index: 1; }
 
-        .admin-grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
-        @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
+        .admin-grid { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+        @media (max-width: 850px) { .admin-grid { grid-template-columns: 1fr; } }
 
         input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
-        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 14px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; color: white; margin-bottom: 10px; font-size: 14px; transition: 0.3s; }
         
-        .history-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .history-item { padding: 12px 0; border-bottom: 1px solid var(--border); transition: 0.2s; }
+        .history-item:hover { background: rgba(255,255,255,0.03); }
         .history-row { display: flex; justify-content: space-between; align-items: flex-start; }
         .badge { font-size: 0.7em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
         .in { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
         .out { background: rgba(218, 54, 51, 0.2); color: #f85149; }
         .hidden { display: none !important; }
         
-        .geo-btn { background: var(--blue); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .geo-btn { background: var(--blue); border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
 
         #theme-toggle { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; z-index: 10000; font-size: 1.5em; }
         .logo-container { text-align: center; margin-bottom: 20px; }
         .logo-container img { max-width: 150px; }
         #real-time-clock { font-size: 0.9em; font-weight: bold; color: var(--blue); margin-bottom: 5px; }
-        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-align: center; display: block; padding: 20px; font-weight: bold; text-decoration: none; }
-        
+        .logout-link { color: #8b949e; cursor: pointer; font-size: 0.9em; text-align: center; display: block; padding: 20px; font-weight: bold; }
+        h3 { border-left: 4px solid var(--blue); padding-left: 10px; margin-top: 0; margin-bottom: 15px; }
+
         .filter-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
         @media (max-width: 600px) { .filter-row { grid-template-columns: 1fr; } }
 
-        #loader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 20000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .staff-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .status-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
     </style>
 </head>
 <body data-theme="dark">
 
-<div id="loader" class="hidden">
-    <div style="border: 4px solid #f3f3f3; border-top: 4px solid var(--blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
-    <p id="loader-text" style="margin-top:15px;">Accessing Database...</p>
-</div>
-
 <button id="theme-toggle">🌙</button>
 
 <div class="container">
-    <div id="login-view" class="hidden" style="max-width: 400px; margin: auto; padding-top: 50px;">
+    <div id="login-view" style="max-width: 400px; margin: auto;">
         <div class="logo-container"><img src="logo1.png"></div>
+        <h2 style="text-align: center;">Admin Portal</h2>
         <div class="card">
-            <h2 style="text-align: center; margin-top: 0;">Admin Login</h2>
             <form id="login-form">
                 <input type="email" id="login-email" placeholder="Admin Email" required>
                 <input type="password" id="login-pass" placeholder="Password" required>
-                <button type="submit" class="btn" style="background: var(--blue);">Login to System</button>
+                <button type="submit" class="btn" style="background: var(--blue);">Access Admin Panel</button>
             </form>
         </div>
     </div>
 
     <div id="admin-view" class="hidden">
         <div class="logo-container">
-            <div id="real-time-clock">Loading...</div>
+            <div id="real-time-clock">Loading Time...</div>
             <img src="logo1.png">
         </div>
         
@@ -103,54 +100,59 @@
 
         <div class="admin-grid">
             <div class="admin-sidebar">
+                <h3>Create Staff</h3>
                 <div class="card">
-                    <h3 style="margin-top:0; border-left:4px solid var(--blue); padding-left:10px;">Staff Registration</h3>
-                    <input type="text" id="new-fullname" placeholder="Full Name">
-                    <input type="email" id="new-email" placeholder="Email Address">
-                    <input type="password" id="new-pass" placeholder="Initial Password">
+                    <input type="text" id="new-fullname" placeholder="Staff Full Name">
+                    <input type="email" id="new-email" placeholder="Staff Email">
+                    <input type="password" id="new-pass" placeholder="Temp Password">
                     <button class="btn" style="background: var(--blue);" id="createAccBtn">Create Account</button>
                 </div>
-                <div class="card">
-                    <h3 style="margin-top:0; border-left:4px solid var(--blue); padding-left:10px;">Staff Directory</h3>
-                    <div id="staff-directory-list" style="max-height: 400px; overflow-y: auto;">
-                        <p style="text-align: center; color: #8b949e;">Loading staff...</p>
-                    </div>
+
+                <h3>Staff Directory</h3>
+                <div class="card" id="staff-directory-list" style="max-height: 350px; overflow-y: auto; padding: 10px;">
+                    <p style="text-align: center; color: #8b949e;">Loading directory...</p>
                 </div>
-                <a href="#" class="logout-link" id="logoutLink">🔒 Logout Securely</a>
+
+                <span class="logout-link" id="logoutLink">🔒 Secure Logout</span>
             </div>
 
             <div class="admin-main">
-                <div class="card" style="padding: 15px;">
-                    <h3 style="margin-top:0; border-left:4px solid var(--blue); padding-left:10px;">Live Staff Map</h3>
+                <h3>Live Staff Map</h3>
+                <div class="card" style="padding: 10px;">
                     <div id="map"></div>
                     
-                    <div style="border-top: 1px solid var(--border); padding-top: 20px;">
-                        <h4 style="margin: 0 0 15px 0; color: var(--blue);">Database Search (Historic Records)</h4>
+                    <div style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 0.9em; color: var(--blue);">Search & Filter Logs</h4>
                         <div class="filter-row">
                             <div>
-                                <label style="font-size: 0.7em; color: #8b949e;">Search Name</label>
-                                <input type="text" id="filter-name" placeholder="Type name...">
+                                <label style="font-size: 0.7em; color: #8b949e;">Name/Email</label>
+                                <input type="text" id="filter-name" placeholder="Search staff...">
                             </div>
                             <div>
-                                <label style="font-size: 0.7em; color: #8b949e;">From</label>
+                                <label style="font-size: 0.7em; color: #8b949e;">Date From</label>
                                 <input type="date" id="filter-date-from">
                             </div>
                             <div>
-                                <label style="font-size: 0.7em; color: #8b949e;">To</label>
+                                <label style="font-size: 0.7em; color: #8b949e;">Date To</label>
                                 <input type="date" id="filter-date-to">
                             </div>
-                            <button id="applyFiltersBtn" class="btn" style="background: var(--green); height: 45px; margin-bottom: 10px;">🔍 Fetch Records</button>
+                            <button id="applyFiltersBtn" class="btn" style="background: var(--blue); margin-bottom: 10px; height: 45px;">🔍 Filter</button>
                         </div>
                     </div>
 
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <button id="exportBtn" class="btn" style="background: #238636; flex: 1;">📊 Export to CSV</button>
-                        <button id="wipeLogsBtn" class="btn" style="background: var(--red); flex: 1;">🗑️ Clear Old Logs</button>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                        <button id="exportBtn" class="btn export-trigger" style="background: #238636; flex: 1; min-width: 120px;">📊 Export Excel</button>
+                        <button id="archiveBtn" class="btn" style="background: #fb8c00; flex: 1; min-width: 120px;">📦 Backup JSON</button>
+                        <button id="importBtn" class="btn" style="background: #8250df; flex: 1; min-width: 120px;">📥 Restore Backup</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                        <button id="wipeLogsBtn" class="btn" style="background: #da3633; flex: 1; min-width: 120px;">🗑️ Wipe Logs</button>
                     </div>
 
-                    <div id="admin-master-list" style="max-height: 600px; overflow-y: auto; background: rgba(0,0,0,0.1); border-radius: 8px; padding: 10px;">
-                        <p style="text-align: center; color: #8b949e; padding: 20px;">Use the filter above to load data (including March).</p>
+                    <div id="admin-master-list" style="max-height: 400px; overflow-y: auto;">
+                        <p style="text-align: center; color: #8b949e;">Loading activity...</p>
                     </div>
+                    
+                    <button id="exportBtnBottom" class="btn export-trigger" style="background: #238636; margin-top: 15px;">📊 Download Results Below</button>
                 </div>
             </div>
         </div>
@@ -163,7 +165,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
         getFirestore, collection, query, orderBy, onSnapshot, getDocs, 
-        writeBatch, addDoc, serverTimestamp, updateDoc, doc, 
+        writeBatch, addDoc, serverTimestamp, updateDoc, doc, setDoc, 
         Timestamp, deleteDoc, where, limit 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -183,220 +185,241 @@
     const secondaryAuth = getAuth(secondaryApp);
 
     let masterLogs = [];
+    let filteredLogs = [];
     let staffMap = {}; 
     let map, markerGroup;
 
-    function toggleLoader(show, text = "Processing...") {
-        document.getElementById('loader-text').innerText = text;
-        document.getElementById('loader').classList.toggle('hidden', !show);
-    }
-
     function updateClock() {
         const now = new Date();
-        document.getElementById('real-time-clock').innerText = now.toLocaleString();
+        document.getElementById('real-time-clock').innerText = now.toLocaleString('en-US', { 
+            weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', 
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true 
+        });
     }
     setInterval(updateClock, 1000);
+    updateClock();
 
     const themeBtn = document.getElementById('theme-toggle');
     themeBtn.onclick = () => {
-        const isDark = document.body.getAttribute('data-theme') === 'dark';
-        document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        const body = document.body;
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
         themeBtn.innerText = isDark ? "☀️" : "🌙";
     };
 
     function initMap() {
         if (map) return;
-        map = L.map('map').setView([12.8797, 121.7740], 6);
+        map = L.map('map').setView([14.5995, 120.9842], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         markerGroup = L.layerGroup().addTo(map);
     }
 
-    window.zoomToLocation = (lat, lng, name, type, dt) => {
-        if (!lat || !lng) return alert("No GPS data.");
+    function plotAllStaff() {
+        if (!markerGroup) return;
+        markerGroup.clearLayers();
+        const latestPositions = {};
+        masterLogs.forEach(log => {
+            if (!latestPositions[log.uid] && log.latitude && log.longitude) {
+                latestPositions[log.uid] = log;
+            }
+        });
+
+        Object.values(latestPositions).forEach(pos => {
+            const name = staffMap[pos.uid]?.name || pos.fullName || "Unknown";
+            const color = pos.type === 'Check In' ? '#3fb950' : '#f85149';
+            const marker = L.circleMarker([pos.latitude, pos.longitude], {
+                radius: 8, fillColor: color, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8
+            }).addTo(markerGroup);
+            marker.bindPopup(`<b>${name}</b><br>${pos.type}<br><small>${pos.timestamp?.toDate().toLocaleString()}</small>`);
+        });
+    }
+
+    window.zoomToLocation = (lat, lng, name, type, dateTime) => {
+        if (!lat || !lng) return alert("No GPS coordinates.");
+        const labelColor = type === 'Check In' ? '#3fb950' : '#f85149';
         map.setView([lat, lng], 16);
-        L.popup().setLatLng([lat, lng]).setContent(`<b>${name}</b><br>${type}<br><small>${dt}</small>`).openOn(map);
+        L.popup()
+            .setLatLng([lat, lng])
+            .setContent(`
+                <div style="text-align:center; font-family: sans-serif;">
+                    <b style="font-size:1.1em; color:var(--blue);">${name}</b><br>
+                    <span style="font-size:0.9em; color:#666;">${dateTime}</span><br>
+                    <b style="color:${labelColor}; font-size:1em;">${type}</b>
+                </div>
+            `)
+            .openOn(map);
     };
 
-    // --- Data Handlers ---
-    function loadStaff() {
+    window.toggleStaffStatus = async (docId, currentStatus) => {
+        const newStatus = currentStatus === "Active" ? "Inactive" : "Active";
+        if (!confirm(`Set this staff member to ${newStatus}?`)) return;
+        try { await updateDoc(doc(db, "users", docId), { status: newStatus }); } 
+        catch (e) { alert("Error updating status: " + e.message); }
+    };
+
+    window.deleteStaff = async (docId, name) => {
+        if (!confirm(`PERMANENT DELETE: Are you sure you want to remove ${name}?`)) return;
+        try { 
+            await deleteDoc(doc(db, "users", docId)); 
+            alert(`${name} deleted.`);
+        } catch (e) { alert("Delete failed: " + e.message); }
+    };
+
+    function loadStaffData() {
         onSnapshot(collection(db, "users"), (snap) => {
-            const list = document.getElementById('staff-directory-list');
-            list.innerHTML = "";
-            snap.forEach(sDoc => {
-                const d = sDoc.data();
-                staffMap[d.uid] = { name: d.fullName, email: d.email };
-                list.innerHTML += `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
-                        <div><b>${d.fullName}</b></div>
-                        <button class="geo-btn" style="background:var(--red);" onclick="deleteStaff('${sDoc.id}', '${d.fullName}')">🗑️</button>
+            const directory = document.getElementById('staff-directory-list');
+            directory.innerHTML = ""; 
+            snap.forEach(documentDoc => { 
+                const data = documentDoc.data();
+                const docId = documentDoc.id;
+                const status = data.status || "Active";
+                const isActive = status === "Active";
+                staffMap[data.uid] = { name: data.fullName, status: status }; 
+                directory.innerHTML += `
+                    <div class="staff-item">
+                        <div style="flex: 1; overflow: hidden;">
+                            <div style="font-size: 0.85em; font-weight: bold; white-space: nowrap; text-overflow: ellipsis;">${data.fullName}</div>
+                            <div style="font-size: 0.7em; color: ${isActive ? '#3fb950' : '#f85149'};">
+                                <span class="status-dot" style="background: ${isActive ? '#3fb950' : '#f85149'};"></span>${status}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="geo-btn" style="background: ${isActive ? 'var(--red)' : 'var(--green)'}; padding: 4px 6px;" 
+                                onclick="toggleStaffStatus('${docId}', '${status}')">
+                                ${isActive ? 'Off' : 'On'}
+                            </button>
+                            <button class="geo-btn" style="background: #444; padding: 4px 6px;" 
+                                onclick="deleteStaff('${docId}', '${data.fullName}')">
+                                🗑️
+                            </button>
+                        </div>
                     </div>`;
             });
-            updateStats();
+            applyFilters();
         });
     }
 
-    // Default 600 records load
-    function loadInitialLogs() {
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(600));
+    function loadAdminLogs() {
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(200));
         onSnapshot(q, (snap) => {
-            masterLogs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderLogs(masterLogs);
-            plotMarkers(masterLogs);
-            updateStats();
+            masterLogs = snap.docs.map(doc => {
+                const data = doc.data();
+                data.fullName = staffMap[data.uid]?.name || data.fullName || "Unknown Staff";
+                return data;
+            });
+            updateStats(masterLogs);
+            applyFilters();
+            plotAllStaff();
         });
     }
 
-    // Deep search (para sa March records)
-    async function fetchHistory() {
-        const from = document.getElementById('filter-date-from').value;
-        const to = document.getElementById('filter-date-to').value;
-        const nameSrch = document.getElementById('filter-name').value.toLowerCase();
+    function applyFilters() {
+        const nameVal = document.getElementById('filter-name').value.toLowerCase().trim();
+        const dateFromInput = document.getElementById('filter-date-from').value;
+        const dateToInput = document.getElementById('filter-date-to').value;
 
-        if (!from) return alert("Pumili muna ng 'Date From' (hal. March 1).");
-
-        toggleLoader(true, "Searching entire database...");
-        try {
-            let q = query(
-                collection(db, "attendance"), 
-                where("timestamp", ">=", Timestamp.fromDate(new Date(from))),
-                orderBy("timestamp", "desc")
-            );
-
-            if (to) {
-                const end = new Date(to);
-                end.setHours(23,59,59);
-                q = query(q, where("timestamp", "<=", Timestamp.fromDate(end)));
+        filteredLogs = masterLogs.filter(log => {
+            const currentName = (staffMap[log.uid]?.name || log.fullName || "").toLowerCase();
+            const currentEmail = (log.email || "").toLowerCase();
+            const matchesName = currentName.includes(nameVal) || currentEmail.includes(nameVal);
+            let matchesDate = true;
+            if (log.timestamp && log.timestamp.toDate) {
+                const logDate = log.timestamp.toDate();
+                const logTime = new Date(logDate.getFullYear(), logDate.getMonth(), logDate.getDate()).getTime();
+                if (dateFromInput) {
+                    const from = new Date(dateFromInput).getTime();
+                    if (logTime < from) matchesDate = false;
+                }
+                if (dateToInput) {
+                    const to = new Date(dateToInput).getTime();
+                    if (logTime > to) matchesDate = false;
+                }
             }
-
-            const snap = await getDocs(q);
-            masterLogs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            const filtered = masterLogs.filter(l => 
-                (staffMap[l.uid]?.name || l.fullName || "").toLowerCase().includes(nameSrch)
-            );
-
-            renderLogs(filtered);
-            plotMarkers(filtered);
-            alert(`Loaded ${filtered.length} records.`);
-        } catch (e) {
-            alert("Error: " + e.message + "\n\nTip: I-check ang browser console (F12) para sa Index Link kung bago itong query.");
-        } finally {
-            toggleLoader(false);
-        }
+            return matchesName && matchesDate;
+        });
+        renderAdminLogs(filteredLogs);
     }
 
-    function renderLogs(data) {
-        const container = document.getElementById('admin-master-list');
-        if (!data.length) {
-            container.innerHTML = "<p style='text-align:center;'>No records found.</p>";
-            return;
-        }
-        let html = "";
-        data.forEach(d => {
-            // Updated Date Format: "March 27, 2026"
-            let formattedDate = "N/A";
-            if (d.timestamp) {
-                const dt = d.timestamp.toDate();
-                formattedDate = dt.toLocaleDateString('en-US', { 
-                    month: 'long', 
-                    day: 'numeric', 
-                    year: 'numeric' 
-                }) + " " + dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            }
+    document.getElementById('applyFiltersBtn').onclick = (e) => { e.preventDefault(); applyFilters(); };
+    document.getElementById('filter-name').oninput = applyFilters;
 
-            const name = staffMap[d.uid]?.name || d.fullName || "Unknown";
-            html += `
+    function renderAdminLogs(data) {
+        const list = document.getElementById('admin-master-list');
+        list.innerHTML = data.length ? "" : '<p style="text-align:center;color:#8b949e;">No matching logs found.</p>';
+        data.forEach(d => {
+            const dt = d.timestamp ? d.timestamp.toDate() : new Date();
+            // CALENDAR DATE FORMAT: March 11, 2026
+            const datePart = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            const timePart = dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const displayDate = `${datePart} ${timePart}`;
+            
+            const displayName = staffMap[d.uid]?.name || d.fullName || "Unknown Staff";
+            list.innerHTML += `
                 <div class="history-item">
                     <div class="history-row">
-                        <b style="color:var(--blue);">${name}</b>
-                        <small style="color:#8b949e;">${formattedDate}</small>
+                        <span style="font-weight:bold; color:var(--blue);">${displayName}</span>
+                        <span style="font-size:0.75em; color:#8b949e;">${displayDate}</span>
                     </div>
-                    <div class="history-row" style="margin-top:5px;">
-                        <span><b class="badge ${d.type==='Check In'?'in':'out'}">${d.type}</b> ${d.locationName || ''}</span>
-                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude},${d.longitude},'${name}','${d.type}','${formattedDate}')">📍 View</button>
+                    <div class="history-row" style="margin-top:4px; align-items: center;">
+                        <span><b class="badge ${d.type === 'Check In' ? 'in' : 'out'}">${d.type}</b> ${d.locationName || 'N/A'}</span>
+                        <button class="geo-btn" onclick="zoomToLocation(${d.latitude}, ${d.longitude}, '${displayName}', '${d.type}', '${displayDate}')">📍 Show</button>
+                    </div>
+                    <div style="font-size:0.7em; color:#8b949e; margin-top:5px;">
+                        Lat: ${d.latitude || '--'} | Lng: ${d.longitude || '--'} | Remarks: ${d.remarks || 'None'}
                     </div>
                 </div>`;
         });
-        container.innerHTML = html;
     }
 
-    function plotMarkers(data) {
-        if (!markerGroup) return;
-        markerGroup.clearLayers();
-        const latest = {};
-        data.forEach(l => { if(l.latitude && !latest[l.uid]) latest[l.uid] = l; });
-        Object.values(latest).forEach(l => {
-            const color = l.type === 'Check In' ? '#3fb950' : '#f85149';
-            L.circleMarker([l.latitude, l.longitude], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8 })
-            .addTo(markerGroup).bindPopup(`<b>${l.fullName}</b><br>${l.type}`);
-        });
-    }
-
-    function updateStats() {
-        const today = new Date().toLocaleDateString();
-        const activeToday = new Set(masterLogs.filter(l => l.timestamp?.toDate().toLocaleDateString() === today).map(l => l.uid));
+    function updateStats(data) {
+        const todayStr = new Date().toLocaleDateString();
+        const presentToday = new Set(data.filter(d => d.timestamp?.toDate().toLocaleDateString() === todayStr).map(d => d.uid));
         document.getElementById('total-staff-count').innerText = Object.keys(staffMap).length;
-        document.getElementById('present-today-count').innerText = activeToday.size;
+        document.getElementById('present-today-count').innerText = presentToday.size;
     }
 
-    // --- Buttons ---
-    document.getElementById('applyFiltersBtn').onclick = fetchHistory;
-
-    document.getElementById('exportBtn').onclick = () => {
-        if (!masterLogs.length) return alert("Walang data.");
-        let csv = "Name,Date,Action,Location\n";
-        masterLogs.forEach(l => {
-            const dt = l.timestamp ? l.timestamp.toDate() : new Date();
-            const dStr = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-            csv += `"${staffMap[l.uid]?.name || l.fullName}","${dStr} ${dt.toLocaleTimeString()}","${l.type}","${l.locationName}"\n`;
+    const handleExport = () => {
+        if (filteredLogs.length === 0) return alert("No results to export.");
+        let csv = "Full Name,Email,Date,Time,Action,Location,Lat,Lng,Remarks\n";
+        filteredLogs.forEach(d => {
+            const dt = d.timestamp ? d.timestamp.toDate() : new Date();
+            // CALENDAR FORMAT IN EXCEL
+            const dateStr = dt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            csv += `"${staffMap[d.uid]?.name || d.fullName}","${d.email || ''}","${dateStr}","${dt.toLocaleTimeString()}","${d.type}","${d.locationName || ''}","${d.latitude}","${d.longitude}","${d.remarks || ''}"\n`;
         });
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `iMerch_Report_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `iMerch_Logs_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
     };
 
+    document.getElementById('exportBtn').onclick = handleExport;
+    document.getElementById('exportBtnBottom').onclick = handleExport;
+
     document.getElementById('createAccBtn').onclick = async () => {
-        const name = document.getElementById('new-fullname').value;
+        const btn = document.getElementById('createAccBtn');
+        const fullName = document.getElementById('new-fullname').value;
         const email = document.getElementById('new-email').value;
         const pass = document.getElementById('new-pass').value;
-        if (!name || !email || !pass) return alert("Fill all fields.");
-        toggleLoader(true, "Creating...");
+        if (!fullName || !email || !pass) return alert("Missing info.");
+        btn.disabled = true; btn.innerText = "Creating...";
         try {
-            const res = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
-            await addDoc(collection(db, "users"), { uid: res.user.uid, fullName: name, email, status: "Active", createdAt: serverTimestamp() });
+            const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, pass);
+            await addDoc(collection(db, "users"), { uid: userCred.user.uid, fullName, email, status: "Active", createdAt: serverTimestamp() });
             await signOut(secondaryAuth);
-            alert("Account created!");
-            document.querySelectorAll('.admin-sidebar input').forEach(i => i.value = "");
-        } catch (e) { alert(e.message); } finally { toggleLoader(false); }
+            alert("Account Created!");
+            document.getElementById('new-fullname').value = ""; document.getElementById('new-email').value = ""; document.getElementById('new-pass').value = "";
+        } catch (e) { alert("Error: " + e.message); } 
+        finally { btn.disabled = false; btn.innerText = "Create Account"; }
     };
 
-    window.deleteStaff = async (id, name) => {
-        if (confirm(`Delete ${name}?`)) await deleteDoc(doc(db, "users", id));
-    };
-
-    document.getElementById('wipeLogsBtn').onclick = async () => {
-        const ok = prompt("Type 'CONFIRM' to wipe logs > 30 days old:");
-        if (ok !== 'CONFIRM') return;
-        toggleLoader(true, "Wiping...");
-        const cut = new Date(); cut.setDate(cut.getDate() - 30);
-        const q = query(collection(db, "attendance"), where("timestamp", "<", Timestamp.fromDate(cut)));
-        const sn = await getDocs(q);
-        const b = writeBatch(db);
-        sn.docs.forEach(d => b.delete(d.ref));
-        await b.commit();
-        alert("Done!");
-        toggleLoader(false);
-    };
-
-    // --- Auth Check ---
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
         const admins = ["ron.sarmenta@gmail.com", "ronsarmenta.imerchmedia@gmail.com"];
         if (user && admins.includes(user.email)) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('admin-view').classList.remove('hidden');
-            loadStaff(); loadInitialLogs(); setTimeout(initMap, 500);
+            loadStaffData(); loadAdminLogs(); setTimeout(initMap, 500);
         } else {
             document.getElementById('login-view').classList.remove('hidden');
             document.getElementById('admin-view').classList.add('hidden');
@@ -405,13 +428,109 @@
 
     document.getElementById('login-form').onsubmit = async (e) => {
         e.preventDefault();
-        try {
-            await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value);
-        } catch (e) { alert("Login failed."); }
+        try { await signInWithEmailAndPassword(auth, document.getElementById('login-email').value, document.getElementById('login-pass').value); } 
+        catch (e) { alert("Error: " + e.message); }
     };
 
-    document.getElementById('logoutLink').onclick = (e) => { e.preventDefault(); signOut(auth); };
+    document.getElementById('logoutLink').onclick = () => signOut(auth);
 
+    document.getElementById('wipeLogsBtn').onclick = async () => {
+        const ngayon = new Date();
+        const startOfCurrentMonth = new Date(ngayon.getFullYear(), ngayon.getMonth(), 1);
+        const formatMonth = ngayon.toLocaleString('default', { month: 'long' });
+
+        const confirmation = confirm(`SECURITY ACTION: Buburahin ang LAHAT ng logs bago ang ${formatMonth} 1, ${ngayon.getFullYear()}. Sigurado ka?`);
+        if (!confirmation) return;
+
+        const btn = document.getElementById('wipeLogsBtn');
+        btn.disabled = true; btn.innerText = "Cleaning database...";
+
+        try {
+            const cutoff = Timestamp.fromDate(startOfCurrentMonth);
+            const q = query(collection(db, "attendance"), where("timestamp", "<", cutoff));
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) {
+                alert(`Database is na-clean na! Walang records bago ang ${formatMonth} 1.`);
+            } else {
+                const batch = writeBatch(db);
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                alert(`Success! ${snapshot.size} lumang records (bago ang ${formatMonth} 1) ang nabura.`);
+                location.reload();
+            }
+        } catch (e) { alert("Error: " + e.message); }
+        finally { btn.disabled = false; btn.innerText = "🗑️ Wipe Logs"; }
+    };
+
+    document.getElementById('archiveBtn').onclick = async () => {
+        const btn = document.getElementById('archiveBtn');
+        if (!confirm("Download a complete backup?")) return;
+        btn.disabled = true; btn.innerText = "Processing...";
+        try {
+            const aSnap = await getDocs(collection(db, "attendance"));
+            const uSnap = await getDocs(collection(db, "users"));
+            const backup = {
+                backupDate: new Date().toISOString(),
+                system: "iMerch Secured Attendance",
+                staffDirectory: uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                attendanceLogs: aSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+            };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `iMerch_FULL_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        } catch (e) { alert("Backup failed: " + e.message); } 
+        finally { btn.disabled = false; btn.innerText = "📦 Backup JSON"; }
+    };
+
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+    importBtn.onclick = () => importFile.click();
+
+    importFile.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = JSON.parse(event.target.result);
+                if (data.system !== "iMerch Secured Attendance") return alert("Invalid format.");
+                if (!confirm(`Restore ${data.staffDirectory.length} staff and ${data.attendanceLogs.length} logs?`)) return;
+                
+                importBtn.disabled = true;
+                const chunk = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
+                
+                const userChunks = chunk(data.staffDirectory, 400);
+                for (const batchData of userChunks) {
+                    const batch = writeBatch(db);
+                    batchData.forEach(item => {
+                        const { id, ...cleanData } = item;
+                        if (cleanData.createdAt?.seconds) cleanData.createdAt = new Timestamp(cleanData.createdAt.seconds, cleanData.createdAt.nanoseconds);
+                        batch.set(doc(db, "users", id), cleanData, { merge: true });
+                    });
+                    await batch.commit();
+                }
+                
+                const logChunks = chunk(data.attendanceLogs, 400);
+                for (const batchData of logChunks) {
+                    const batch = writeBatch(db);
+                    batchData.forEach(item => {
+                        const { id, ...cleanData } = item;
+                        if (cleanData.timestamp?.seconds) cleanData.timestamp = new Timestamp(cleanData.timestamp.seconds, cleanData.timestamp.nanoseconds);
+                        batch.set(doc(db, "attendance", id), cleanData, { merge: true });
+                    });
+                    await batch.commit();
+                }
+                
+                alert("Restore complete!");
+                window.location.reload();
+            } catch (err) { alert("Import failed: " + err.message); } 
+            finally { importBtn.disabled = false; importFile.value = ""; }
+        };
+        reader.readAsText(file);
+    };
 </script>
 </body>
 </html>
